@@ -1,9 +1,9 @@
 import os
 from datetime import datetime
 
-from color_generator import Colors
-from statistics_generator import WSP_Statistics
-from wsp_generator import WSP_Artificial
+from Colors import Colors
+from WSP_Statistics import WSP_Statistics
+from WSP_Image import WSP_Image
 
 from paths import path_to_images_folder, path_main, path_to_statistics_folder
 
@@ -38,5 +38,4 @@ today_date = str(datetime.now().date())
 # generate images
 for i in range(num_wsp):
     print(i)
-    wsp = WSP_Artificial(i, colors.droplet_color, colors.background_color, today_date)
-    WSP_Statistics(wsp)
+    WSP_Statistics(WSP_Image(i, colors.droplet_color, colors.background_color, today_date))

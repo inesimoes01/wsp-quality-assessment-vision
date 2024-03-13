@@ -4,7 +4,7 @@ from datetime import datetime
 
 from paths import path_to_images_folder, max_num_spots, min_num_spots, max_radius, width, height
 
-class WSP_Artificial:
+class WSP_Image:
     def __init__(self, index, droplet_color, background_color, today_date):
         self.index = index
         self.max_num_spots = max_num_spots

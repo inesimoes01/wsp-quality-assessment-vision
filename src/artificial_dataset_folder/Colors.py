@@ -2,7 +2,6 @@ class Colors:
     def __init__(self):
         self.generate_color()
 
-
     def interpolate_color(self, color1, color2, steps):
         # extract individual BGR components
         b1, g1, r1 = color1
