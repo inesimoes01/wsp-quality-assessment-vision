@@ -1,8 +1,9 @@
 import os
+from datetime import datetime
 
-from color_generator import generate_color
-from statistics_generator import calculate_statistics
-from wsp_generator import generate_one_wsp
+from color_generator import Colors
+from statistics_generator import WSP_Statistics
+from wsp_generator import WSP_Artificial
 
 from paths import path_to_images_folder, path_main, path_to_statistics_folder
 
@@ -31,10 +32,11 @@ def create_folders():
 # manage folders
 create_folders()
 delete_old_dataset()
-droplet_color, background_color = generate_color()
+colors = Colors()
+today_date = str(datetime.now().date())
 
 # generate images
 for i in range(num_wsp):
     print(i)
-    width, height, image, num_spots, droplets_data = generate_one_wsp(droplet_color, background_color)
-    calculate_statistics(i, width, height, image, num_spots, droplets_data, background_color)
+    wsp = WSP_Artificial(i, colors.droplet_color, colors.background_color, today_date)
+    WSP_Statistics(wsp)
