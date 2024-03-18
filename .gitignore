@@ -153,4 +153,4 @@ cython_debug/
 
 
 #artificial dataset
-images/artificial_images
+images/

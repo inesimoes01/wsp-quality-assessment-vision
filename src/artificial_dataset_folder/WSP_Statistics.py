@@ -63,14 +63,38 @@ class WSP_Statistics:
     def save_statistics_to_folder(self):
         statistics_file_path = path_to_statistics_folder + '\statistics_' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.txt'
         with open(statistics_file_path, 'w') as f:
+            f.write(f"Number of droplets: {self.wsp_image.num_spots:d}\n")
             f.write(f"Coverage percentage: {self.coverage_percentage:.2f}%\n")
             f.write(f"Number of droplets per area: {self.droplets_per_area:.10f}\n")
-            f.write(f"VMD value: {self.vmd_value:.10f}\n")
+            f.write(f"VMD value: {self.vmd_value:d}\n")
+            f.write(f"RSF value: {self.rsf_value:.2f}\n")
+            
+
+# class WSP_Statistics_Generator:
+#     def __init__(self):  
+#         self.total_num_droplets = 400
+#         self.vmd = 14
+#     def generate_radius(self):
+#         droplet_vol = []
+#         for i in range(self.total_num_droplets//2):
+#             droplet_vol.append(np.random.randint(0, 14))
+#         for i in range(self.total_num_droplets//2):
+#             droplet_vol.append(np.random.randint(14, 40))
+        
+#         return droplet_vol
+        
+# stats = WSP_Statistics_Generator()
+# droplet_vol = WSP_Statistics_Generator.generate_radius(stats)
 
 
+# volumes_sorted = sorted(droplet_vol)
+# total_volume = sum(volumes_sorted)
+# cumulative_fraction = np.cumsum(volumes_sorted) / total_volume
 
+# vmd_index = np.argmax(cumulative_fraction >= 0.5)
+# vmd_value = volumes_sorted[vmd_index]
 
-
+# print(vmd_value)
 
 
 
