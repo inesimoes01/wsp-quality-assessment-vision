@@ -4,34 +4,28 @@ from datetime import datetime
 from Colors import Colors
 from WSP_Statistics import WSP_Statistics
 from WSP_Image import WSP_Image
+import sys
 
-from paths import path_to_images_folder, path_main, path_to_statistics_folder
+sys.path.insert(0, 'src/others')
+from paths import *
+from util import *
 
 ### VALUES
 num_wsp = 5
 
-def delete_old_dataset():
-    for filename in os.listdir(path_to_images_folder):
-        file_path_image = os.path.join(path_to_images_folder, filename)
-        if os.path.isfile(file_path_image):
-            os.remove(file_path_image)
-
-    for filename in os.listdir(path_to_statistics_folder):
-        file_path_statistic = os.path.join(path_to_statistics_folder, filename)
-        if os.path.isfile(file_path_statistic):
-            os.remove(file_path_statistic)
-
-def create_folders():
-    if not os.path.exists(path_main):
-        os.makedirs(path_main)
-    if not os.path.exists(path_to_images_folder):
-        os.makedirs(path_to_images_folder)
-    if not os.path.exists(path_to_statistics_folder):
-        os.makedirs(path_to_statistics_folder)
-    
 # manage folders
-create_folders()
-delete_old_dataset()
+create_folders(path_main_dataset)
+create_folders(path_to_images_folder)
+create_folders(path_to_statistics_folder)
+create_folders(path_to_outputs_folder)
+create_folders(path_to_separation_folder)
+
+delete_old_files(path_to_images_folder)
+delete_old_files(path_to_statistics_folder)
+delete_folder_contents(path_to_outputs_folder)
+delete_old_files(path_to_separation_folder)
+
+
 colors = Colors()
 today_date = str(datetime.now().date())
 

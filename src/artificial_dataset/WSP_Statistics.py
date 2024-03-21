@@ -1,6 +1,9 @@
 import numpy as np
 import cv2
+import sys
 
+sys.path.insert(0, 'src/others')
+from util import *
 from paths import path_to_statistics_folder
 
 class WSP_Statistics:
@@ -61,7 +64,7 @@ class WSP_Statistics:
         print("number of droplets ", check_vmd_s, " ", check_vmd_h, " ", equal)
     
     def save_statistics_to_folder(self):
-        statistics_file_path = path_to_statistics_folder + '\statistics_' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.txt'
+        statistics_file_path = path_to_statistics_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.txt'
         with open(statistics_file_path, 'w') as f:
             f.write(f"Number of droplets: {self.wsp_image.num_spots:d}\n")
             f.write(f"Coverage percentage: {self.coverage_percentage:.2f}%\n")

@@ -1,7 +1,9 @@
 import numpy as np
 import cv2
 from datetime import datetime
+import sys
 
+sys.path.insert(0, 'src/others')
 from paths import path_to_images_folder, max_num_spots, min_num_spots, max_radius, width, height
 
 class WSP_Image:
@@ -44,7 +46,7 @@ class WSP_Image:
         self.droplet_radii = [d['radius'] for d in self.droplets_data]
     
     def save_wsp(self):
-        cv2.imwrite(path_to_images_folder + '\wsp_' + self.today_date + '_' + str(self.index) + '.png', self.rectangle)
+        cv2.imwrite(path_to_images_folder + '\\' + self.today_date + '_' + str(self.index) + '.png', self.rectangle)
         return width, height, self.rectangle, self.num_spots, self.droplets_data
 
 
