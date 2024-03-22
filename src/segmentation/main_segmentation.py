@@ -22,7 +22,9 @@ def get_ground_truth(stats_file_path):
         for line in f:
             if "Number of droplets: " in line:
                 number_of_droplets = int(line.split(":")[1].strip())
-    return number_of_droplets
+            if "Number of overlapped droplets: " in line:
+                no_overlapped_droplets = int(line.split(":")[1].strip())
+    return number_of_droplets, no_overlapped_droplets
 
 def get_contours(image):
     # grayscale
@@ -112,8 +114,6 @@ def display_results(number_of_droplets, object_count, transformed_image, origina
 
 
 
-
-
 # delete old outputs
 delete_folder_contents(path_to_separation_folder)
 delete_folder_contents(path_to_outputs_folder)
@@ -137,7 +137,8 @@ for file in os.listdir(path_to_images_folder):
     contours, contour_image, object_count = get_contours(out_image)
 
     # ground truth of number of contours
-    number_of_droplets = get_ground_truth(stats_file_path)
+    number_of_droplets, no_overlapped_droplets = get_ground_truth(stats_file_path)
+    
 
     # save each step in a different variable
     roi_image = copy.copy(in_image)
@@ -146,19 +147,22 @@ for file in os.listdir(path_to_images_folder):
     separate_image = copy.copy(in_image)
 
     # calculate diameter + save each contour
+    final_no_droplets = object_count
+    
     for i, contour in enumerate(contours):    
-        separate_image, diameter_image, final_no_droplets, isOverlapped = measure_diameter(contour, object_count, diameter_image, separate_image)
+        separate_image, diameter_image, final_no_droplets, isOverlapped = measure_diameter(contour, final_no_droplets, diameter_image, separate_image)
     
         crop_ROI(i, contour, enumerate_image, roi_image, isOverlapped, filename)
 
         separate_image = cv2.cvtColor(separate_image, cv2.COLOR_RGB2BGR)
     
     # save final image
-    cv2.imwrite(f'images\\artificial_dataset\\separation\\result_image_' + filename + '.png', separate_image)
+    cv2.imwrite(path_to_separation_folder + f'\\result_image_' + filename + '.png', separate_image)
 
     print("Number of droplets detected: ", final_no_droplets)
-    print("Number of droplets before counting double: ", object_count)
+    print("Number of overlapped droplets: ", final_no_droplets - object_count)
     print("Number of droplets real: ", number_of_droplets)
+    print("Number of overlapped droplets real: ", no_overlapped_droplets)
     print("")
 
     #display_results(number_of_droplets, object_count, separate_image, in_image)

@@ -1,20 +1,25 @@
 import numpy as np
 import cv2
 import sys
+from matplotlib import pyplot as plt 
+
+from Colors import *
 
 sys.path.insert(0, 'src/others')
 from util import *
 from paths import path_to_statistics_folder
 
 class WSP_Statistics:
-    def __init__(self, wsp_image):
+    def __init__(self, wsp_image, colors):
+        self.colors = colors
         self.wsp_image = wsp_image
+        
+        self.find_overlapping_circles()
         self.calculate_vmd()
         self.calculate_coverage_percentage()
         self.calculate_number_of_droplets_in_total_area()
         self.calculate_rsf()
         self.save_statistics_to_folder()
-        
 
     def calculate_vmd(self):
         volumes_sorted = sorted(self.wsp_image.droplet_radii)
@@ -48,6 +53,40 @@ class WSP_Statistics:
 
         self.rsf_value = (self.dv_nine - self.dv_one) / self.vmd_value
 
+    def find_overlapping_circles(self):
+        self.no_overlapped_droplets = 0
+        for droplet in self.wsp_image.droplets_data:
+            center_y = droplet['center_y'] 
+            center_x = droplet['center_x'] 
+            r = droplet['radius']
+
+            isOverlapped = False
+
+            for y in range(center_y - r - 3, center_y + r + 3):
+                for x in range(center_x - r - 3, center_x + r + 3):
+                    # distance from center
+                    distance = ((x - center_x) ** 2 + (y - center_y) ** 2) ** 0.5
+                    if r < distance <= r + 3:
+                        # check if the pixel is between the two circles
+                        if 0 <= x < self.wsp_image.width and 0 <= y < self.wsp_image.height:
+                            # color of the pixel
+                            color = self.wsp_image.rectangle[y, x]
+                            
+                            # detects pixels that are not background
+                            if tuple(map(lambda i, j: i - j, color, self.wsp_image.background_color)) != (0, 0, 0):
+                                isOverlapped = True
+
+
+            if (isOverlapped):
+                droplet['isOverlapped'] = True
+                self.no_overlapped_droplets += 1
+            else: 
+                droplet['isOverlapped'] = False
+            
+            
+            # region = self.wsp_image.rectangle[max(0, y - r - margin): min(image.shape[0], y + r + margin),
+            #             max(0, x - r - margin): min(image.shape[1], x + r + margin)]
+
     def verify_VDM(droplet_radii, vmd_value):
         check_vmd_s = 0
         check_vmd_h = 0
@@ -71,7 +110,10 @@ class WSP_Statistics:
             f.write(f"Number of droplets per area: {self.droplets_per_area:.10f}\n")
             f.write(f"VMD value: {self.vmd_value:d}\n")
             f.write(f"RSF value: {self.rsf_value:.2f}\n")
-            
+            f.write(f"Number of overlapped droplets: {self.no_overlapped_droplets:d}\n")
+
+
+
 
 # class WSP_Statistics_Generator:
 #     def __init__(self):  

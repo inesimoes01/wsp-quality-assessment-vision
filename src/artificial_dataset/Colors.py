@@ -1,6 +1,8 @@
+import numpy as np
+
 class Colors:
     def __init__(self):
-        self.generate_color()
+        self.droplet_colors, self.background_color = self.generate_color()
 
     def interpolate_color(self, color1, color2, steps):
         # extract individual BGR components
@@ -30,6 +32,8 @@ class Colors:
 
         # BACKGROUND COLOR
         self.background_color = (97, 225, 243)
+
+        print("Background: ", np.mean(self.background_color))
 
         return self.droplet_color, self.background_color
 

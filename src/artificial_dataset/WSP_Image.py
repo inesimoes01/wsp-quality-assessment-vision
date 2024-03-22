@@ -7,15 +7,15 @@ sys.path.insert(0, 'src/others')
 from paths import path_to_images_folder, max_num_spots, min_num_spots, max_radius, width, height
 
 class WSP_Image:
-    def __init__(self, index, droplet_color, background_color, today_date):
+    def __init__(self, index, colors, today_date):
         self.index = index
         self.max_num_spots = max_num_spots
         self.min_num_spots = min_num_spots
         self.max_radius = max_radius
         self.width = width
         self.height = height
-        self.droplet_color = droplet_color
-        self.background_color = background_color
+        self.droplet_color = colors.droplet_color
+        self.background_color = colors.background_color
         self.today_date = today_date
         self.generate_one_wsp()
         self.save_wsp()
@@ -44,6 +44,7 @@ class WSP_Image:
             })
 
         self.droplet_radii = [d['radius'] for d in self.droplets_data]
+    
     
     def save_wsp(self):
         cv2.imwrite(path_to_images_folder + '\\' + self.today_date + '_' + str(self.index) + '.png', self.rectangle)

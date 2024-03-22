@@ -11,7 +11,7 @@ from paths import *
 from util import *
 
 ### VALUES
-num_wsp = 5
+num_wsp = 1
 
 # manage folders
 create_folders(path_main_dataset)
@@ -25,11 +25,13 @@ delete_old_files(path_to_statistics_folder)
 delete_folder_contents(path_to_outputs_folder)
 delete_old_files(path_to_separation_folder)
 
-
 colors = Colors()
 today_date = str(datetime.now().date())
 
 # generate images
 for i in range(num_wsp):
-    print(i)
-    WSP_Statistics(WSP_Image(i, colors.droplet_color, colors.background_color, today_date))
+    print("Creating image number ", i)
+    WSP_Statistics(WSP_Image(i, colors, today_date), colors)
+
+    
+## Background:  188.33333333333334
