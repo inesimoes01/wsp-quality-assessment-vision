@@ -29,7 +29,7 @@ class WSP_Image:
 
         # generate random spots with colors from the list
         self.droplets_data = []
-        for _ in range(self.num_spots):
+        for i in range(self.num_spots):
             spot_color = self.droplet_color[np.random.randint(0, len(self.droplet_color))]
             spot_radius = np.random.randint(1, max_radius) 
             center_x = np.random.randint(spot_radius, width - spot_radius)
@@ -37,10 +37,12 @@ class WSP_Image:
             cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
 
             self.droplets_data.append({
+                'id': i+1,
                 'color': spot_color,
                 'radius': spot_radius,
                 'center_x': center_x,
-                'center_y': center_y
+                'center_y': center_y,
+                'overlappedIDs': []
             })
 
         self.droplet_radii = [d['radius'] for d in self.droplets_data]

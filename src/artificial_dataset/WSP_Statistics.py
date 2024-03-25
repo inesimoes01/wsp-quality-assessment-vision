@@ -2,23 +2,24 @@ import numpy as np
 import cv2
 import sys
 from matplotlib import pyplot as plt 
+import copy
 
 from Colors import *
 
 sys.path.insert(0, 'src/others')
 from util import *
-from paths import path_to_statistics_folder
+from paths import * 
 
 class WSP_Statistics:
     def __init__(self, wsp_image, colors):
         self.colors = colors
         self.wsp_image = wsp_image
-        
+     
         self.find_overlapping_circles()
         self.calculate_vmd()
         self.calculate_coverage_percentage()
-        self.calculate_number_of_droplets_in_total_area()
         self.calculate_rsf()
+
         self.save_statistics_to_folder()
 
     def calculate_vmd(self):
@@ -44,9 +45,6 @@ class WSP_Statistics:
         self.total_area = self.wsp_image.width * self.wsp_image.height
         self.coverage_percentage = ((self.total_area - not_covered_area) / self.total_area) * 100
     
-    def calculate_number_of_droplets_in_total_area(self):
-        self.droplets_per_area = self.wsp_image.num_spots / self.total_area
-       
     def calculate_rsf(self):
         self.dv_one = np.argmax(self.cumulative_fraction >= 0.1)
         self.dv_nine = np.argmax(self.cumulative_fraction >= 0.9)
@@ -55,37 +53,26 @@ class WSP_Statistics:
 
     def find_overlapping_circles(self):
         self.no_overlapped_droplets = 0
+
+        # iterate over each droplet and compare with all other droplets
         for droplet in self.wsp_image.droplets_data:
-            center_y = droplet['center_y'] 
-            center_x = droplet['center_x'] 
-            r = droplet['radius']
+            center_y1 = droplet['center_y'] 
+            center_x1 = droplet['center_x'] 
+            r1 = droplet['radius']
+            id1 = droplet['id']
 
-            isOverlapped = False
+            for droplet2 in self.wsp_image.droplets_data:
+                id2 = droplet2['id']
+                center_y2 = droplet2['center_y'] 
+                center_x2 = droplet2['center_x'] 
+                r2 = droplet2['radius']
 
-            for y in range(center_y - r - 3, center_y + r + 3):
-                for x in range(center_x - r - 3, center_x + r + 3):
-                    # distance from center
-                    distance = ((x - center_x) ** 2 + (y - center_y) ** 2) ** 0.5
-                    if r < distance <= r + 3:
-                        # check if the pixel is between the two circles
-                        if 0 <= x < self.wsp_image.width and 0 <= y < self.wsp_image.height:
-                            # color of the pixel
-                            color = self.wsp_image.rectangle[y, x]
-                            
-                            # detects pixels that are not background
-                            if tuple(map(lambda i, j: i - j, color, self.wsp_image.background_color)) != (0, 0, 0):
-                                isOverlapped = True
+                center_distance = np.sqrt((center_x2 - center_x1)**2 + (center_y2 - center_y1)**2)
 
-
-            if (isOverlapped):
-                droplet['isOverlapped'] = True
-                self.no_overlapped_droplets += 1
-            else: 
-                droplet['isOverlapped'] = False
-            
-            
-            # region = self.wsp_image.rectangle[max(0, y - r - margin): min(image.shape[0], y + r + margin),
-            #             max(0, x - r - margin): min(image.shape[1], x + r + margin)]
+                # if they overlap, mark it as overlapped
+                if (center_distance < (r1 + r2) and id2 != id1):
+                    droplet['overlappedIDs'] += [id2]
+                    self.no_overlapped_droplets += 1
 
     def verify_VDM(droplet_radii, vmd_value):
         check_vmd_s = 0
@@ -106,11 +93,14 @@ class WSP_Statistics:
         statistics_file_path = path_to_statistics_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.txt'
         with open(statistics_file_path, 'w') as f:
             f.write(f"Number of droplets: {self.wsp_image.num_spots:d}\n")
-            f.write(f"Coverage percentage: {self.coverage_percentage:.2f}%\n")
-            f.write(f"Number of droplets per area: {self.droplets_per_area:.10f}\n")
+            f.write(f"Coverage percentage: {self.coverage_percentage:.2f}\n")
             f.write(f"VMD value: {self.vmd_value:d}\n")
             f.write(f"RSF value: {self.rsf_value:.2f}\n")
             f.write(f"Number of overlapped droplets: {self.no_overlapped_droplets:d}\n")
+            f.write(f"\nOVERLAPPED DROPLETS\n")
+            for drop in self.wsp_image.droplets_data:
+                if(drop['overlappedIDs'] != []): f.write(f"Overlapping droplets of droplet no {drop['id']}: {drop['overlappedIDs']}\n")
+
 
 
 

@@ -33,7 +33,5 @@ class Colors:
         # BACKGROUND COLOR
         self.background_color = (97, 225, 243)
 
-        print("Background: ", np.mean(self.background_color))
-
         return self.droplet_color, self.background_color
 

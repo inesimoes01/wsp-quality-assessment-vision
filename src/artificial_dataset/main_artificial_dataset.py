@@ -1,17 +1,19 @@
 import os
 from datetime import datetime
+import time
 
 from Colors import Colors
 from WSP_Statistics import WSP_Statistics
 from WSP_Image import WSP_Image
 import sys
 
+
 sys.path.insert(0, 'src/others')
 from paths import *
 from util import *
 
 ### VALUES
-num_wsp = 1
+num_wsp = 5
 
 # manage folders
 create_folders(path_main_dataset)
@@ -30,8 +32,14 @@ today_date = str(datetime.now().date())
 
 # generate images
 for i in range(num_wsp):
+    start_time = time.time()
+
     print("Creating image number ", i)
     WSP_Statistics(WSP_Image(i, colors, today_date), colors)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print("Time taken:", elapsed_time, "seconds")
 
     
 ## Background:  188.33333333333334
