@@ -1,3 +1,6 @@
+import re
+import string
+
 class GroundTruth_Statistics:
     def __init__(self, stats_file):
         # read file
@@ -9,18 +12,37 @@ class GroundTruth_Statistics:
             self.rsf_value = float(lines[3].split(":")[1].strip())
             self.no_overlapped_droplets = int(lines[4].split(":")[1].strip())
 
-            # Find the index where the overlapped droplets section begins
-            self.overlapped_droplets = {}
+            self.overlapped_droplets = []
+            droplet_info_regex = r"Overlapping droplets of droplet no (\d+) \((\d+), (\d+), (\d+)\): \[([\d, ]+)\]"
+            droplet_id_regex = r"\d+"
 
-            # Iterate over the lines containing information about overlapped droplets
-            for line in lines[7:]:  # Start from line 7 to skip the header lines
-                # Split the line to extract droplet number and its overlapping droplets
-                parts = line.strip().split(': ')
-                droplet_number = int(parts[0].split()[-1])
-                overlapping_droplets = [int(d) for d in parts[1][1:-1].split(', ')]
+            for line in lines[7:]:
+                matches = re.finditer(droplet_info_regex, line)
+                # lines with overlapped droplets information
+                for match in matches:
+                    droplet_id, center_x, center_y, radius, overlapped_ids_str = match.groups()
+                    overlapped_ids = [int(id_) for id_ in re.findall(droplet_id_regex, overlapped_ids_str)]
+                    self.overlapped_droplets.append({
+                        'id': int(droplet_id),
+                        'center_x': int(center_x),
+                        'center_y': int(center_y),
+                        'radius': int(radius),
+                        'overlappedIds': overlapped_ids
+                    })                  
+            
+            
+            
+            
+            
+            
+            
+            #for line in lines[7:]:  # skip header lines
+                # parts = line.strip().split(': ')
+                # droplet_number = int(parts[0].split()[-1])
+                # overlapping_droplets = [int(d) for d in parts[1][1:-1].split(', ')]
                 
-                # Store the overlapped droplets in the dictionary
-                self.overlapped_droplets[droplet_number] = overlapping_droplets 
+                # # Store the overlapped droplets in the dictionary
+                # self.overlapped_droplets[droplet_number] = overlapping_droplets 
 
             # for line in f:
             #     if "Number of droplets: " in line:

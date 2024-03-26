@@ -29,7 +29,11 @@ class Calculated_Statistics:
 
         # calculate diameter + save each contour        
         for i, contour in enumerate(self.contours):    
-            isOverlapped = self.measure_diameter_droplet(contour)
+            center_x, center_y, radius = self.measure_diameter_droplet(contour)
+
+            overlapped_ids, isOverlapped = self.check_for_overlapped(contour, radius)
+
+            self.save_droplet_information(i, center_x, center_y, radius, overlapped_ids)
         
             self.crop_ROI(contour, isOverlapped, i)
 
@@ -76,18 +80,21 @@ class Calculated_Statistics:
         else: cv2.imwrite(self.path_to_save_contours_single + '\\' + str(index) + '.png', object_roi)
     
     def measure_diameter_droplet(self, contour):   
-        # bool variable to check if the algorithm sees the object as overlapped or single droplets
-        isOverlapped = 0
-
         # find minimum enclosing circle
-        (x, y), radius = cv2.minEnclosingCircle(contour)
+        (center_x, center_y), radius = cv2.minEnclosingCircle(contour)
         diameter = radius * 2
 
         # annotate image for diameter values
-        center = (int(x), int(y))
+        center = (int(center_x), int(center_y))
         radius = int(radius)
         cv2.circle(self.diameter_image, center, radius, (255, 0, 0), 2)
-        cv2.putText(self.diameter_image, f'{diameter:.2f}', (int(x-radius), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        cv2.putText(self.diameter_image, f'{diameter:.2f}', (int(center_x-radius), int(center_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2))
+
+        return center_x, center_y, radius
+
+    def check_for_overlapped(self, contour, radius):
+        # bool variable to check if the algorithm sees the object as overlapped or single droplets
+        isOverlapped = 0
 
         # perform shape analysis
         area = cv2.contourArea(contour)
@@ -110,3 +117,14 @@ class Calculated_Statistics:
             self.final_no_droplets += 1
 
         return isOverlapped
+    
+    def save_droplet_information(self, index, center_x, center_y, radius, overlapped_ids):
+        self.droplets_data.append({
+            'id': int(index),
+            'center_x': int(center_x),
+            'center_y': int(center_y),
+            'radius': int(radius),
+            'overlappedIds': overlapped_ids
+        })    
+
+
