@@ -12,3 +12,8 @@ max_num_spots = 400
 min_num_spots = 300
 max_radius = 15
 width, height = 76*26, 26*26
+
+
+### accuracy
+distance_threshold = 10
+radius_threshold = 10

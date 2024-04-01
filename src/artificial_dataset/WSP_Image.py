@@ -6,6 +6,9 @@ import sys
 sys.path.insert(0, 'src/others')
 from paths import path_to_images_folder, max_num_spots, min_num_spots, max_radius, width, height
 
+sys.path.insert(0, 'src')
+from Droplet import *
+
 class WSP_Image:
     def __init__(self, index, colors, today_date):
         self.index = index
@@ -36,17 +39,19 @@ class WSP_Image:
             center_y = np.random.randint(spot_radius, height - spot_radius)
             cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
 
-            self.droplets_data.append({
-                'id': i+1,
-                'color': spot_color,
-                'radius': spot_radius,
-                'center_x': center_x,
-                'center_y': center_y,
-                'overlappedIDs': []
-            })
+            # save each Droplet
+            self.droplets_data.append(Droplet(center_x, center_y, spot_radius, i+1, [], spot_color))
+            #     {
+            #     'id': i+1,
+            #     'color': spot_color,
+            #     'radius': spot_radius,
+            #     'center_x': center_x,
+            #     'center_y': center_y,
+            #     'overlappedIDs': []
+            # })
 
-        self.droplet_radii = [d['radius'] for d in self.droplets_data]
-    
+        self.droplet_radii = [d.radius for d in self.droplets_data]
+
     
     def save_wsp(self):
         cv2.imwrite(path_to_images_folder + '\\' + self.today_date + '_' + str(self.index) + '.png', self.rectangle)

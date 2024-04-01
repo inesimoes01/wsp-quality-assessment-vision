@@ -8,8 +8,12 @@ sys.path.insert(0, 'src/others')
 from util import *
 from paths import *
 
+sys.path.insert(0, 'src')
+from Droplet import *
+
 class Calculated_Statistics:
     def __init__(self, image, filename):
+        self.droplets_data=[]
         # file management
         self.path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
         self.path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
@@ -28,11 +32,18 @@ class Calculated_Statistics:
         self.separate_image = copy.copy(image)
 
         # calculate diameter + save each contour        
-        for i, contour in enumerate(self.contours):    
+        for i, contour in enumerate(self.contours):
+            overlapped_ids = []    
             center_x, center_y, radius = self.measure_diameter_droplet(contour)
 
-            overlapped_ids, isOverlapped = self.check_for_overlapped(contour, radius)
+            isOverlapped = self.check_for_overlapped(contour, radius)
 
+            if isOverlapped: 
+                overlapped_ids.append(i)
+                i+=1
+                overlapped_ids.append(i)
+            
+            overlapped_ids.append(i)
             self.save_droplet_information(i, center_x, center_y, radius, overlapped_ids)
         
             self.crop_ROI(contour, isOverlapped, i)
@@ -75,7 +86,6 @@ class Calculated_Statistics:
 
         # save outputs
         object_roi = cv2.cvtColor(object_roi, cv2.COLOR_RGB2BGR)
-
         if (isOverlapped): cv2.imwrite(self.path_to_save_contours_overlapped + '\\' + str(index) + '.png', object_roi)
         else: cv2.imwrite(self.path_to_save_contours_single + '\\' + str(index) + '.png', object_roi)
     
@@ -88,7 +98,7 @@ class Calculated_Statistics:
         center = (int(center_x), int(center_y))
         radius = int(radius)
         cv2.circle(self.diameter_image, center, radius, (255, 0, 0), 2)
-        cv2.putText(self.diameter_image, f'{diameter:.2f}', (int(center_x-radius), int(center_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2))
+        #cv2.putText(self.diameter_image, f'{diameter:.2f}', (int(center_x-radius), int(center_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2))
 
         return center_x, center_y, radius
 
@@ -119,12 +129,6 @@ class Calculated_Statistics:
         return isOverlapped
     
     def save_droplet_information(self, index, center_x, center_y, radius, overlapped_ids):
-        self.droplets_data.append({
-            'id': int(index),
-            'center_x': int(center_x),
-            'center_y': int(center_y),
-            'radius': int(radius),
-            'overlappedIds': overlapped_ids
-        })    
+        self.droplets_data.append(Droplet(int(center_x), int(center_y), int(radius), index, overlapped_ids))
 
 

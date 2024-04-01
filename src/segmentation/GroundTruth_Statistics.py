@@ -1,5 +1,9 @@
 import re
 import string
+import sys
+
+sys.path.insert(0, 'src')
+from Droplet import *
 
 class GroundTruth_Statistics:
     def __init__(self, stats_file):
@@ -12,8 +16,8 @@ class GroundTruth_Statistics:
             self.rsf_value = float(lines[3].split(":")[1].strip())
             self.no_overlapped_droplets = int(lines[4].split(":")[1].strip())
 
-            self.overlapped_droplets = []
-            droplet_info_regex = r"Overlapping droplets of droplet no (\d+) \((\d+), (\d+), (\d+)\): \[([\d, ]+)\]"
+            self.droplets = []
+            droplet_info_regex = r"Droplet no (\d+) \((\d+), (\d+), (\d+)\): \[([\d, ]+)\]"
             droplet_id_regex = r"\d+"
 
             for line in lines[7:]:
@@ -22,15 +26,16 @@ class GroundTruth_Statistics:
                 for match in matches:
                     droplet_id, center_x, center_y, radius, overlapped_ids_str = match.groups()
                     overlapped_ids = [int(id_) for id_ in re.findall(droplet_id_regex, overlapped_ids_str)]
-                    self.overlapped_droplets.append({
-                        'id': int(droplet_id),
-                        'center_x': int(center_x),
-                        'center_y': int(center_y),
-                        'radius': int(radius),
-                        'overlappedIds': overlapped_ids
-                    })                  
-            
-            
+                    self.droplets.append(Droplet(int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
+
+                    # self.overlapped_droplets.append({
+                    #     'id': int(droplet_id),
+                    #     'center_x': int(center_x),
+                    #     'center_y': int(center_y),
+                    #     'radius': int(radius),
+                    #     'overlappedIds': overlapped_ids
+                    # })                  
+             
             
             
             

@@ -29,12 +29,13 @@ for file in os.listdir(path_to_images_folder):
     out_image = copy.copy(in_image)
 
     # calculate statistics
-    stats_calculated = Calculated_Statistics(out_image, filename)
+    stats_calculated = Calculated_Statistics(out_image, filename).droplets_data
 
     # compare with the ground truth
     stats_file_path = (os.path.join(path_to_statistics_folder, filename + ".txt"))
-    stats_groundtruth = GroundTruth_Statistics(stats_file_path) 
+    stats_groundtruth = GroundTruth_Statistics(stats_file_path).droplets
 
+    Accuracy(stats_groundtruth, stats_calculated)
 
 
 

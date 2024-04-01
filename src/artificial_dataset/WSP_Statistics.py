@@ -56,22 +56,22 @@ class WSP_Statistics:
 
         # iterate over each droplet and compare with all other droplets
         for droplet in self.wsp_image.droplets_data:
-            center_y1 = droplet['center_y'] 
-            center_x1 = droplet['center_x'] 
-            r1 = droplet['radius']
-            id1 = droplet['id']
+            center_y1 = droplet.center_y
+            center_x1 = droplet.center_x
+            r1 = droplet.radius
+            id1 = droplet.id
 
             for droplet2 in self.wsp_image.droplets_data:
-                id2 = droplet2['id']
-                center_y2 = droplet2['center_y'] 
-                center_x2 = droplet2['center_x'] 
-                r2 = droplet2['radius']
+                id2 = droplet2.id
+                center_y2 = droplet2.center_y
+                center_x2 = droplet2.center_x
+                r2 = droplet2.radius
 
                 center_distance = np.sqrt((center_x2 - center_x1)**2 + (center_y2 - center_y1)**2)
 
                 # if they overlap, mark it as overlapped
                 if (center_distance < (r1 + r2) and id2 != id1):
-                    droplet['overlappedIDs'] += [id2]
+                    droplet.overlappedIDs += [id2]
                     self.no_overlapped_droplets += 1
 
     def verify_VDM(droplet_radii, vmd_value):
@@ -97,9 +97,10 @@ class WSP_Statistics:
             f.write(f"VMD value: {self.vmd_value:d}\n")
             f.write(f"RSF value: {self.rsf_value:.2f}\n")
             f.write(f"Number of overlapped droplets: {self.no_overlapped_droplets:d}\n")
-            f.write(f"\nOVERLAPPED DROPLETS: no [id] ([center_x], [center_y], [radius])\n")
+            f.write(f"\nDROPLETS: no [id] ([center_x], [center_y], [radius])\n")
             for drop in self.wsp_image.droplets_data:
-                if(drop['overlappedIDs'] != []): f.write(f"Overlapping droplets of droplet no {drop['id']} ({drop['center_x']}, {drop['center_y']}, {drop['radius']}): {drop['overlappedIDs']}\n")
+                if(drop.overlappedIDs != []): f.write(f"Droplet no {drop.id} ({drop.center_x}, {drop.center_y}, {drop.radius}): {drop.overlappedIDs}\n")
+                else: f.write(f"Droplet no {drop.id} ({drop.center_x}, {drop.center_y}, {drop.radius}): {drop.overlappedIDs}\n")
 
 
 

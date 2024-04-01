@@ -94,11 +94,10 @@ for circle in best_circles1:
 # remove circles detected
 mask1 = np.zeros_like(gray1)
 for circle in best_circles1:
-    cv2.circle(mask1, (int(circle.xCenter), int(circle.yCenter)), int(circle.radius), (255), 2)
+    for i in range(int(circle.radius)):
+        cv2.circle(mask1, (int(circle.xCenter), int(circle.yCenter)), int(circle.radius)-i, (255), 2)
 mask_inv1 = cv2.bitwise_not(mask1)
 result1 = cv2.bitwise_and(thresh1, thresh1, mask=mask_inv1)
-
-
 
 
 # RUN IT AGAIN
