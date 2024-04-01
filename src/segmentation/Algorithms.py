@@ -16,13 +16,13 @@ class Algorithms:
         self.image = cv2.imread(image_path)
         
         # apply hough_tansform algorithm
-        self.hough_tansform()
+        # self.hough_tansform()
 
-        # # apply ransac algorithm
-        # self.no_iterations = 50000
-        # self.radius_threshold = 16
-        # self.edge_points_threshold = 5
-        # self.ransac()
+        # apply ransac algorithm
+        self.no_iterations = 50000
+        self.radius_threshold = 16
+        self.edge_points_threshold = 5
+        self.ransac()
 
     def process_image(self):
         self.image_blur = cv2.GaussianBlur(self.image, (7, 7), 1.5)
@@ -63,7 +63,6 @@ class Algorithms:
 
         # run algorithm
         best_circles_1 = self.ransac_helper(self.edge_points)
-
 
         # annotate the image + remove circles detected
         thresh_1 = copy.copy(self.thresh)

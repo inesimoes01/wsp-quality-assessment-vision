@@ -8,10 +8,11 @@ from Colors import *
 
 sys.path.insert(0, 'src/others')
 from util import *
-from paths import * 
+from variables import * 
+from WSP_Image import WSP_Image
 
 class WSP_Statistics:
-    def __init__(self, wsp_image, colors):
+    def __init__(self, wsp_image:WSP_Image, colors):
         self.colors = colors
         self.wsp_image = wsp_image
      
@@ -53,9 +54,12 @@ class WSP_Statistics:
 
     def find_overlapping_circles(self):
         self.no_overlapped_droplets = 0
+        self.enumerate_image = copy.copy(self.wsp_image.blur_image)
 
         # iterate over each droplet and compare with all other droplets
         for droplet in self.wsp_image.droplets_data:
+            cv2.putText(self.enumerate_image, f'{droplet.id}', (int(droplet.center_x-droplet.radius), int(droplet.center_y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
+
             center_y1 = droplet.center_y
             center_x1 = droplet.center_x
             r1 = droplet.radius
@@ -74,6 +78,8 @@ class WSP_Statistics:
                     droplet.overlappedIDs += [id2]
                     self.no_overlapped_droplets += 1
 
+        #cv2.imwrite(path_to_numbered_folder + '\\GT_' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.png', self.enumerate_image)
+
     def verify_VDM(droplet_radii, vmd_value):
         check_vmd_s = 0
         check_vmd_h = 0
@@ -90,7 +96,7 @@ class WSP_Statistics:
         print("number of droplets ", check_vmd_s, " ", check_vmd_h, " ", equal)
     
     def save_statistics_to_folder(self):
-        statistics_file_path = path_to_statistics_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.txt'
+        statistics_file_path = path_to_statistics_gt_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.txt'
         with open(statistics_file_path, 'w') as f:
             f.write(f"Number of droplets: {self.wsp_image.num_spots:d}\n")
             f.write(f"Coverage percentage: {self.coverage_percentage:.2f}\n")

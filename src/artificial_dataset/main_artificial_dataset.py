@@ -9,23 +9,28 @@ import sys
 
 
 sys.path.insert(0, 'src/others')
-from paths import *
+from variables import *
 from util import *
 
 ### VALUES
-num_wsp = 5
+num_wsp = 1
 
 # manage folders
 create_folders(path_main_dataset)
 create_folders(path_to_images_folder)
-create_folders(path_to_statistics_folder)
+create_folders(path_to_statistics_gt_folder)
+create_folders(path_to_statistics_c_folder)
 create_folders(path_to_outputs_folder)
 create_folders(path_to_separation_folder)
+create_folders(path_to_numbered_folder)
 
 delete_old_files(path_to_images_folder)
-delete_old_files(path_to_statistics_folder)
+delete_folder_contents(path_to_statistics_gt_folder)
+delete_folder_contents(path_to_statistics_c_folder)
 delete_folder_contents(path_to_outputs_folder)
 delete_old_files(path_to_separation_folder)
+delete_folder_contents(path_to_inputs_folder)
+delete_folder_contents(path_to_numbered_folder)
 
 colors = Colors()
 today_date = str(datetime.now().date())

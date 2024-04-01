@@ -11,7 +11,10 @@ from Accuracy import Accuracy
 
 sys.path.insert(0, 'src/others')
 from util import *
-from paths import *
+from variables import *
+
+sys.path.insert(0, 'src')
+from Droplet import *
 
 # delete old outputs
 delete_folder_contents(path_to_separation_folder)
@@ -29,13 +32,12 @@ for file in os.listdir(path_to_images_folder):
     out_image = copy.copy(in_image)
 
     # calculate statistics
-    stats_calculated = Calculated_Statistics(out_image, filename).droplets_data
+    stats_calculated:list[Droplet] = Calculated_Statistics(out_image, filename).droplets_data
 
-    # compare with the ground truth
-    stats_file_path = (os.path.join(path_to_statistics_folder, filename + ".txt"))
-    stats_groundtruth = GroundTruth_Statistics(stats_file_path).droplets
+    # save ground truth
+    stats_groundtruth:list[Droplet] = GroundTruth_Statistics(filename, out_image).droplets
 
-    Accuracy(stats_groundtruth, stats_calculated)
+    Accuracy(stats_calculated, stats_groundtruth, filename)
 
 
 

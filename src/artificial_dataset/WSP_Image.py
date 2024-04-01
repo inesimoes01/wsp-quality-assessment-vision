@@ -4,22 +4,23 @@ from datetime import datetime
 import sys
 
 sys.path.insert(0, 'src/others')
-from paths import path_to_images_folder, max_num_spots, min_num_spots, max_radius, width, height
+from variables import *
+from util import *
 
 sys.path.insert(0, 'src')
 from Droplet import *
 
 class WSP_Image:
-    def __init__(self, index, colors, today_date):
+    def __init__(self, index:int, colors, today_date:datetime):
         self.index = index
-        self.max_num_spots = max_num_spots
-        self.min_num_spots = min_num_spots
-        self.max_radius = max_radius
-        self.width = width
-        self.height = height
+        self.max_num_spots:int = max_num_spots
+        self.min_num_spots:int = min_num_spots
+        self.max_radius:int = max_radius
+        self.width:int = width
+        self.height:int = height
         self.droplet_color = colors.droplet_color
         self.background_color = colors.background_color
-        self.today_date = today_date
+        self.today_date:datetime = today_date
         self.generate_one_wsp()
         self.save_wsp()
 
@@ -31,7 +32,7 @@ class WSP_Image:
         self.num_spots = np.random.randint(min_num_spots, max_num_spots)
 
         # generate random spots with colors from the list
-        self.droplets_data = []
+        self.droplets_data:list[Droplet] = []
         for i in range(self.num_spots):
             spot_color = self.droplet_color[np.random.randint(0, len(self.droplet_color))]
             spot_radius = np.random.randint(1, max_radius) 
@@ -54,8 +55,11 @@ class WSP_Image:
 
     
     def save_wsp(self):
-        cv2.imwrite(path_to_images_folder + '\\' + self.today_date + '_' + str(self.index) + '.png', self.rectangle)
-        return width, height, self.rectangle, self.num_spots, self.droplets_data
+        self.blur_image = cv2.blur(self.rectangle, (3,3))
+        cv2.imwrite(path_to_images_folder + '\\' + self.today_date + '_' + str(self.index) + '.png', self.blur_image)
+        
+        
+
 
 
 

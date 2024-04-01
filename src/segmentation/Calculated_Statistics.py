@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, 'src/others')
 from util import *
-from paths import *
+from variables import *
 
 sys.path.insert(0, 'src')
 from Droplet import *
@@ -52,14 +52,15 @@ class Calculated_Statistics:
         
         # save final image
         cv2.imwrite(path_to_separation_folder + f'\\result_image_' + filename + '.png', self.separate_image)
+        cv2.imwrite(path_to_numbered_folder + '\\C_' + filename + '.png', self.enumerate_image)
 
     def get_contours(self):
         # grayscale
         gray = cv2.cvtColor(self.image, cv2.COLOR_RGB2GRAY)
         self.gray_image = copy.copy(gray)
 
-        # canny edge detectio + thresholding + contours
-        edges = cv2.Canny(gray, 50, 150)
+        # canny edge detection + thresholding + contours
+        edges = cv2.Canny(gray, 100, 150)
         _, thresh = cv2.threshold(edges, 127, 255, cv2.THRESH_BINARY)
         self.contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -67,15 +68,15 @@ class Calculated_Statistics:
         cv2.drawContours(self.image, self.contours, -1, (0, 255, 0), 2)
         self.contour_image = copy.copy(self.image)
 
-        # number of contours
+        # save number of contours
         self.final_no_droplets = len(self.contours)
     
     def crop_ROI(self, contour, isOverlapped, index):
         # crop region of interest
         x, y, w, h = cv2.boundingRect(contour)
-        expansion_factor = 2
-        expanded_w = int(w * expansion_factor)
-        expanded_h = int(h * expansion_factor)
+
+        expanded_w = int(w * border_expand)
+        expanded_h = int(h * border_expand)
         x -= int((expanded_w - w) / 2)
         y -= int((expanded_h - h) / 2)
         x = max(x, 0)
@@ -119,7 +120,7 @@ class Calculated_Statistics:
         circularity = 4 * np.pi * area / (perimeter * perimeter)
         
         # classify based on properties
-        if circularity > 0.8: 
+        if circularity > circularity_threshold: 
             cv2.drawContours(self.separate_image, [contour], -1, (102, 0, 204), 2)
         else:
             cv2.drawContours(self.separate_image, [contour], -1, (44, 156, 63), 2)
@@ -129,6 +130,6 @@ class Calculated_Statistics:
         return isOverlapped
     
     def save_droplet_information(self, index, center_x, center_y, radius, overlapped_ids):
-        self.droplets_data.append(Droplet(int(center_x), int(center_y), int(radius), index, overlapped_ids))
+        self.droplets_data.append(Droplet(int(center_x), int(center_y), int(radius), int(index), overlapped_ids))
 
 
