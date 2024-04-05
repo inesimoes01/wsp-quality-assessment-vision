@@ -10,7 +10,6 @@ from Droplet import *
 
 class Accuracy:
     def __init__(self, calculated_stats:list[Droplet], groundtruth_stats:list[Droplet], filename):
-        # save arrays of circles
         self.calculated_stats = calculated_stats
         self.groundtruth_stats = groundtruth_stats
         self.filename = filename
@@ -44,9 +43,7 @@ class Accuracy:
         self.f1_score = 2 * (self.precision * self.recall) / (self.precision + self.recall)
 
 
-    
     def write_stats_file(self):
-        
         statistics_file_path = path_to_statistics_c_folder + '\\' + self.filename + '.txt'
         with open(statistics_file_path, 'w') as f:
             f.write(f"True Positives: {self.true_positives:d}\n")

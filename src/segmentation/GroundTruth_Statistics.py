@@ -46,7 +46,6 @@ class GroundTruth_Statistics:
                     overlapped_ids = []
                     self.droplets.append(Droplet(int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
 
-
     def save_roi(self):   
         self.enumerate_image = copy.copy(self.image)                      
         for drop in self.droplets:
@@ -96,16 +95,3 @@ class GroundTruth_Statistics:
             #         # Store the information in the dictionary
             #         drop[droplet_no] = overlapped_droplets
             #         self.coverage_percentage = int(line.split(":")[1].strip())
-
-    #     self.get_overlapping()
-    #     self.get_VMD()
-    #     self.get_VMD()
-
-    # def get_overlapping(self):
-    #     return
-
-    # def get_VMD(self):
-    #     return
-
-    # def get_VMD(self):
-    #     return

@@ -17,8 +17,8 @@ max_radius = 15
 width, height = 76*26, 26*26
 
 ### accuracy
-distance_threshold = 10
-radius_threshold = 15
+distance_threshold = 5
+radius_threshold = 5
 
 ### distinguish between overlapped and singular
 circularity_threshold = 0.8

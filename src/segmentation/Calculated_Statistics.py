@@ -13,16 +13,14 @@ from Droplet import *
 
 class Calculated_Statistics:
     def __init__(self, image, filename):
-        self.droplets_data=[]
         # file management
         self.path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
         self.path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
         create_folders(self.path_to_save_contours_overlapped)
         create_folders(self.path_to_save_contours_single)
-
+        
+        # get objects from image
         self.image = copy.copy(image)
-
-        # get all the contours
         self.get_contours()
 
         # save each step in a different image
@@ -31,26 +29,39 @@ class Calculated_Statistics:
         self.diameter_image = copy.copy(image)
         self.separate_image = copy.copy(image)
 
-        # calculate diameter + save each contour        
+        # calculate diameter + save each contour   
+        self.droplets_data=[]     
         for i, contour in enumerate(self.contours):
             overlapped_ids = []    
-            center_x, center_y, radius = self.measure_diameter_droplet(contour)
 
+            # find values for the contour
+            (center_x, center_y), radius = cv2.minEnclosingCircle(contour)
+
+            # annotate image for diameter values
+            center = (int(center_x), int(center_y))
+            radius = int(radius)
+            cv2.circle(self.diameter_image, center, radius, (255, 0, 0), 2)
+
+            # check if is a singular or overlapped droplet
             isOverlapped = self.check_for_overlapped(contour, radius)
 
+            # save droplet information
             if isOverlapped: 
+                overlapped_ids.append(i+1)
+                self.droplets_data.append(Droplet(int(center_x), int(center_y), int(radius), int(i), overlapped_ids))
+                overlapped_ids = []
                 overlapped_ids.append(i)
-                i+=1
-                overlapped_ids.append(i)
-            
-            overlapped_ids.append(i)
-            self.save_droplet_information(i, center_x, center_y, radius, overlapped_ids)
-        
-            self.crop_ROI(contour, isOverlapped, i)
+                self.droplets_data.append(Droplet(int(center_x), int(center_y), int(radius), int(i+1), overlapped_ids))
 
-            self.separate_image = cv2.cvtColor(self.separate_image, cv2.COLOR_RGB2BGR)
+            else: self.droplets_data.append(Droplet(int(center_x), int(center_y), int(radius), int(i), overlapped_ids))
+        
+            # crop ROI of the droplet
+            self.crop_ROI(contour, isOverlapped, i)
+            
+            i += 1
         
         # save final image
+        self.separate_image = cv2.cvtColor(self.separate_image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(path_to_separation_folder + f'\\result_image_' + filename + '.png', self.separate_image)
         cv2.imwrite(path_to_numbered_folder + '\\C_' + filename + '.png', self.enumerate_image)
 
@@ -128,8 +139,4 @@ class Calculated_Statistics:
             self.final_no_droplets += 1
 
         return isOverlapped
-    
-    def save_droplet_information(self, index, center_x, center_y, radius, overlapped_ids):
-        self.droplets_data.append(Droplet(int(center_x), int(center_y), int(radius), int(index), overlapped_ids))
-
 
