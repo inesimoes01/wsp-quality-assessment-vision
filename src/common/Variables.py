@@ -11,12 +11,12 @@ path_to_separation_folder = 'images\\artificial_dataset\\separation'
 path_to_numbered_folder = 'images\\artificial_dataset\\numbered'
 
 ### VALUES
-max_num_spots = 400
+max_num_spots = 1000
 min_num_spots = 300
 max_radius = 15
 width, height = 76, 26
 resolution = 30
-
+num_wsp = 10
 
 ### accuracy
 distance_threshold = 5

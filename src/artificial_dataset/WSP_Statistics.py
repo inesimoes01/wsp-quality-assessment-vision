@@ -6,9 +6,11 @@ import copy
 
 from Colors import *
 
-sys.path.insert(0, 'src/others')
-from util import *
-from variables import * 
+sys.path.insert(0, 'src/common')
+from Util import *
+from Variables import * 
+from Statistics import *
+
 from WSP_Image import WSP_Image
 
 class WSP_Statistics:
@@ -17,10 +19,13 @@ class WSP_Statistics:
         self.wsp_image = wsp_image
      
         self.find_overlapping_circles()
-        self.calculate_vmd()
-        self.calculate_coverage_percentage()
-        self.calculate_rsf()
-
+        
+        cumulative_fraction = Statistics.calculate_cumulative_fraction(self.wsp_image.droplet_radii)
+        vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.wsp_image.droplet_radii)
+        coverage_percentage = Statistics.calculate_coverage_percentage_gt(self.wsp_image.rectangle, self.wsp_image.height, self.wsp_image.width, self.wsp_image.background_color)
+        rsf_value = Statistics.calculate_rsf(cumulative_fraction, vmd_value)
+        
+        self.stats:Statistics = Statistics(vmd_value, rsf_value, coverage_percentage, wsp_image.num_spots)
         self.save_statistics_to_folder()
 
     def calculate_vmd(self):
@@ -98,10 +103,10 @@ class WSP_Statistics:
     def save_statistics_to_folder(self):
         statistics_file_path = path_to_statistics_gt_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.txt'
         with open(statistics_file_path, 'w') as f:
-            f.write(f"Number of droplets: {self.wsp_image.num_spots:d}\n")
-            f.write(f"Coverage percentage: {self.coverage_percentage:.2f}\n")
-            f.write(f"VMD value: {self.vmd_value:d}\n")
-            f.write(f"RSF value: {self.rsf_value:.2f}\n")
+            f.write(f"Number of droplets: {self.stats.no_droplets:d}\n")
+            f.write(f"Coverage percentage: {self.stats.coverage_percentage:.2f}\n")
+            f.write(f"VMD value: {self.stats.vmd_value:d}\n")
+            f.write(f"RSF value: {self.stats.rsf_value:.2f}\n")
             f.write(f"Number of overlapped droplets: {self.no_overlapped_droplets:d}\n")
             f.write(f"\nDROPLETS: no [id] ([center_x], [center_y], [radius])\n")
             for drop in self.wsp_image.droplets_data:

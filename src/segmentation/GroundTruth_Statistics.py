@@ -4,9 +4,11 @@ import sys
 import copy
 
 sys.path.insert(0, 'src')
+sys.path.insert(0, 'src/common')
 from Droplet import *
-from variables import *
-from util import *
+from Variables import *
+from Util import *
+from Statistics import *
 
 class GroundTruth_Statistics:
     def __init__(self, filename, image):
@@ -16,6 +18,8 @@ class GroundTruth_Statistics:
         # read file
         self.read_stats_file()
         self.save_roi()
+
+        self.stats = Statistics(self.vmd_value, self.rsf_value, self.coverage_percentage, self.no_total_droplets)
 
     def read_stats_file(self):
         stats_file_path = (os.path.join(path_to_statistics_gt_folder, self.filename + ".txt"))

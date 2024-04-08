@@ -4,10 +4,9 @@ import sys
 import copy
 from matplotlib import pyplot as plt 
 
-sys.path.insert(0, 'src')
+sys.path.insert(0, 'src/common')
 from Droplet import *
-sys.path.insert(0, 'src\others')
-from util import *
+from Util import *
 
 
 class Algorithms:

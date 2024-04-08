@@ -7,12 +7,10 @@ from PIL import Image
 from matplotlib import pyplot as plt 
 
 sys.path.insert(0, 'src')
+sys.path.insert(0, 'src/common')
+from Util import *
+from Variables import *
 from Droplet import *
-
-sys.path.insert(0, 'src\others')
-from util import *
-from variables import *
-
 
 class Distortion:
     def __init__(self, filename):
@@ -22,14 +20,17 @@ class Distortion:
         self.largest_contour = self.detect_rectangle(filename)
         cv2.drawContours(self.image, [self.largest_contour], -1, (255, 0, 0), 5)
 
-        # Calculate the transformation matrix
+        # remove distortion from the image
         maxWidth, maxHeight = self.calculate_points()
         matrix = cv2.getPerspectiveTransform(self.input_pts, self.output_pts)
         self.undistorted_image = cv2.warpPerspective(self.image, matrix, (maxWidth+20, maxHeight), flags=cv2.INTER_LINEAR)
 
     def calculate_points(self):
         approx = cv2.approxPolyDP(self.largest_contour, 0.009 * cv2.arcLength(self.largest_contour, True), closed=True) 
-        if len(approx) != 4: exit()
+        if len(approx) != 4: 
+            print("Shape detected does not have 4 sides")
+            exit()
+
 
         # order corners
         approx = sorted(approx, key=lambda x: x[0][0] + x[0][1])
@@ -120,9 +121,10 @@ class Distortion:
         return hull[0]
 
 
-im1 = Distortion("images\\inesc_dataset\\1_V1_A3.jpg").undistorted_image
+
 im2 = Distortion("images\\inesc_dataset\\1_V1_A1.jpg").undistorted_image
 im3 = Distortion("images\\inesc_dataset\\1_V1_A2.jpg").undistorted_image
+im1 = Distortion("images\\real_images\\field1.jpg").undistorted_image
 plotThreeImages(im1, im2, im3)
 
 

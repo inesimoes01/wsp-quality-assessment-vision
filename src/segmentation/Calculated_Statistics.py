@@ -4,12 +4,11 @@ import copy
 import os
 import sys
 
-sys.path.insert(0, 'src/others')
-from util import *
-from variables import *
-
-sys.path.insert(0, 'src')
+sys.path.insert(0, 'src/common')
+from Util import *
+from Variables import *
 from Droplet import *
+from Statistics import * 
 
 class Calculated_Statistics:
     def __init__(self, image, filename):
@@ -42,7 +41,7 @@ class Calculated_Statistics:
             radius = int(radius)
             cv2.circle(self.diameter_image, center, radius, (255, 0, 0), 2)
 
-            # check if is a singular or overlapped droplet
+            # check if the contour is a singular or overlapped droplet
             isOverlapped = self.check_for_overlapped(contour, radius)
 
             # save droplet information
@@ -60,6 +59,9 @@ class Calculated_Statistics:
             
             i += 1
         
+        # calculate values for statistics
+        self.calculate_stats()
+
         # save final image
         self.separate_image = cv2.cvtColor(self.separate_image, cv2.COLOR_RGB2BGR)
         cv2.imwrite(path_to_separation_folder + f'\\result_image_' + filename + '.png', self.separate_image)
@@ -140,3 +142,15 @@ class Calculated_Statistics:
 
         return isOverlapped
 
+    def calculate_stats(self):
+        droplet_radii = [d.radius for d in self.droplets_data]
+        image_height, image_width = self.image.shape[:2]
+
+        cumulative_fraction = Statistics.calculate_cumulative_fraction(droplet_radii)
+        vmd_value = Statistics.calculate_vmd(cumulative_fraction, droplet_radii)
+        rsf_value = Statistics.calculate_rsf(cumulative_fraction, vmd_value)
+        coverage_percentage = Statistics.calculate_coverage_percentage_c(self.image, image_height, image_width, (0, 0, 0))
+
+        self.stats = Statistics(vmd_value, rsf_value, coverage_percentage, self.final_no_droplets)
+
+       

@@ -24,7 +24,6 @@ def create_folders(file_path):
         os.makedirs(file_path)
 
 def plotThreeImages(image1, image2, image3):
-    # Create a side-by-side plot with titles
     plt.close('all')
     fig, axes = plt.subplots(1, 3, figsize=(16, 8))
 
@@ -43,5 +42,20 @@ def plotThreeImages(image1, image2, image3):
     axes[2].set_xlabel("X (pixels)")
     axes[2].set_ylabel("Y (pixels)")
 
+    plt.show()
+
+def plotTwoImages(image1, image2):
+    plt.close('all')
+    fig, axes = plt.subplots(1, 2, figsize=(16, 8))
+
+    axes[0].imshow(image1)
+    #axes[0].axis('off')
+    axes[0].set_xlabel("X (pixels)")
+    axes[0].set_ylabel("Y (pixels)")
+
+    axes[1].imshow(image2)
+    #axes[1].axis('off')
+    axes[1].set_xlabel("X (pixels)")
+    axes[1].set_ylabel("Y (pixels)")
 
     plt.show()

@@ -1,5 +1,3 @@
-import numpy as np
-
 class Colors:
     def __init__(self):
         self.droplet_colors, self.background_color = self.generate_color()
