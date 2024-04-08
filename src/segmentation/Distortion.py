@@ -1,70 +1,62 @@
 import cv2
 import numpy as np
 import copy
-import math
+import sys
 
 from PIL import Image
 from matplotlib import pyplot as plt 
+
+sys.path.insert(0, 'src')
+from Droplet import *
+
+sys.path.insert(0, 'src\others')
+from util import *
+from variables import *
 
 
 class Distortion:
     def __init__(self, filename):
         self.image = cv2.imread(filename,  cv2.IMREAD_GRAYSCALE)
-        # detect the contour of the rectangle
-        contour = self.detect_rectangle(filename)
-        #cv2.drawContours(image, [contour], -1, (255, 255, 0), 5)
 
-        # draws the bounding rectangle with minimun area by considering the rotation
-        rect = cv2.minAreaRect(contour)
-        box = cv2.boxPoints(rect)
-        box = np.intp(box)
-        cv2.drawContours(self.image, [box], -1, (255, 255, 0), 5)
-         
-      
-        # plt.imshow(image)
-        # plt.show()
-        # # original_width = 26
-        # # original_height = 76
-        # real_width_cm = 2.6
-        # real_height_cm = 7.6
+        # detect and the contour of the rectangle
+        self.largest_contour = self.detect_rectangle(filename)
+        cv2.drawContours(self.image, [self.largest_contour], -1, (255, 0, 0), 5)
 
-        # # Convert real-world dimensions to pixels using the resolution of the image
-        # # Assuming resolution in dpi (dots per inch)
-        # dpi = 756.32  # example resolution, replace it with your actual resolution
-        # dpi_to_cm_conversion = 1 / 2.54  # Conversion factor from inches to cm
-        # original_width = int(real_width_cm * dpi * dpi_to_cm_conversion)
-        # original_height = int(real_height_cm * dpi * dpi_to_cm_conversion)
+        # Calculate the transformation matrix
+        maxWidth, maxHeight = self.calculate_points()
+        matrix = cv2.getPerspectiveTransform(self.input_pts, self.output_pts)
+        self.undistorted_image = cv2.warpPerspective(self.image, matrix, (maxWidth+20, maxHeight), flags=cv2.INTER_LINEAR)
 
-        # # Calculate the transformation matrix
-        # dest_pts = np.array([[0, 0], [original_width - 1, 0], [original_width - 1, original_height - 1], [0, original_height - 1]], dtype='float32')
-        # matrix = cv2.getPerspectiveTransform(box.astype('float32'), dest_pts)
+    def calculate_points(self):
+        approx = cv2.approxPolyDP(self.largest_contour, 0.009 * cv2.arcLength(self.largest_contour, True), closed=True) 
+        if len(approx) != 4: exit()
 
-        # # Apply the transformation
-        # undistorted_image = cv2.warpPerspective(image, matrix, (original_width, original_height))
+        # order corners
+        approx = sorted(approx, key=lambda x: x[0][0] + x[0][1])
+        top_left = approx[0][0]
+        top_right = approx[1][0]
+        bottom_left = approx[2][0]
+        bottom_right = approx[3][0]
 
-        # # self.plotTwoImages(image, undistorted_image, "ah", "ah")
-        # # plt.show()
-        # # # Save or display the undistorted image
-        # # cv2.imshow('Undistorted Image', undistorted_image)
-        # # cv2.waitKey(0)
-        # # cv2.destroyAllWindows()
-    
+        # L2 norm
+        width_AD = np.sqrt(((top_left[0] - top_right[0]) ** 2) + ((top_left[1] - top_right[1]) ** 2))
+        width_BC = np.sqrt(((bottom_left[0] - bottom_right[0]) ** 2) + ((bottom_left[1] - bottom_right[1]) ** 2))
+        maxWidth = max(int(width_AD), int(width_BC))
+       
+        height_AB = np.sqrt(((top_left[0] - bottom_left[0]) ** 2) + ((top_left[1] - bottom_left[1]) ** 2))
+        height_CD = np.sqrt(((bottom_right[0] - top_right[0]) ** 2) + ((bottom_right[1] - top_right[1]) ** 2))
+        maxHeight = max(int(height_AB), int(height_CD))
+        
+        self.input_pts = np.float32([top_left, bottom_left, bottom_right, top_right])
+        self.output_pts = np.float32([[0, 0],
+                                [0, maxHeight + 1],
+                                [maxWidth +  1, maxHeight + 1],
+                                [maxWidth + 1, 0]])
+        return maxWidth, maxHeight
 
-
-
-        # calibrationImageGray = cv2.cvtColor(calibrationImage, cv2.COLOR_BGR2GRAY)
-        # retval, corners = cv2.findChessboardCorners(calibrationImageGray, patternSize)
-        # print("")
-        # if retval != 0:
-        #     corners = cv2.cornerSubPix(calibrationImageGray, corners, (11, 11), (-1, -1), (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.001))
-        #     return retval, corners
-        # else:
-        #     return 0, None
-    
     def detect_rectangle(self, filename):
         image = cv2.imread(filename,  cv2.IMREAD_GRAYSCALE)
         edges = cv2.GaussianBlur(image, (5, 5), 3, 3)
-
         edges = cv2.Canny(edges, 150, 200, 1, 3, True)
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
    
@@ -94,56 +86,62 @@ class Distortion:
         hull = sorted(hull, key=lambda x: cv2.contourArea(x), reverse=True)
         return hull[0]
 
+    def detect_rectangle_alternative(self, filename):
+        image = cv2.imread(filename,  cv2.COLOR_BGR2RGB)
+        edges = cv2.GaussianBlur(image, (5, 5), 3, 3)
+
+        # find the most present color
+        histogram = cv2.calcHist([edges], [0, 1, 2], None, [256, 256, 256], [0, 256, 0, 256, 0, 256])
+        max_count = np.amax(histogram)
+        most_present_color = np.unravel_index(np.argmax(histogram), histogram.shape)
+        most_present_color = tuple(int(c) for c in most_present_color)
+        
+        # remove colors based on upper and lower bounds
+        tolerance = 100 
+        lower_bound = np.array([max(0, c - tolerance) for c in most_present_color])
+        upper_bound = np.array([min(255, c + tolerance) for c in most_present_color])
+        mask = cv2.inRange(edges, lower_bound, upper_bound)
+        result = cv2.bitwise_and(edges, edges, mask=cv2.bitwise_not(mask))
+
+        # threshold image
+        gray = cv2.cvtColor(result, cv2.COLOR_RGB2GRAY)
+        _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
+
+        # find contours        
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)
+
+        hull = []
+        #contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        for contour in contours:
+            hull.append(cv2.convexHull(contour, False))
+            #cv2.drawContours(image, hull, -1, (255, 0, 0), 5)
+        
+        return hull[0]
 
 
-def sort_corners(corners):
-    top, bot = [], []
-    center = np.array([0, 0], dtype=np.float64)
-
-    for corner in corners:
-        center += corner
-    center *= (1.0 / len(corners))
-
-    for corner in corners:
-        if corner[1] < center[1]:
-            top.append(corner)
-        else:
-            bot.append(corner)
-
-    if len(top) == 2 and len(bot) == 2:
-        tl = min(top, key=lambda x: x[0])
-        tr = max(top, key=lambda x: x[0])
-        bl = min(bot, key=lambda x: x[0])
-        br = max(bot, key=lambda x: x[0])
-
-        return [tl, tr, br, bl]  
-       
-def plotThreeImages(image1, image2, image3):
-    # Create a side-by-side plot with titles
-    plt.close('all')
-    fig, axes = plt.subplots(1, 3, figsize=(16, 8))
-
-    axes[0].imshow(image1)
-    #axes[0].axis('off')
-    axes[0].set_xlabel("X (pixels)")
-    axes[0].set_ylabel("Y (pixels)")
-
-    axes[1].imshow(image2)
-    #axes[1].axis('off')
-    axes[1].set_xlabel("X (pixels)")
-    axes[1].set_ylabel("Y (pixels)")
-    
-    axes[2].imshow(image3)
-    #axes[1].axis('off')
-    axes[2].set_xlabel("X (pixels)")
-    axes[2].set_ylabel("Y (pixels)")
-
-
-    plt.show()
-
- 
-
-im1 = Distortion("images\\inesc_dataset\\2_V1_A3.jpg").image
-im2 = Distortion("images\\inesc_dataset\\2_V1_A1.jpg").image
-im3 = Distortion("images\\inesc_dataset\\2_V1_A2.jpg").image
+im1 = Distortion("images\\inesc_dataset\\1_V1_A3.jpg").undistorted_image
+im2 = Distortion("images\\inesc_dataset\\1_V1_A1.jpg").undistorted_image
+im3 = Distortion("images\\inesc_dataset\\1_V1_A2.jpg").undistorted_image
 plotThreeImages(im1, im2, im3)
+
+
+        # # epsilon = 0.05 * cv2.arcLength(self.largest_contour, True)
+        # # approx = cv2.approxPolyDP(largest_contour, epsilon, True)
+
+        # if len(approx) == 4:
+        #     src_pts = approx.reshape(4, 2)
+        # else:
+        #     print("Cannot find four corners or too many corners.")
+        #     exit()
+        
+
+        # rect = cv2.minAreaRect(largest_contour)
+        # box = cv2.boxPoints(rect)
+        # box = np.int0(box)
+
+        # x, y, w, h = cv2.boundingRect(largest_contour)
+        # dest_pts = np.array([[x, y], [x + w, y], [x + w, y + h], [x, y + h]], dtype='float32')
+
+        # Define the destination points for the perspective transformation
+        # dest_pts = np.array([[0, 0], [width - 1, 0], [width - 1, height - 1], [0, height - 1]], dtype='float32')

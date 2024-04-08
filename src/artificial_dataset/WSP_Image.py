@@ -16,8 +16,8 @@ class WSP_Image:
         self.max_num_spots:int = max_num_spots
         self.min_num_spots:int = min_num_spots
         self.max_radius:int = max_radius
-        self.width:int = width
-        self.height:int = height
+        self.width:int = width * resolution
+        self.height:int = height * resolution
         self.droplet_color = colors.droplet_color
         self.background_color = colors.background_color
         self.today_date:datetime = today_date

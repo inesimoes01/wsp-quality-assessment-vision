@@ -14,7 +14,9 @@ path_to_numbered_folder = 'images\\artificial_dataset\\numbered'
 max_num_spots = 400
 min_num_spots = 300
 max_radius = 15
-width, height = 76*26, 26*26
+width, height = 76, 26
+resolution = 30
+
 
 ### accuracy
 distance_threshold = 5
@@ -25,3 +27,4 @@ circularity_threshold = 0.8
 
 ### border for ROI
 border_expand = 2
+

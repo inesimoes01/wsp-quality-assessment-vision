@@ -6,28 +6,31 @@ from matplotlib import pyplot as plt
 
 sys.path.insert(0, 'src')
 from Droplet import *
+sys.path.insert(0, 'src\others')
+from util import *
 
 
 class Algorithms:
-    def __init__(self):
-        image_path = 'images\\artificial_dataset\\outputs\\overlapped\\2024-03-22_0\\32.png'
+    def __init__(self, image_path):
+
         # image_path = 'images\\artificial_dataset\\image\\2024-03-25_0.png'
         self.original_image = cv2.imread(image_path)
         self.image = cv2.imread(image_path)
         
-        # apply hough_tansform algorithm
-        # self.hough_tansform()
+        # hough_tansform algorithm
+        self.hough_tansform()
 
-        # apply ransac algorithm
-        self.no_iterations = 50000
-        self.radius_threshold = 16
-        self.edge_points_threshold = 5
-        self.ransac()
+        # # apply ransac algorithm
+        # self.no_iterations = 50000
+        # self.radius_threshold = 16
+        # self.edge_points_threshold = 5
+        # self.ransac()
 
     def process_image(self):
         self.image_blur = cv2.GaussianBlur(self.image, (7, 7), 1.5)
         self.gray = cv2.cvtColor(self.image_blur, cv2.COLOR_BGR2GRAY)
-        self.edges = cv2.Canny(self.gray, 50, 150)
+        self.edges = cv2.Canny(self.gray, 150, 200)
+
         _, self.thresh = cv2.threshold(self.edges, 127, 255, cv2.THRESH_BINARY)
         self.contours, _ = cv2.findContours(self.edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         self.edge_points = [point[0] for contour in self.contours for point in contour]
@@ -36,7 +39,11 @@ class Algorithms:
         self.process_image()
 
         # Find circles using Hough transform
-        circles = cv2.HoughCircles(self.edges, cv2.HOUGH_GRADIENT, dp=1.3, minDist=10, param1=150, param2=70, minRadius=0, maxRadius=0)
+        # only a few circles
+        circles = cv2.HoughCircles(self.edges, cv2.HOUGH_GRADIENT, dp=1.3, minDist=1, param1=200, param2=15, minRadius=1, maxRadius=0)
+        
+        # whole image
+        #circles = cv2.HoughCircles(self.edges, cv2.HOUGH_GRADIENT, dp=1.3, minDist=30, param1=200, param2=30, minRadius=15, maxRadius=0)
 
         if circles is not None:
             # Convert circle parameters to integer
@@ -48,10 +55,6 @@ class Algorithms:
                 radius = circle[2]
                 cv2.circle(self.image, center, radius, (0, 255, 0), 2)
 
-            # Display result
-            cv2.imshow('Detected Circles', self.image)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
         else:
             print("No circles detected in the image.")
 
@@ -159,4 +162,7 @@ class Algorithms:
 
 
 
-Algorithms()
+im1 = Algorithms("images\\artificial_dataset\\outputs\\overlapped\\2024-04-01_0\\28.png").image
+im2 = Algorithms("images\\artificial_dataset\\image\\2024-04-01_0.png").image
+im3 = Algorithms("images\\artificial_dataset\\outputs\\overlapped\\2024-04-01_0\\269.png").image
+plotThreeImages(im1, im2, im3)
