@@ -27,7 +27,7 @@ for file in os.listdir(path_to_images_folder):
 
     # treat image
     in_image = cv2.imread(os.path.join(path_to_images_folder, filename + ".png"))
-    in_image = cv2.cvtColor(in_image, cv2.COLOR_BGR2RGB)
+    in_image = cv2.cvtColor(in_image, cv2.IMREAD_GRAYSCALE)
     out_image = copy.copy(in_image)
 
     # calculate statistics
@@ -39,4 +39,6 @@ for file in os.listdir(path_to_images_folder):
     groundtruth:GroundTruth_Statistics = GroundTruth_Statistics(filename, out_image)
     droplets_groundtruth:list[Droplet] = groundtruth.droplets
     stats_groundtruth:Statistics = groundtruth.stats
+
+
     Accuracy(droplets_calculated, droplets_groundtruth, filename, stats_calculated, stats_groundtruth)

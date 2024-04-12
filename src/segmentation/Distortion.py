@@ -23,14 +23,15 @@ class Distortion:
         # remove distortion from the image
         maxWidth, maxHeight = self.calculate_points()
         matrix = cv2.getPerspectiveTransform(self.input_pts, self.output_pts)
-        self.undistorted_image = cv2.warpPerspective(self.image, matrix, (maxWidth+20, maxHeight), flags=cv2.INTER_LINEAR)
+        self.undistorted_image = cv2.warpPerspective(self.image, matrix, (maxWidth, maxHeight), flags=cv2.INTER_LINEAR)
+
+        self.save_undistorted_image()
 
     def calculate_points(self):
         approx = cv2.approxPolyDP(self.largest_contour, 0.009 * cv2.arcLength(self.largest_contour, True), closed=True) 
         if len(approx) != 4: 
             print("Shape detected does not have 4 sides")
             exit()
-
 
         # order corners
         approx = sorted(approx, key=lambda x: x[0][0] + x[0][1])
@@ -120,12 +121,14 @@ class Distortion:
         
         return hull[0]
 
+    def save_undistorted_image(self):
+        cv2.imwrite("images\\inesc_dataset\\oi.png", self.undistorted_image);
 
 
-im2 = Distortion("images\\inesc_dataset\\1_V1_A1.jpg").undistorted_image
-im3 = Distortion("images\\inesc_dataset\\1_V1_A2.jpg").undistorted_image
-im1 = Distortion("images\\real_images\\field1.jpg").undistorted_image
-plotThreeImages(im1, im2, im3)
+im2 = Distortion("images\\inesc_dataset\\1_V1_A2.jpg").undistorted_image
+# im3 = Distortion("images\\inesc_dataset\\1_V1_A2.jpg").undistorted_image
+# im1 = Distortion("images\\real_images\\field1.jpg").undistorted_image
+# plotThreeImages(im1, im2, im3)
 
 
         # # epsilon = 0.05 * cv2.arcLength(self.largest_contour, True)

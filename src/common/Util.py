@@ -44,6 +44,16 @@ def plotThreeImages(image1, image2, image3):
 
     plt.show()
 
+def plotALOTImages(images):
+    fig, axes = plt.subplots(2, 2, figsize=(10,10))
+    for i, ax in enumerate(axes.flat):
+        ax.imshow(images[i])
+        ax.axis('off')
+    plt.tight_layout()
+    plt.show()
+
+
+
 def plotTwoImages(image1, image2):
     plt.close('all')
     fig, axes = plt.subplots(1, 2, figsize=(16, 8))
@@ -57,5 +67,32 @@ def plotTwoImages(image1, image2):
     #axes[1].axis('off')
     axes[1].set_xlabel("X (pixels)")
     axes[1].set_ylabel("Y (pixels)")
+
+    plt.show()
+
+def plotFourImages(image1, image2, image3, image4):
+    plt.close('all')
+    fig, axes = plt.subplots(2, 2, figsize=(16, 8))
+
+    axes[0].imshow(image1)
+    #axes[0].axis('off')
+    axes[0].set_xlabel("X (pixels)")
+    axes[0].set_ylabel("Y (pixels)")
+
+    axes[1].imshow(image2)
+    #axes[1].axis('off')
+    axes[1].set_xlabel("X (pixels)")
+    axes[1].set_ylabel("Y (pixels)")
+
+    axes[2].imshow(image3)
+    #axes[1].axis('off')
+    axes[2].set_xlabel("X (pixels)")
+    axes[1].set_ylabel("Y (pixels)")
+
+    axes[1].imshow(image4)
+    #axes[1].axis('off')
+    axes[1].set_xlabel("X (pixels)")
+    axes[1].set_ylabel("Y (pixels)")
+
 
     plt.show()

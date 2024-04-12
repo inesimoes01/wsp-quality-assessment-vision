@@ -22,40 +22,47 @@ class WSP_Statistics:
         
         cumulative_fraction = Statistics.calculate_cumulative_fraction(self.wsp_image.droplet_radii)
         vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.wsp_image.droplet_radii)
-        coverage_percentage = Statistics.calculate_coverage_percentage_gt(self.wsp_image.rectangle, self.wsp_image.height, self.wsp_image.width, self.wsp_image.background_color)
+        coverage_percentage = Statistics.calculate_coverage_percentage_gt(self.wsp_image.rectangle, self.wsp_image.height, self.wsp_image.width, self.wsp_image.background_color_1, self.wsp_image.background_color_2)
         rsf_value = Statistics.calculate_rsf(cumulative_fraction, vmd_value)
         
         self.stats:Statistics = Statistics(vmd_value, rsf_value, coverage_percentage, wsp_image.num_spots)
         self.save_statistics_to_folder()
 
-    def calculate_vmd(self):
-        volumes_sorted = sorted(self.wsp_image.droplet_radii)
-        total_volume = sum(volumes_sorted)
-        self.cumulative_fraction = np.cumsum(volumes_sorted) / total_volume
+    # def calculate_vmd(self):
+    #     volumes_sorted = sorted(self.wsp_image.droplet_radii)
+    #     total_volume = sum(volumes_sorted)
+    #     self.cumulative_fraction = np.cumsum(volumes_sorted) / total_volume
 
-        vmd_index = np.argmax(self.cumulative_fraction >= 0.5)
-        self.vmd_value = volumes_sorted[vmd_index]
+    #     vmd_index = np.argmax(self.cumulative_fraction >= 0.5)
+    #     self.vmd_value = volumes_sorted[vmd_index]
 
-    def calculate_coverage_percentage(self):
-        # sum number of pixels that are part of the background
-        not_covered_area = 0
-        for y in range(self.wsp_image.height):
-            for x in range(self.wsp_image.width):
-                droplet_bgr = tuple(self.wsp_image.rectangle[y, x])
-                
-                # check if pixel is yellow
-                if tuple(map(lambda i, j: i - j, droplet_bgr, self.wsp_image.background_color)) == (0, 0, 0):
-                    not_covered_area += 1
+    # def calculate_coverage_percentage(self):
+    #                                     # Define the acceptable range for yellow color in RGB
+    #     background_lower = np.array(self.wsp_image.background_color_1, dtype=np.uint8)  # Lower bound for yellow
+    #     background_upper = np.array(self.wsp_image.background_color_2, dtype=np.uint8)  # Upper bound for yellow
+
+    #     # sum number of pixels that are part of the background
+    #     not_covered_area = 0
+    #     for y in range(self.wsp_image.height):
+    #         for x in range(self.wsp_image.width):
+    #             droplet_bgr = tuple(self.wsp_image.rectangle[y, x])
+
+    #             # Check if the pixel falls within the yellow range
+    #             isYellow = np.all([y, x] >= background_lower) and np.all([y, x] <= background_upper)
+    #             # check if pixel is yellow
+    #             if isYellow:
+    #                 print("ahhh")
+    #                 not_covered_area += 1
         
-        # calculate percentage of paper that is coverered
-        self.total_area = self.wsp_image.width * self.wsp_image.height
-        self.coverage_percentage = ((self.total_area - not_covered_area) / self.total_area) * 100
+    #     # calculate percentage of paper that is coverered
+    #     self.total_area = self.wsp_image.width * self.wsp_image.height
+    #     self.coverage_percentage = ((self.total_area - not_covered_area) / self.total_area) * 100
     
-    def calculate_rsf(self):
-        self.dv_one = np.argmax(self.cumulative_fraction >= 0.1)
-        self.dv_nine = np.argmax(self.cumulative_fraction >= 0.9)
+    # def calculate_rsf(self):
+    #     self.dv_one = np.argmax(self.cumulative_fraction >= 0.1)
+    #     self.dv_nine = np.argmax(self.cumulative_fraction >= 0.9)
 
-        self.rsf_value = (self.dv_nine - self.dv_one) / self.vmd_value
+    #     self.rsf_value = (self.dv_nine - self.dv_one) / self.vmd_value
 
     def find_overlapping_circles(self):
         self.no_overlapped_droplets = 0

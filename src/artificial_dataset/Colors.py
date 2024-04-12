@@ -1,6 +1,6 @@
 class Colors:
     def __init__(self):
-        self.droplet_colors, self.background_color = self.generate_color()
+        self.generate_color()
 
     def interpolate_color(self, color1, color2, steps):
         # extract individual BGR components
@@ -23,13 +23,16 @@ class Colors:
         return interpolated_colors
 
     def generate_color(self):
-        # DROPLET COLOR
+        # DROPLET COLOR IN BGR
         self.droplet_color = []
         self.droplet_color.extend(self.interpolate_color((29, 33, 52), (61, 42, 64), 20))
         self.droplet_color.extend(self.interpolate_color((89, 8, 37), (172, 4, 46), 20))
 
-        # BACKGROUND COLOR
-        self.background_color = (97, 225, 243)
+        # BACKGROUND COLOR IN RGB
+        self.background_color_1 = (243, 225, 97)
+        self.background_color_2 = (229, 196, 44)
 
-        return self.droplet_color, self.background_color
-
+        
+    
+    
+    
