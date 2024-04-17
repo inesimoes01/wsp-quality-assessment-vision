@@ -125,7 +125,8 @@ class Distortion:
         cv2.imwrite("images\\inesc_dataset\\oi.png", self.undistorted_image);
 
 
-im2 = Distortion("images\\inesc_dataset\\1_V1_A2.jpg").undistorted_image
+im2 = Distortion("images\\inesc_dataset\\1_V1_A1.jpg").undistorted_image
+#cv2.imwrite("test1.png", im2)
 # im3 = Distortion("images\\inesc_dataset\\1_V1_A2.jpg").undistorted_image
 # im1 = Distortion("images\\real_images\\field1.jpg").undistorted_image
 # plotThreeImages(im1, im2, im3)

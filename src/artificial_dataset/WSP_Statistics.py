@@ -27,43 +27,9 @@ class WSP_Statistics:
         
         self.stats:Statistics = Statistics(vmd_value, rsf_value, coverage_percentage, wsp_image.num_spots)
         self.save_statistics_to_folder()
+        self.create_masks()
 
-    # def calculate_vmd(self):
-    #     volumes_sorted = sorted(self.wsp_image.droplet_radii)
-    #     total_volume = sum(volumes_sorted)
-    #     self.cumulative_fraction = np.cumsum(volumes_sorted) / total_volume
-
-    #     vmd_index = np.argmax(self.cumulative_fraction >= 0.5)
-    #     self.vmd_value = volumes_sorted[vmd_index]
-
-    # def calculate_coverage_percentage(self):
-    #                                     # Define the acceptable range for yellow color in RGB
-    #     background_lower = np.array(self.wsp_image.background_color_1, dtype=np.uint8)  # Lower bound for yellow
-    #     background_upper = np.array(self.wsp_image.background_color_2, dtype=np.uint8)  # Upper bound for yellow
-
-    #     # sum number of pixels that are part of the background
-    #     not_covered_area = 0
-    #     for y in range(self.wsp_image.height):
-    #         for x in range(self.wsp_image.width):
-    #             droplet_bgr = tuple(self.wsp_image.rectangle[y, x])
-
-    #             # Check if the pixel falls within the yellow range
-    #             isYellow = np.all([y, x] >= background_lower) and np.all([y, x] <= background_upper)
-    #             # check if pixel is yellow
-    #             if isYellow:
-    #                 print("ahhh")
-    #                 not_covered_area += 1
-        
-    #     # calculate percentage of paper that is coverered
-    #     self.total_area = self.wsp_image.width * self.wsp_image.height
-    #     self.coverage_percentage = ((self.total_area - not_covered_area) / self.total_area) * 100
-    
-    # def calculate_rsf(self):
-    #     self.dv_one = np.argmax(self.cumulative_fraction >= 0.1)
-    #     self.dv_nine = np.argmax(self.cumulative_fraction >= 0.9)
-
-    #     self.rsf_value = (self.dv_nine - self.dv_one) / self.vmd_value
-
+  
     def find_overlapping_circles(self):
         self.no_overlapped_droplets = 0
         self.enumerate_image = copy.copy(self.wsp_image.blur_image)
@@ -121,6 +87,68 @@ class WSP_Statistics:
                 else: f.write(f"Droplet no {drop.id} ({drop.center_x}, {drop.center_y}, {drop.radius}): {drop.overlappedIDs}\n")
 
 
+
+    def create_masks(self):
+        self.mask = np.zeros_like(self.wsp_image.rectangle)
+        mask_overlapped = copy.copy(self.mask)
+        mask_single_circle = copy.copy(self.mask)
+        mask_single_elipse = copy.copy(self.mask)
+
+        for drop in self.wsp_image.droplets_data:
+            # single droplets
+            if (drop.overlappedIDs == []):
+                if drop.isElispe:
+                    cv2.ellipse(mask_single_elipse, (drop.center_x, drop.center_y), (drop.radius, drop.radius + 5), 5, 0, 360, 255, -1)
+                else:
+                    cv2.circle(mask_single_circle, (drop.center_x, drop.center_y), drop.radius, 255, -1)
+            # overlapped droplets
+            else:
+                if drop.isElispe:
+                    cv2.ellipse(mask_overlapped, (drop.center_x, drop.center_y), (drop.radius, drop.radius + 5), 5, 0, 360, 255, -1)
+                else:
+                    cv2.circle(mask_overlapped, (drop.center_x, drop.center_y), drop.radius, 255, -1)
+
+        cv2.imwrite(path_to_masks_overlapped_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.png', mask_overlapped)
+        cv2.imwrite(path_to_masks_single_circle_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.png', mask_single_circle)
+        cv2.imwrite(path_to_masks_single_ellipse_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.png', mask_single_elipse)   
+            
+
+
+  # def calculate_vmd(self):
+    #     volumes_sorted = sorted(self.wsp_image.droplet_radii)
+    #     total_volume = sum(volumes_sorted)
+    #     self.cumulative_fraction = np.cumsum(volumes_sorted) / total_volume
+
+    #     vmd_index = np.argmax(self.cumulative_fraction >= 0.5)
+    #     self.vmd_value = volumes_sorted[vmd_index]
+
+    # def calculate_coverage_percentage(self):
+    #                                     # Define the acceptable range for yellow color in RGB
+    #     background_lower = np.array(self.wsp_image.background_color_1, dtype=np.uint8)  # Lower bound for yellow
+    #     background_upper = np.array(self.wsp_image.background_color_2, dtype=np.uint8)  # Upper bound for yellow
+
+    #     # sum number of pixels that are part of the background
+    #     not_covered_area = 0
+    #     for y in range(self.wsp_image.height):
+    #         for x in range(self.wsp_image.width):
+    #             droplet_bgr = tuple(self.wsp_image.rectangle[y, x])
+
+    #             # Check if the pixel falls within the yellow range
+    #             isYellow = np.all([y, x] >= background_lower) and np.all([y, x] <= background_upper)
+    #             # check if pixel is yellow
+    #             if isYellow:
+    #                 print("ahhh")
+    #                 not_covered_area += 1
+        
+    #     # calculate percentage of paper that is coverered
+    #     self.total_area = self.wsp_image.width * self.wsp_image.height
+    #     self.coverage_percentage = ((self.total_area - not_covered_area) / self.total_area) * 100
+    
+    # def calculate_rsf(self):
+    #     self.dv_one = np.argmax(self.cumulative_fraction >= 0.1)
+    #     self.dv_nine = np.argmax(self.cumulative_fraction >= 0.9)
+
+    #     self.rsf_value = (self.dv_nine - self.dv_one) / self.vmd_value
 
 
 

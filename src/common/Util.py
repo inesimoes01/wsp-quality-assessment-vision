@@ -89,10 +89,10 @@ def plotFourImages(image1, image2, image3, image4):
     axes[2].set_xlabel("X (pixels)")
     axes[1].set_ylabel("Y (pixels)")
 
-    axes[1].imshow(image4)
+    axes[3].imshow(image4)
     #axes[1].axis('off')
-    axes[1].set_xlabel("X (pixels)")
-    axes[1].set_ylabel("Y (pixels)")
+    axes[3].set_xlabel("X (pixels)")
+    axes[3].set_ylabel("Y (pixels)")
 
 
     plt.show()

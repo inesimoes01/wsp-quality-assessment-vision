@@ -5,6 +5,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image, ImageDraw
+import copy
 
 sys.path.insert(0, 'src/common')
 from Variables import *
@@ -28,34 +29,42 @@ class WSP_Image:
 
         self.generate_one_wsp()
         self.save_image(self.rectangle, isShadow = False)
-
+        
         image_with_shadow = self.add_shadow()
         self.save_image(image_with_shadow, isShadow = True)
 
     def generate_one_wsp(self):
         # rectangle for background
+        # TODO make this better, maybe change types of the image
+        #self.rectangle = np.full((self.height, self.width, 3), self.background_color_1, dtype=np.uint8)
         rectangle = self.create_background(self.background_color_1, self.background_color_2)
         rectangle.save("temp.png")
         self.rectangle = cv2.imread("temp.png")
-        #self.rectangle = np.full((self.height, self.width, 3), self.background_color, dtype=np.uint8)
-
+        
+ 
         # generate number of spots
         self.num_spots = np.random.randint(min_num_spots, max_num_spots)
 
         # generate random spots with colors from the list
         self.droplets_data:list[Droplet] = []
         for i in range(self.num_spots):
+            isElipse = False
             spot_color = self.droplet_color[np.random.randint(0, len(self.droplet_color))]
             spot_radius = np.random.randint(1, max_radius) 
             center_x = np.random.randint(spot_radius, self.width - spot_radius)
             center_y = np.random.randint(spot_radius, self.height - spot_radius)
-            cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
+            if (i % 10 == 1): 
+                isElipse = True
+                # spot_radius_difference = spot_radius + np.random.randint(1, 5)
+                # angle = np.random.randint(1, 5)
+                cv2.ellipse(self.rectangle, (center_x, center_y), (spot_radius, spot_radius + 5), 5, 0, 360, spot_color, -1)
+            else: cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
 
             # save each Droplet
-            self.droplets_data.append(Droplet(center_x, center_y, spot_radius, i+1, [], spot_color))
-
+            self.droplets_data.append(Droplet(isElipse, center_x, center_y, spot_radius, i+1, [], spot_color))
+  
+        
         self.droplet_radii = [d.radius for d in self.droplets_data]
-
 
     def add_shadow(self):
         # create shadow shape
@@ -122,7 +131,6 @@ class WSP_Image:
 
         return i
 
-
     # Draw polygon with radial gradient from point to the polygon border
     # ranging from color 1 to color 2 on given image
     def radial_gradient(self, i, poly, p, c1, c2):
@@ -151,24 +159,14 @@ class WSP_Image:
 
         return i
 
-
-
-    # def add_variation_background(self):
-    #     draw = ImageDraw.Draw(image)
-    #     for _ in range(5000):  # Add 5000 random pixels to introduce variation
-    #         x = random.randint(0, width - 1)
-    #         y = random.randint(0, height - 1)
-    #         noise_color = (
-    #             base_color[0] + random.randint(-20, 20),
-    #             base_color[1] + random.randint(-20, 20),
-    #             base_color[2] + random.randint(-20, 20)
-    #         )
-    #         draw.point((x, y), fill=noise_color)
-
-
     def save_image(self, image, isShadow):
+        
         self.blur_image = cv2.blur(image, (3,3))
 
         if isShadow: cv2.imwrite(path_to_images_folder + '\\' + self.today_date + '_' + str(self.index) + '_shadow.png', self.blur_image)
         else: cv2.imwrite(path_to_images_folder + '\\' + self.today_date + '_' + str(self.index) + '.png', self.blur_image)
+
+        #cv2.imwrite(path_to_masks_folder + '\\' + self.today_date + '_' + str(self.index) + '.png', self.mask)
+
+
         

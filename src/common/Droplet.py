@@ -1,7 +1,8 @@
 class Droplet:
-    def __init__(self, center_x:int, center_y:int, radius:int, id:int,  overlappedIDs, color=None):
+    def __init__(self, isElipse:bool, center_x:int, center_y:int, radius:int, id:int,  overlappedIDs, color=None):
         if color is not None:
             self.id = id
+            self.isElispe = isElipse
             self.center_x = center_x
             self.center_y = center_y
             self.radius = radius
@@ -9,9 +10,11 @@ class Droplet:
             self.color = color
         else:
             self.id = id
+            self.isElispe = isElipse
             self.center_x = center_x
             self.center_y = center_y
             self.radius = radius
+            
             self.overlappedIDs = overlappedIDs
         # else:         
         #     self.center_x = center_x
