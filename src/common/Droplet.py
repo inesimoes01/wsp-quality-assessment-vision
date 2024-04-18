@@ -14,7 +14,6 @@ class Droplet:
             self.center_x = center_x
             self.center_y = center_y
             self.radius = radius
-            
             self.overlappedIDs = overlappedIDs
         # else:         
         #     self.center_x = center_x

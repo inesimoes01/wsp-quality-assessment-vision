@@ -10,6 +10,8 @@ from Variables import *
 from Util import *
 from Statistics import *
 
+#TODO read the ellipse bool
+
 class GroundTruth_Statistics:
     def __init__(self, filename, image):
         self.filename = filename
@@ -17,9 +19,9 @@ class GroundTruth_Statistics:
 
         # read file
         self.read_stats_file()
-        self.save_roi()
+        #self.save_roi()
 
-        self.stats = Statistics(self.vmd_value, self.rsf_value, self.coverage_percentage, self.no_total_droplets)
+        self.stats = Statistics(self.vmd_value, self.rsf_value, self.coverage_percentage, self.no_total_droplets, self.droplets)
 
     def read_stats_file(self):
         stats_file_path = (os.path.join(path_to_statistics_gt_folder, self.filename + ".txt"))
@@ -44,11 +46,11 @@ class GroundTruth_Statistics:
                 for match in matches_overlapped:
                     droplet_id, center_x, center_y, radius, overlapped_ids_str = match.groups()
                     overlapped_ids = [int(id_) for id_ in re.findall(droplet_id_regex, overlapped_ids_str)]
-                    self.droplets.append(Droplet(int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
+                    self.droplets.append(Droplet(False, int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
                 for match in matches:
                     droplet_id, center_x, center_y, radius = match.groups()
                     overlapped_ids = []
-                    self.droplets.append(Droplet(int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
+                    self.droplets.append(Droplet(False, int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
 
     def save_roi(self):   
         self.enumerate_image = copy.copy(self.image)                      

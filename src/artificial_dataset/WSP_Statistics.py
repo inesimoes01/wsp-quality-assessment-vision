@@ -25,7 +25,7 @@ class WSP_Statistics:
         coverage_percentage = Statistics.calculate_coverage_percentage_gt(self.wsp_image.rectangle, self.wsp_image.height, self.wsp_image.width, self.wsp_image.background_color_1, self.wsp_image.background_color_2)
         rsf_value = Statistics.calculate_rsf(cumulative_fraction, vmd_value)
         
-        self.stats:Statistics = Statistics(vmd_value, rsf_value, coverage_percentage, wsp_image.num_spots)
+        self.stats:Statistics = Statistics(vmd_value, rsf_value, coverage_percentage, wsp_image.num_spots, wsp_image.droplets_data)
         self.save_statistics_to_folder()
         self.create_masks()
 
@@ -84,7 +84,7 @@ class WSP_Statistics:
             f.write(f"\nDROPLETS: no [id] ([center_x], [center_y], [radius])\n")
             for drop in self.wsp_image.droplets_data:
                 if(drop.overlappedIDs != []): f.write(f"Droplet no {drop.id} ({drop.center_x}, {drop.center_y}, {drop.radius}): {drop.overlappedIDs}\n")
-                else: f.write(f"Droplet no {drop.id} ({drop.center_x}, {drop.center_y}, {drop.radius}): {drop.overlappedIDs}\n")
+                else: f.write(f"Droplet no {drop.id} {drop.isElispe} ({drop.center_x}, {drop.center_y}, {drop.radius}): {drop.overlappedIDs}\n")
 
 
 

@@ -29,8 +29,8 @@ class Colors:
         self.droplet_color.extend(self.interpolate_color((89, 8, 37), (172, 4, 46), 20))
 
         # BACKGROUND COLOR IN RGB
-        self.background_color_1 = (243, 225, 97)
-        self.background_color_2 = (229, 196, 44)
+        self.background_color_1 = (245, 231, 109)
+        self.background_color_2 = (230, 191, 33)
 
         
     

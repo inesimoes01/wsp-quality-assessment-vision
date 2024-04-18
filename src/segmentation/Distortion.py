@@ -12,26 +12,35 @@ from Util import *
 from Variables import *
 from Droplet import *
 
+#TODO make the detect rectangle without a magic number (50)
+
 class Distortion:
-    def __init__(self, filename):
-        self.image = cv2.imread(filename,  cv2.IMREAD_GRAYSCALE)
-
-        # detect and the contour of the rectangle
-        self.largest_contour = self.detect_rectangle(filename)
-        cv2.drawContours(self.image, [self.largest_contour], -1, (255, 0, 0), 5)
-
+    def __init__(self, image, filename):
+        self.noPaper = False
+        self.image = copy.copy(image)
+        # detect the contour of the rectangle
+        self.largest_contour = self.detect_rectangle(image)
+        cv2.drawContours(self.image, [self.largest_contour], -1, (0, 0, 0), 5)
+        plt.imshow(self.image)
+        plt.show()
         # remove distortion from the image
-        maxWidth, maxHeight = self.calculate_points()
+        maxWidth, maxHeight = self.calculate_points(filename)
+
+        if self.noPaper: return
+
         matrix = cv2.getPerspectiveTransform(self.input_pts, self.output_pts)
         self.undistorted_image = cv2.warpPerspective(self.image, matrix, (maxWidth, maxHeight), flags=cv2.INTER_LINEAR)
 
-        self.save_undistorted_image()
+        # save undistorted image
+        self.save_undistorted_image(filename)
 
-    def calculate_points(self):
+        
+    def calculate_points(self, filename):
         approx = cv2.approxPolyDP(self.largest_contour, 0.009 * cv2.arcLength(self.largest_contour, True), closed=True) 
-        if len(approx) != 4: 
-            print("Shape detected does not have 4 sides")
-            exit()
+        if len(approx) > 5: 
+            print("Could not find the paper in image " + filename)
+            self.noPaper = True
+            
 
         # order corners
         approx = sorted(approx, key=lambda x: x[0][0] + x[0][1])
@@ -54,14 +63,15 @@ class Distortion:
                                 [0, maxHeight + 1],
                                 [maxWidth +  1, maxHeight + 1],
                                 [maxWidth + 1, 0]])
+        #print("AFTER " + filename + " " + str(maxWidth) + " " + str(maxHeight))
+        
         return maxWidth, maxHeight
 
-    def detect_rectangle(self, filename):
-        image = cv2.imread(filename,  cv2.IMREAD_GRAYSCALE)
+    def detect_rectangle(self, image):
         edges = cv2.GaussianBlur(image, (5, 5), 3, 3)
         edges = cv2.Canny(edges, 150, 200, 1, 3, True)
         contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-   
+        
         # when paper has almost no droplets, it is preferable to not apply morphology so not to delete the contour
         if (len(contours) > 50):
             kernel_value = 20
@@ -83,7 +93,7 @@ class Distortion:
         for contour in contours:
             hull.append(cv2.convexHull(contour, False))
             cv2.drawContours(image, hull, -1, (255, 255, 255), 5)
-        
+
         # only return the biggest contour
         hull = sorted(hull, key=lambda x: cv2.contourArea(x), reverse=True)
         return hull[0]
@@ -121,11 +131,11 @@ class Distortion:
         
         return hull[0]
 
-    def save_undistorted_image(self):
-        cv2.imwrite("images\\inesc_dataset\\oi.png", self.undistorted_image);
+    def save_undistorted_image(self, filename):
+        cv2.imwrite(path_to_real_dataset_inesc_undistorted + '\\' + filename + '.png', self.undistorted_image);
 
 
-im2 = Distortion("images\\inesc_dataset\\1_V1_A1.jpg").undistorted_image
+# im2 = Distortion("images\\inesc_dataset\\1_V1_A1.jpg").undistorted_image
 #cv2.imwrite("test1.png", im2)
 # im3 = Distortion("images\\inesc_dataset\\1_V1_A2.jpg").undistorted_image
 # im1 = Distortion("images\\real_images\\field1.jpg").undistorted_image

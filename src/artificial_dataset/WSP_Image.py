@@ -30,8 +30,8 @@ class WSP_Image:
         self.generate_one_wsp()
         self.save_image(self.rectangle, isShadow = False)
         
-        image_with_shadow = self.add_shadow()
-        self.save_image(image_with_shadow, isShadow = True)
+        # image_with_shadow = self.add_shadow()
+        # self.save_image(image_with_shadow, isShadow = True)
 
     def generate_one_wsp(self):
         # rectangle for background

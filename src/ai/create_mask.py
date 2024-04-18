@@ -1,0 +1,1 @@
+python train.py --dataset wsp_unext --arch UNext --name test_unext --img_ext .png --mask_ext .png --lr 0.0001 --epochs 500 --input_w 2280 --input_h 780 --b 8
