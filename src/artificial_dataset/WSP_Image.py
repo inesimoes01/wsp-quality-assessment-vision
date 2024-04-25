@@ -20,8 +20,8 @@ class WSP_Image:
         self.max_num_spots:int = max_num_spots
         self.min_num_spots:int = min_num_spots
         self.max_radius:int = max_radius
-        self.width:int = width * resolution
-        self.height:int = height * resolution
+        self.width:float = width_mm * resolution
+        self.height:float = height_mm * resolution
         self.droplet_color = colors.droplet_color
         self.background_color_1 = colors.background_color_1
         self.background_color_2 = colors.background_color_2
@@ -44,7 +44,7 @@ class WSP_Image:
  
         # generate number of spots
         self.num_spots = np.random.randint(min_num_spots, max_num_spots)
-
+        
         # generate random spots with colors from the list
         self.droplets_data:list[Droplet] = []
         for i in range(self.num_spots):
@@ -61,10 +61,10 @@ class WSP_Image:
             else: cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
 
             # save each Droplet
-            self.droplets_data.append(Droplet(isElipse, center_x, center_y, spot_radius, i+1, [], spot_color))
+            self.droplets_data.append(Droplet(isElipse, center_x, center_y, spot_radius*2, i+1, [], spot_color))
+
   
-        
-        self.droplet_radii = [d.radius for d in self.droplets_data]
+        self.droplet_diameter = [d.diameter for d in self.droplets_data]
 
     def add_shadow(self):
         # create shadow shape
@@ -78,12 +78,12 @@ class WSP_Image:
         return cv2.addWeighted(self.rectangle, 1, shadow_mask_3channel, -0.2, -0.5)
     
     def create_background(self, color1, color2):
-        w, h = (width*resolution, height*resolution)
+        w, h = (width_mm*resolution, height_mm*resolution)
         rectangle = Image.new('RGBA', (w, h), (0, 0, 0, 0))
 
         # Draw first polygon with radial gradient
-        polygon = [(0, 0), (width*resolution, 0),(width*resolution, height*resolution), (0, height*resolution), ]
-        point = (width*resolution, height*resolution)
+        polygon = [(0, 0), (width_mm*resolution, 0),(width_mm*resolution, height_mm*resolution), (0, height_mm*resolution), ]
+        point = (width_mm*resolution, height_mm*resolution)
         rectangle = self.radial_gradient(rectangle, polygon, point, color1, color2)
 
         return rectangle

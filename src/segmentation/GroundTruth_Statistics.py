@@ -34,8 +34,8 @@ class GroundTruth_Statistics:
             self.no_overlapped_droplets = int(lines[4].split(":")[1].strip())
 
             self.droplets:list[Droplet] = []
-            droplet_info_regex_overlapped = r"Droplet no (\d+) \((\d+), (\d+), (\d+)\): \[([\d, ]+)\]"
-            droplet_info_regex = r"Droplet no (\d+) \((\d+), (\d+), (\d+)\): \[\]"
+            droplet_info_regex_overlapped = r"Droplet no (\d+) (\S+) \((\d+), (\d+), (\d+)\): \[([\d, ]+)\]"
+            droplet_info_regex = r"Droplet no (\d+) (\S+) \((\d+), (\d+), (\d+)\): \[\]"
             droplet_id_regex = r"\d+"
 
             for line in lines[7:]:
@@ -44,13 +44,13 @@ class GroundTruth_Statistics:
 
                 # lines with overlapped droplets information
                 for match in matches_overlapped:
-                    droplet_id, center_x, center_y, radius, overlapped_ids_str = match.groups()
+                    droplet_id, isEllipse, center_x, center_y, radius, overlapped_ids_str = match.groups()
                     overlapped_ids = [int(id_) for id_ in re.findall(droplet_id_regex, overlapped_ids_str)]
-                    self.droplets.append(Droplet(False, int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
+                    self.droplets.append(Droplet(isEllipse, int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
                 for match in matches:
-                    droplet_id, center_x, center_y, radius = match.groups()
+                    droplet_id, isEllipse, center_x, center_y, radius = match.groups()
                     overlapped_ids = []
-                    self.droplets.append(Droplet(False, int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
+                    self.droplets.append(Droplet(isEllipse, int(center_x), int(center_y), int(radius), int(droplet_id), overlapped_ids))
 
     def save_roi(self):   
         self.enumerate_image = copy.copy(self.image)                      

@@ -21,8 +21,7 @@ class Distortion:
         # detect the contour of the rectangle
         self.largest_contour = self.detect_rectangle(image)
         cv2.drawContours(self.image, [self.largest_contour], -1, (0, 0, 0), 5)
-        plt.imshow(self.image)
-        plt.show()
+
         # remove distortion from the image
         maxWidth, maxHeight = self.calculate_points(filename)
 

@@ -19,8 +19,19 @@ from Distortion import *
 # delete old outputs
 delete_folder_contents(path_to_outputs_folder)
 delete_folder_contents(path_to_real_dataset_inesc_undistorted)
+delete_folder_contents(path_to_statistics_pred_folder)
+delete_folder_contents(path_to_masks_single_pred_folder)
+delete_folder_contents(path_to_masks_overlapped_pred_folder)
+
 
 isArtificialDataset = True
+
+TP_overlapped = 0
+FP_overlapped = 0
+FN_overlapped = 0
+IOU = 0
+dice = 0
+
 
 # for each one of the images of the artificial dataset
 if isArtificialDataset:
@@ -28,14 +39,14 @@ if isArtificialDataset:
         # get name of the file
         parts = file.split(".")
         filename = parts[0]
-
+        
         # treat image
-        in_image = cv2.imread(os.path.join(path_to_images_folder, filename + ".png"))
+        in_image = cv2.imread(os.path.join(path_to_images_folder, filename + ".png"), cv2.IMREAD_GRAYSCALE)
         #in_image = cv2.cvtColor(in_image)
         out_image = copy.copy(in_image)
 
-        path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "single", filename)
-        path_to_save_contours_single = os.path.join(path_to_outputs_folder, "overlapped", filename)
+        path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
+        path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
         create_folders(path_to_save_contours_overlapped)
         create_folders(path_to_save_contours_single)
         
@@ -51,7 +62,20 @@ if isArtificialDataset:
         # droplets_groundtruth:list[Droplet] = 
         stats_groundtruth:Statistics = groundtruth.stats
 
-        Accuracy(droplets_calculated_dict, droplets_groundtruth_dict, filename, stats_calculated, stats_groundtruth)
+        acc:Accuracy = Accuracy(droplets_calculated_dict, droplets_groundtruth_dict, filename, stats_calculated, stats_groundtruth)
+
+        TP_overlapped += acc.true_positives_overlapped
+        FP_overlapped += acc.false_positives_overlapped
+        FN_overlapped += acc.false_negatives_overlapped
+
+        IOU += acc.iou 
+        dice += acc.dice_coefficient
+        
+    IOU = IOU / num_wsp
+    dice = dice / num_wsp
+    precision_overlapped, recall_overlapped, f1_score_overlapped, IOU, dice = Accuracy.calculate_parameters(acc, TP_overlapped, 0, FP_overlapped, FN_overlapped)
+
+    Accuracy.write_scores_file(precision_overlapped, recall_overlapped, f1_score_overlapped)
 
 else: 
     for file in os.listdir(path_to_real_dataset_inesc_original):

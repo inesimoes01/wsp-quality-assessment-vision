@@ -14,14 +14,14 @@ from Distortion import *
 
 
 class Algorithms:
-    def __init__(self, image_path):
-
+    # def __init__(self):
+        
         # image_path = 'images\\artificial_dataset\\image\\2024-03-25_0.png'
         # self.original_image = cv2.imread(image_path)
         # self.image = cv2.imread(image_path)
         
         # hough_tansform algorithm
-        self.output = self.hough_transform_paper(image_path)
+        # self.output = self.hough_transform_paper(image_path)
 
         # # apply ransac algorithm
         # self.no_iterations = 50000
@@ -29,35 +29,33 @@ class Algorithms:
         # self.edge_points_threshold = 5
         # self.ransac()
 
-    def process_image(self):
-        self.image_blur = cv2.GaussianBlur(self.image, (7, 7), 1.5)
-        self.gray = cv2.cvtColor(self.image_blur, cv2.COLOR_BGR2GRAY)
-        self.edges = cv2.Canny(self.gray, 150, 200)
 
-        _, self.thresh = cv2.threshold(self.edges, 127, 255, cv2.THRESH_BINARY)
-        self.contours, _ = cv2.findContours(self.edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        self.edge_points = [point[0] for contour in self.contours for point in contour]
+    def process_image(self, image):
+        image_blur = cv2.GaussianBlur(image, (7, 7), 1.5)
+        gray = cv2.cvtColor(image_blur, cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray, 150, 200)
 
-    def hough_tansform(self):
-        self.process_image()
+        _, thresh = cv2.threshold(edges, 127, 255, cv2.THRESH_BINARY)
+        contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        edge_points = [point[0] for contour in contours for point in contour]
+        return edges
 
-        # Find circles using Hough transform
-        # only a few circles
-        circles = cv2.HoughCircles(self.edges, cv2.HOUGH_GRADIENT, dp=1.3, minDist=1, param1=200, param2=23, minRadius=1, maxRadius=0)
-        
-        # whole image
-        #circles = cv2.HoughCircles(self.edges, cv2.HOUGH_GRADIENT, dp=1.3, minDist=30, param1=200, param2=30, minRadius=15, maxRadius=0)
+    def hough_tansform(self, file_path, image):
+        edges = self.process_image(image)
+
+        circles = cv2.HoughCircles(edges, cv2.HOUGH_GRADIENT, dp=1.3, minDist=1, param1=200, param2=23, minRadius=1, maxRadius=0)
 
         if circles is not None:
             # Convert circle parameters to integer
             circles = np.uint16(np.around(circles))
 
-            # Draw detected circles
+            # draw detected circles
             for circle in circles[0, :]:
                 center = (circle[0], circle[1])
                 radius = circle[2]
-                cv2.circle(self.image, center, radius, (0, 255, 0), 2)
+                cv2.circle(image, center, radius, (0, 255, 0), 2)
 
+            cv2.imwrite(file_path, image)
         else:
             print("No circles detected in the image.")
 
