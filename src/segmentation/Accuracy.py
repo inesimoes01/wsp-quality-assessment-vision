@@ -38,13 +38,14 @@ class Accuracy:
     def find_pairs(self):
         self.save_pairs_id = []
         for pred_stat in self.calculated_droplets.values():
-            match_found = False
             for gt_stat in self.groundtruth_droplets.values():
+       
                 distance = np.sqrt((pred_stat.center_x - gt_stat.center_x)**2 + (pred_stat.center_y - gt_stat.center_y)**2 )
+                #print(gt_stat.id, ' ', pred_stat.id, ' ',distance, ' ', abs(pred_stat.diameter - gt_stat.diameter))
                 if distance < distance_threshold and abs(pred_stat.diameter - gt_stat.diameter) < diameter_threshold:
                     #print(gt_stat.id, ' ', pred_stat.id, ' ',distance, ' ', abs(pred_stat.diameter - gt_stat.diameter))
                     self.save_pairs_id.append((gt_stat.id, pred_stat.id))
-                    match_found = True
+                    
                     break
            
 
@@ -53,7 +54,6 @@ class Accuracy:
         self.false_positives_overlapped = 0
         self.false_negatives_overlapped = 0
         self.true_negative_overlapped = 0
-
        
         for pair in self.save_pairs_id:
             gt_drop = self.groundtruth_droplets.get(pair[0])

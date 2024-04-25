@@ -110,7 +110,7 @@ class WSP_Statistics:
                     cv2.ellipse(mask_overlapped, (drop.center_x, drop.center_y), (radius, radius + 5), 5, 0, 360, 255, -1)
                 else:
                     cv2.circle(mask_overlapped, (drop.center_x, drop.center_y), radius, 255, -1)
-        print(mask_overlapped)
+        
         cv2.imwrite(path_to_masks_overlapped_gt_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.png', mask_overlapped)
         cv2.imwrite(path_to_masks_single_gt_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.png', mask_single)
             

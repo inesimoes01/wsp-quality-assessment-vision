@@ -53,15 +53,14 @@ if isArtificialDataset:
         # calculate statistics
         calculated:Calculated_Statistics = Calculated_Statistics(out_image, filename, path_to_save_contours_overlapped, path_to_save_contours_single)
         droplets_calculated_dict = {droplet.id: droplet for droplet in calculated.droplets_data}
-        #droplets_calculated:list[Droplet] = calculated.droplets_data
         stats_calculated:Statistics = calculated.stats
 
         # save ground truth
         groundtruth:GroundTruth_Statistics = GroundTruth_Statistics(filename, out_image)
         droplets_groundtruth_dict = {droplet.id: droplet for droplet in groundtruth.droplets}
-        # droplets_groundtruth:list[Droplet] = 
         stats_groundtruth:Statistics = groundtruth.stats
 
+        # calculate accuracy values
         acc:Accuracy = Accuracy(droplets_calculated_dict, droplets_groundtruth_dict, filename, stats_calculated, stats_groundtruth)
 
         TP_overlapped += acc.true_positives_overlapped
@@ -73,9 +72,9 @@ if isArtificialDataset:
         
     IOU = IOU / num_wsp
     dice = dice / num_wsp
-    precision_overlapped, recall_overlapped, f1_score_overlapped, IOU, dice = Accuracy.calculate_parameters(acc, TP_overlapped, 0, FP_overlapped, FN_overlapped)
+    precision_overlapped, recall_overlapped, f1_score_overlapped, = Accuracy.calculate_parameters(acc, TP_overlapped, 0, FP_overlapped, FN_overlapped)
 
-    Accuracy.write_scores_file(precision_overlapped, recall_overlapped, f1_score_overlapped)
+    Accuracy.write_scores_file(precision_overlapped, recall_overlapped, f1_score_overlapped, IOU, dice)
 
 else: 
     for file in os.listdir(path_to_real_dataset_inesc_original):

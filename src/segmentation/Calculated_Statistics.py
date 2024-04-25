@@ -72,7 +72,7 @@ class Calculated_Statistics:
                         overlapped_ids = []
                         overlapped_ids = circle_ids[:j] + circle_ids[j+1:]
                         j+=1
-
+                        
                         self.droplets_data.append(Droplet(True, int(circle[0] + x_roi), int(circle[1] + y_roi), float(circle[2]*2), int(i), overlapped_ids))
                        
                         i+=1 
@@ -81,8 +81,8 @@ class Calculated_Statistics:
                 else: 
                     (x, y), (_, minor), _ = cv2.fitEllipse(contour)
                     overlapped_ids = []
-                    
-                    self.droplets_data.append(Droplet(True, int(x) + x_roi, int(y) + y_roi, float(minor), int(i), overlapped_ids))
+                  
+                    self.droplets_data.append(Droplet(True, int(x), int(y) , float(minor), int(i), overlapped_ids))
                     self.save_contour(1, contour)
                     #cv2.drawContours(mask_single, [contour], -1, 255, thickness=cv2.FILLED)
 
@@ -91,7 +91,7 @@ class Calculated_Statistics:
                 area = cv2.contourArea(contour)
                 (center_x, center_y), _ = cv2.minEnclosingCircle(contour)
                 diameter = 0.95*(np.sqrt((4*area)/np.pi))**0.91
-                self.droplets_data.append(Droplet(False, int(center_x) + x_roi, int(center_y) + y_roi, float(diameter), int(i), overlapped_ids))
+                self.droplets_data.append(Droplet(False, int(center_x), int(center_y), float(diameter), int(i), overlapped_ids))
                 self.save_contour(1, contour)
                 #cv2.drawContours(mask_single, [contour], -1, 255, thickness=cv2.FILLED)
                 
@@ -151,6 +151,7 @@ class Calculated_Statistics:
         x = max(x, 0)
         y = max(y, 0)
         object_roi = self.roi_image[y:y+expanded_h, x:x+expanded_w]
+    
         (x, y), radius = cv2.minEnclosingCircle(contour)
         cv2.putText(self.enumerate_image, f'{index}', (int(x-radius), int(y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
 
@@ -208,7 +209,7 @@ class Calculated_Statistics:
 
         image_height, image_width = self.image.shape[:2]
 
-        self.volume_list = Statistics.diameter_to_volume(droplet_diameter, image_width)
+        self.volume_list = sorted(Statistics.diameter_to_volume(droplet_diameter, image_width))
 
         cumulative_fraction = Statistics.calculate_cumulative_fraction(self.volume_list)
         vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.volume_list)
