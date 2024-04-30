@@ -1,3 +1,5 @@
+import math
+
 ## PATHS
 path_main_dataset = 'images\\artificial_dataset'
 path_to_images_folder = 'images\\artificial_dataset\\image'
@@ -15,12 +17,15 @@ path_to_real_dataset = 'images\\real_images'
 
 
 ### VALUES
+num_wsp = 20
 max_num_spots = 1000
-min_num_spots = 300
-max_radius = 15
+min_num_spots = 50
+
 width_mm, height_mm = 76, 26
 resolution = 30
-num_wsp = 20
+max_radius = 15 * math.ceil(resolution / 30)
+min_radius = math.ceil(resolution * 0.05)
+
 
 ### accuracy
 distance_threshold = 5

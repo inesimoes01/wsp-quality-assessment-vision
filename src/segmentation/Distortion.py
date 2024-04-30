@@ -15,8 +15,9 @@ from Droplet import *
 #TODO make the detect rectangle without a magic number (50)
 
 class Distortion:
-    def __init__(self, image, filename):
+    def __init__(self, image, filename, save_photo):
         self.noPaper = False
+        
         self.image = copy.copy(image)
         # detect the contour of the rectangle
         self.largest_contour = self.detect_rectangle(image)
@@ -31,7 +32,8 @@ class Distortion:
         self.undistorted_image = cv2.warpPerspective(self.image, matrix, (maxWidth, maxHeight), flags=cv2.INTER_LINEAR)
 
         # save undistorted image
-        self.save_undistorted_image(filename)
+        if (save_photo): self.save_undistorted_image(filename)
+    
 
         
     def calculate_points(self, filename):
@@ -131,7 +133,7 @@ class Distortion:
         return hull[0]
 
     def save_undistorted_image(self, filename):
-        cv2.imwrite(path_to_real_dataset_inesc_undistorted + '\\' + filename + '.png', self.undistorted_image);
+        cv2.imwrite(os.path.join(path_to_real_dataset_inesc_undistorted, filename + '.png'), self.undistorted_image);
 
 
 # im2 = Distortion("images\\inesc_dataset\\1_V1_A1.jpg").undistorted_image

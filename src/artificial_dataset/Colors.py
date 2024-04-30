@@ -30,7 +30,7 @@ class Colors:
 
         # BACKGROUND COLOR IN RGB
         self.background_color_1 = (255, 244, 137)
-        self.background_color_2 = (229, 183, 1)
+        self.background_color_2 = (159, 127, 19)
 
         
     

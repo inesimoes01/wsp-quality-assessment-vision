@@ -81,20 +81,17 @@ else:
         # get name of the file
         parts = file.split(".")
         filename = parts[0]
-        path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "single", filename)
-        path_to_save_contours_single = os.path.join(path_to_outputs_folder, "overlapped", filename)
-        create_folders(path_to_save_contours_overlapped)
-        create_folders(path_to_save_contours_single)
+
 
         # generate undistorted image
         try:    
             image = cv2.imread(path_to_real_dataset_inesc_original + '\\' + file, cv2.IMREAD_GRAYSCALE)
-            dist = Distortion(image, filename)
+            dist = Distortion(image, filename, save_photo=True)
             if dist.noPaper: continue
 
             undistorted_image = cv2.imread(path_to_real_dataset_inesc_undistorted + '\\' + filename + '.png', cv2.IMREAD_GRAYSCALE)
             
-            calc_stats = Calculated_Statistics(undistorted_image, filename, path_to_save_contours_overlapped, path_to_save_contours_single)
+            calc_stats = Calculated_Statistics(undistorted_image, filename, save_images=True)
 
             calc_stats.stats.save_stats_file(filename)
 

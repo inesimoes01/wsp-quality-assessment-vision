@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image, ImageDraw
 import copy
+from hachoir.parser import createParser
+from hachoir.metadata import extractMetadata
+from PIL.PngImagePlugin import PngInfo
+
 
 sys.path.insert(0, 'src/common')
 from Variables import *
@@ -15,8 +19,8 @@ sys.path.insert(0, 'src')
 from Droplet import *
 
 class WSP_Image:
-    def __init__(self, index:int, colors, today_date:datetime):
-        self.index = index
+    def __init__(self, index:int, colors):
+        self.filename = index
         self.max_num_spots:int = max_num_spots
         self.min_num_spots:int = min_num_spots
         self.max_radius:int = max_radius
@@ -25,13 +29,10 @@ class WSP_Image:
         self.droplet_color = colors.droplet_color
         self.background_color_1 = colors.background_color_1
         self.background_color_2 = colors.background_color_2
-        self.today_date:datetime = today_date
 
         self.generate_one_wsp()
-        self.save_image(self.rectangle, isShadow = False)
+        self.save_image(self.rectangle)
         
-        # image_with_shadow = self.add_shadow()
-        # self.save_image(image_with_shadow, isShadow = True)
 
     def generate_one_wsp(self):
         # rectangle for background
@@ -40,8 +41,7 @@ class WSP_Image:
         rectangle = self.create_background(self.background_color_1, self.background_color_2)
         rectangle.save("temp.png")
         self.rectangle = cv2.imread("temp.png")
-        
- 
+    
         # generate number of spots
         self.num_spots = np.random.randint(min_num_spots, max_num_spots)
         
@@ -50,7 +50,7 @@ class WSP_Image:
         for i in range(self.num_spots):
             isElipse = False
             spot_color = self.droplet_color[np.random.randint(0, len(self.droplet_color))]
-            spot_radius = np.random.randint(1, max_radius) 
+            spot_radius = np.random.randint(min_radius, max_radius) 
             center_x = np.random.randint(spot_radius, self.width - spot_radius)
             center_y = np.random.randint(spot_radius, self.height - spot_radius)
             if (i % 10 == 1): 
@@ -83,10 +83,11 @@ class WSP_Image:
 
         # Draw first polygon with radial gradient
         polygon = [(0, 0), (width_mm*resolution, 0),(width_mm*resolution, height_mm*resolution), (0, height_mm*resolution), ]
-        point = (width_mm*resolution, height_mm*resolution)
+        point = (height_mm*resolution*2/3, width_mm*resolution/4)
         rectangle = self.radial_gradient(rectangle, polygon, point, color1, color2)
 
         return rectangle
+    
     # Draw polygon with linear gradient from point 1 to point 2 and ranging
     # from color 1 to color 2 on given image
     def linear_gradient(self, i, poly, p1, p2, c1, c2):
@@ -108,7 +109,7 @@ class WSP_Image:
 
         # Create gradient from color 1 to 2 of appropriate size
         gradient = np.linspace(c1, c2, wt, True).astype(np.uint8)
-        gradient = np.tile(gradient, [2 * h, 1, 1])
+        gradient = np.tile(gradient, [2 * ht, 1, 1])
         gradient = Image.fromarray(gradient)
 
         # Paste gradient on blank canvas of sufficient size
@@ -159,14 +160,13 @@ class WSP_Image:
 
         return i
 
-    def save_image(self, image, isShadow):
-        
+    def save_image(self, image):
+        path = os.path.join(path_to_images_folder, str(self.filename) + '.png')
+
         self.blur_image = cv2.blur(image, (3,3))
+        cv2.imwrite(path, self.blur_image)  
 
-        if isShadow: cv2.imwrite(path_to_images_folder + '\\' + self.today_date + '_' + str(self.index) + '_shadow.png', self.blur_image)
-        else: cv2.imwrite(path_to_images_folder + '\\' + self.today_date + '_' + str(self.index) + '.png', self.blur_image)
-
-        #cv2.imwrite(path_to_masks_folder + '\\' + self.today_date + '_' + str(self.index) + '.png', self.mask)
-
-
-        
+# background_color_1 = (255, 244, 137)
+# background_color_2 = (185, 148, 0)
+# wsp = WSP_Image(1)
+# WSP_Image.create_background(wsp, background_color_2, background_color_1)      

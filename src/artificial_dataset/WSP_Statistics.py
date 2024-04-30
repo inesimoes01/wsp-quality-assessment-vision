@@ -57,8 +57,8 @@ class WSP_Statistics:
                 if (center_distance < (r1 + r2) and id2 != id1):
                     droplet.overlappedIDs += [id2]
                     self.no_overlapped_droplets += 1
-        cv2.imwrite('images\\artificial_dataset\\numbered\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '_groundtruth.png', self.enumerate_image)
-        #cv2.imwrite(path_to_numbered_folder + '\\GT_' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.png', self.enumerate_image)
+        #cv2.imwrite('images\\artificial_dataset\\numbered\\' ++ str(self.wsp_image.index) + '_groundtruth.png', self.enumerate_image)
+       
 
     def verify_VDM(droplet_radii, vmd_value):
         check_vmd_s = 0
@@ -76,7 +76,7 @@ class WSP_Statistics:
         print("number of droplets ", check_vmd_s, " ", check_vmd_h, " ", equal)
     
     def save_statistics_to_folder(self):
-        statistics_file_path = path_to_statistics_gt_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.txt'
+        statistics_file_path = os.path.join(path_to_statistics_gt_folder, str(self.wsp_image.filename) + '.txt')
         with open(statistics_file_path, 'w') as f:
             f.write(f"Number of droplets: {self.stats.no_droplets:d}\n")
             f.write(f"Coverage percentage: {self.stats.coverage_percentage:.2f}\n")
@@ -111,8 +111,8 @@ class WSP_Statistics:
                 else:
                     cv2.circle(mask_overlapped, (drop.center_x, drop.center_y), radius, 255, -1)
         
-        cv2.imwrite(path_to_masks_overlapped_gt_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.png', mask_overlapped)
-        cv2.imwrite(path_to_masks_single_gt_folder + '\\' + self.wsp_image.today_date + '_' + str(self.wsp_image.index) + '.png', mask_single)
+        cv2.imwrite(os.path.join(path_to_masks_overlapped_gt_folder, str(self.wsp_image.filename) + '.png'), mask_overlapped)
+        cv2.imwrite(os.path.join(path_to_masks_single_gt_folder, str(self.wsp_image.filename) + '.png'), mask_single)
             
 
 
