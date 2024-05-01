@@ -6,8 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image, ImageDraw
 import copy
-from hachoir.parser import createParser
-from hachoir.metadata import extractMetadata
 from PIL.PngImagePlugin import PngInfo
 
 
@@ -19,7 +17,7 @@ sys.path.insert(0, 'src')
 from Droplet import *
 
 class WSP_Image:
-    def __init__(self, index:int, colors):
+    def __init__(self, index:int, colors, total_no_droplets):
         self.filename = index
         self.max_num_spots:int = max_num_spots
         self.min_num_spots:int = min_num_spots
@@ -29,6 +27,7 @@ class WSP_Image:
         self.droplet_color = colors.droplet_color
         self.background_color_1 = colors.background_color_1
         self.background_color_2 = colors.background_color_2
+        self.num_spots = total_no_droplets[index-250]
 
         self.generate_one_wsp()
         self.save_image(self.rectangle)
@@ -42,15 +41,16 @@ class WSP_Image:
         rectangle.save("temp.png")
         self.rectangle = cv2.imread("temp.png")
     
-        # generate number of spots
-        self.num_spots = np.random.randint(min_num_spots, max_num_spots)
+        # generate the droplet sizes given a rosin rammler distribution
+        self.droplet_radius = self.generate_droplet_sizes_rosin_rammler(characteristic_particle_size, uniformity_constant, self.num_spots)
         
         # generate random spots with colors from the list
         self.droplets_data:list[Droplet] = []
         for i in range(self.num_spots):
             isElipse = False
             spot_color = self.droplet_color[np.random.randint(0, len(self.droplet_color))]
-            spot_radius = np.random.randint(min_radius, max_radius) 
+            spot_radius = math.ceil(self.droplet_radius[i])
+            #spot_radius = np.random.randint(min_radius, max_radius) 
             center_x = np.random.randint(spot_radius, self.width - spot_radius)
             center_y = np.random.randint(spot_radius, self.height - spot_radius)
             if (i % 10 == 1): 
@@ -63,7 +63,6 @@ class WSP_Image:
             # save each Droplet
             self.droplets_data.append(Droplet(isElipse, center_x, center_y, spot_radius*2, i+1, [], spot_color))
 
-  
         self.droplet_diameter = [d.diameter for d in self.droplets_data]
 
     def add_shadow(self):
@@ -165,6 +164,15 @@ class WSP_Image:
 
         self.blur_image = cv2.blur(image, (3,3))
         cv2.imwrite(path, self.blur_image)  
+
+    def generate_droplet_sizes_rosin_rammler(self, x_o, n, no_droplets):
+        # random number from 0 to 1
+        random_numbers = np.random.rand(no_droplets)
+
+        # inverse transform sampling to generate droplet sizes
+        droplet_sizes = x_o * (-np.log(1 - random_numbers))**(1/n)
+        
+        return droplet_sizes
 
 # background_color_1 = (255, 244, 137)
 # background_color_2 = (185, 148, 0)

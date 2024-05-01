@@ -3,6 +3,7 @@ import cv2
 import sys
 from matplotlib import pyplot as plt 
 import copy
+import csv
 
 from Colors import *
 
@@ -28,8 +29,16 @@ class WSP_Statistics:
         rsf_value = Statistics.calculate_rsf(cumulative_fraction, self.volume_list, vmd_value)
        
         self.stats:Statistics = Statistics(vmd_value, rsf_value, coverage_percentage, wsp_image.num_spots, wsp_image.droplets_data)
+        self.save_dropletinfo_csv()
         self.save_statistics_to_folder()
-        self.create_masks()
+
+        path_mask_overlapped = os.path.join(path_to_masks_overlapped_gt_folder, str(self.wsp_image.filename) + '.png')
+        path_mask_single = os.path.join(path_to_masks_single_gt_folder, str(self.wsp_image.filename) + '.png')
+        self.create_masks(path_mask_overlapped, path_mask_single)
+
+        path_labels = os.path.join(path_to_labels_yolo, str(self.wsp_image.filename) + '.txt')
+        self.mask_to_label(path_mask_overlapped, path_labels, 1)
+        self.mask_to_label(path_mask_single, path_labels, 0)
 
   
     def find_overlapping_circles(self):
@@ -59,7 +68,6 @@ class WSP_Statistics:
                     self.no_overlapped_droplets += 1
         #cv2.imwrite('images\\artificial_dataset\\numbered\\' ++ str(self.wsp_image.index) + '_groundtruth.png', self.enumerate_image)
        
-
     def verify_VDM(droplet_radii, vmd_value):
         check_vmd_s = 0
         check_vmd_h = 0
@@ -83,37 +91,64 @@ class WSP_Statistics:
             f.write(f"VMD value: {self.stats.vmd_value:2f}\n")
             f.write(f"RSF value: {self.stats.rsf_value:.2f}\n")
             f.write(f"Number of overlapped droplets: {self.no_overlapped_droplets:d}\n")
-            f.write(f"\nDROPLETS: no [id] ([center_x], [center_y], [diameter])\n")
+
+    def save_dropletinfo_csv(self):
+        csv_file = os.path.join(path_to_dropletinfo_gt_folder, str(self.wsp_image.filename) + '.csv')
+        with open(csv_file, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["DropletID", "isElipse", "CenterX", "CenterY", "Diameter", "OverlappedDropletsID"])
             for drop in self.wsp_image.droplets_data:
-                if(drop.overlappedIDs != []): f.write(f"Droplet no {drop.id} {drop.isElispe} ({drop.center_x}, {drop.center_y}, {drop.diameter}): {drop.overlappedIDs}\n")
-                else: f.write(f"Droplet no {drop.id} {drop.isElispe} ({drop.center_x}, {drop.center_y}, {drop.diameter}): {drop.overlappedIDs}\n")
+                row = [drop.id, drop.isElipse, drop.center_x, drop.center_y, drop.diameter, str(drop.overlappedIDs)]
+                writer.writerow(row)
 
+    def mask_to_label(self, path_mask, path_labels, classid):
+        # load the binary mask and get its contours
+        mask = cv2.imread(path_mask, cv2.IMREAD_GRAYSCALE)
+        _, mask = cv2.threshold(mask, 1, 255, cv2.THRESH_BINARY)
 
+        H, W = mask.shape
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    def create_masks(self):
+        # convert the contours to polygons
+        polygons = []
+        for cnt in contours:
+            if cv2.contourArea(cnt) > 5:
+                polygon = []
+                for point in cnt:
+                    x, y = point[0]
+                    polygon.append(x / W)
+                    polygon.append(y / H)
+                polygons.append(polygon)
+        
+        # print the polygons
+        with open('{}.txt'.format(path_labels[:-4]), 'a') as f:
+            for polygon in polygons:
+                f.write(f"{classid} {' '.join(map(str, polygon))}\n")
+        
+    def create_masks(self, path_mask_overlapped, path_mask_single):
         self.mask = np.zeros_like(self.wsp_image.rectangle)
         mask_overlapped = copy.copy(self.mask)
         mask_single = copy.copy(self.mask)
         
-
         for drop in self.wsp_image.droplets_data:
             radius = int(drop.diameter/2)
             # single droplets
             if (drop.overlappedIDs == []):
-                if drop.isElispe:
+                if drop.isElipse:
                     cv2.ellipse(mask_single, (drop.center_x, drop.center_y), (radius, radius + 5), 5, 0, 360, 255, -1)
                 else:
                     cv2.circle(mask_single, (drop.center_x, drop.center_y), radius, 255, -1)
             # overlapped droplets
             else:
-                if drop.isElispe:
+                if drop.isElipse:
                     cv2.ellipse(mask_overlapped, (drop.center_x, drop.center_y), (radius, radius + 5), 5, 0, 360, 255, -1)
                 else:
                     cv2.circle(mask_overlapped, (drop.center_x, drop.center_y), radius, 255, -1)
         
-        cv2.imwrite(os.path.join(path_to_masks_overlapped_gt_folder, str(self.wsp_image.filename) + '.png'), mask_overlapped)
-        cv2.imwrite(os.path.join(path_to_masks_single_gt_folder, str(self.wsp_image.filename) + '.png'), mask_single)
-            
+        cv2.imwrite(path_mask_overlapped, mask_overlapped)
+        cv2.imwrite(path_mask_single, mask_single)
+
+      
 
 
   # def calculate_vmd(self):
