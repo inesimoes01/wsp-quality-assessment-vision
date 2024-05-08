@@ -1,27 +1,28 @@
 import math
+import os
 
 ## PATHS
-path_main_dataset = 'images\\artificial_dataset'
-path_to_images_folder = 'images\\artificial_dataset\\image'
-path_to_statistics_gt_folder = 'images\\artificial_dataset\\statistic\\gt'
-path_to_statistics_pred_folder = 'images\\artificial_dataset\\statistic\\c'
-path_to_dropletinfo_gt_folder = 'images\\artificial_dataset\\dropletinfo\\gt'
-path_to_dropletinfo_pred_folder = 'images\\artificial_dataset\\dropletinfo\\c'
-path_to_outputs_folder = 'images\\artificial_dataset\\outputs'
-path_to_masks_overlapped_pred_folder = 'images\\artificial_dataset\\masks\\c\\overlapped'
-path_to_masks_overlapped_gt_folder = 'images\\artificial_dataset\\masks\\gt\\overlapped'
-path_to_masks_single_pred_folder = 'images\\artificial_dataset\\masks\\c\\single'
-path_to_masks_single_gt_folder = 'images\\artificial_dataset\\masks\\gt\\single'
-path_to_real_dataset_inesc = 'images\\inesc_dataset'
-path_to_real_dataset_inesc_original = 'images\\inesc_dataset\\original'
-path_to_real_dataset_inesc_undistorted = 'images\\inesc_dataset\\undistorted'
-path_to_real_dataset = 'images\\real_images'
-path_to_labels_yolo = 'images\\artificial_dataset\\labels_yolo'
+path_main_dataset = os.path.normpath('images\\artificial_dataset')
+path_to_images_folder = os.path.normpath('images\\artificial_dataset\\image')
+path_to_statistics_gt_folder = os.path.normpath('images\\artificial_dataset\\statistic\\gt')
+path_to_statistics_pred_folder = os.path.normpath('images\\artificial_dataset\\statistic\\c')
+path_to_dropletinfo_gt_folder = os.path.normpath('images\\artificial_dataset\\dropletinfo\\gt')
+path_to_dropletinfo_pred_folder = os.path.normpath('images\\artificial_dataset\\dropletinfo\\c')
+path_to_outputs_folder = os.path.normpath('images\\artificial_dataset\\outputs')
+path_to_masks_overlapped_pred_folder = os.path.normpath('images\\artificial_dataset\\masks\\c\\overlapped')
+path_to_masks_overlapped_gt_folder = os.path.normpath('images\\artificial_dataset\\masks\\gt\\overlapped')
+path_to_masks_single_pred_folder = os.path.normpath('images\\artificial_dataset\\masks\\c\\single')
+path_to_masks_single_gt_folder = os.path.normpath('images\\artificial_dataset\\masks\\gt\\single')
+path_to_real_dataset_inesc = os.path.normpath('images\\inesc_dataset')
+path_to_real_dataset_inesc_original = os.path.normpath('images\\inesc_dataset\\original')
+path_to_real_dataset_inesc_undistorted = os.path.normpath('images\\inesc_dataset\\undistorted')
+path_to_real_dataset = os.path.normpath('images\\real_images')
+path_to_labels_yolo = os.path.normpath('images\\artificial_dataset\\labels_yolo')
 
 
 
 ### VALUES
-num_wsp = 250
+num_wsp = 500
 max_num_spots = 1000
 min_num_spots = 50
 

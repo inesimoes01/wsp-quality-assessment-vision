@@ -50,13 +50,11 @@ class WSP_Image:
             isElipse = False
             spot_color = self.droplet_color[np.random.randint(0, len(self.droplet_color))]
             spot_radius = math.ceil(self.droplet_radius[i])
-            #spot_radius = np.random.randint(min_radius, max_radius) 
             center_x = np.random.randint(spot_radius, self.width - spot_radius)
             center_y = np.random.randint(spot_radius, self.height - spot_radius)
+            
             if (i % 10 == 1): 
                 isElipse = True
-                # spot_radius_difference = spot_radius + np.random.randint(1, 5)
-                # angle = np.random.randint(1, 5)
                 cv2.ellipse(self.rectangle, (center_x, center_y), (spot_radius, spot_radius + 5), 5, 0, 360, spot_color, -1)
             else: cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
 

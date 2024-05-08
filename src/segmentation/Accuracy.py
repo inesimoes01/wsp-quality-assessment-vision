@@ -122,6 +122,7 @@ class Accuracy:
         #accuracy = (true_positives + true_negatives) / (true_positives + true_negatives + false_positives + false_negatives) 
         precision = true_positives / (true_positives + false_positives)
         recall = true_positives / (true_positives + false_negatives)
+      
         f1_score = 2 * (precision * recall) / (precision + recall)
         return precision, recall, f1_score
 

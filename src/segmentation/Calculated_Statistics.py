@@ -29,15 +29,15 @@ class Calculated_Statistics:
     def __init__(self, image, filename, save_images:bool, create_masks:bool):
         self.save_images = save_images
         self.create_masks = create_masks
-        self.path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
-        self.path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
-        create_folders(self.path_to_save_contours_overlapped)
-        create_folders(self.path_to_save_contours_single)
+        if save_images:
+            self.path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
+            self.path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
+            create_folders(self.path_to_save_contours_overlapped)
+            create_folders(self.path_to_save_contours_single)
 
         # get objects from image
         self.image = copy.copy(image)
         self.get_contours()
-     
 
         # save each step in a different image
         self.roi_image = copy.copy(image)
@@ -136,8 +136,8 @@ class Calculated_Statistics:
 
         self.contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         cv2.drawContours(self.image, self.contours, -1, (255), 1)
-        plt.imshow(self.image)
-        plt.show()
+        # plt.imshow(self.image)
+        # plt.show()
 
         self.contour_area = 0
         for contour in self.contours:
@@ -238,8 +238,8 @@ class Calculated_Statistics:
                 for circle in circles[0, :]:
                     center = (circle[0], circle[1])
                     radius = circle[2]
-                    cv2.circle(edges, center, radius, (0, 255, 0), 2)
+                    cv2.circle(image, center, radius, (0, 255, 0), 2)
     
-                cv2.imwrite(file_path, edges)
+                cv2.imwrite(file_path, image)
         
         return circles
