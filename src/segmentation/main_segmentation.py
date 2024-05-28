@@ -22,6 +22,7 @@ delete_folder_contents(path_to_real_dataset_inesc_undistorted)
 delete_folder_contents(path_to_statistics_pred_folder)
 delete_folder_contents(path_to_masks_single_pred_folder)
 delete_folder_contents(path_to_masks_overlapped_pred_folder)
+delete_folder_contents(path_to_detected_circles)
 
 
 isArtificialDataset = True
@@ -32,7 +33,7 @@ FN_overlapped = 0
 IOU = 0
 dice = 0
 
-
+k = 0
 # for each one of the images of the artificial dataset
 if isArtificialDataset:
     for file in os.listdir(path_to_images_folder):
@@ -42,7 +43,8 @@ if isArtificialDataset:
         
         # treat image
         in_image = cv2.imread(os.path.join(path_to_images_folder, filename + ".png"), cv2.IMREAD_GRAYSCALE)
-        #in_image = cv2.cvtColor(in_image)
+        in_image_colors = cv2.imread(os.path.join(path_to_images_folder, filename + ".png"))
+       
         out_image = copy.copy(in_image)
 
         path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
@@ -51,7 +53,7 @@ if isArtificialDataset:
         create_folders(path_to_save_contours_single)
         
         # calculate statistics
-        calculated:Calculated_Statistics = Calculated_Statistics(out_image, filename, path_to_save_contours_overlapped, path_to_save_contours_single)
+        calculated:Calculated_Statistics = Calculated_Statistics(out_image, in_image_colors, filename, path_to_save_contours_overlapped, path_to_save_contours_single)
         droplets_calculated_dict = {droplet.id: droplet for droplet in calculated.droplets_data}
         stats_calculated:Statistics = calculated.stats
 
@@ -69,9 +71,14 @@ if isArtificialDataset:
 
         IOU += acc.iou 
         dice += acc.dice_coefficient
+        k+=1
+        print(k, filename)
+        if k==10: 
+            print("end")
+            break
         
-    IOU = IOU / num_wsp
-    dice = dice / num_wsp
+    IOU = IOU / 10
+    dice = dice / 10
     precision_overlapped, recall_overlapped, f1_score_overlapped, = Accuracy.calculate_parameters(acc, TP_overlapped, 0, FP_overlapped, FN_overlapped)
 
     Accuracy.write_scores_file(precision_overlapped, recall_overlapped, f1_score_overlapped, IOU, dice)

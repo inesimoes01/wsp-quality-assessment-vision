@@ -18,6 +18,7 @@ path_to_real_dataset_inesc_original = os.path.normpath('images\\inesc_dataset\\o
 path_to_real_dataset_inesc_undistorted = os.path.normpath('images\\inesc_dataset\\undistorted')
 path_to_real_dataset = os.path.normpath('images\\real_images')
 path_to_labels_yolo = os.path.normpath('images\\artificial_dataset\\labels_yolo')
+path_to_detected_circles = os.path.normpath('images\\artificial_dataset\\circles_detected')
 
 
 
@@ -40,12 +41,16 @@ max_radius = 15 * math.ceil(resolution / 30)
 min_radius = math.ceil(resolution * 0.05)
 
 ### accuracy
-distance_threshold = 5
+distance_threshold = 4/500
 diameter_threshold = 5
 
 ### distinguish between overlapped and singular
 circularity_threshold = 0.8
 
+elipse_threshold = 0.90
+# difference between the total area of the contour and the area of the elipse calculated
+elipse_area_threshold = 30
+
 ### border for ROI
-border_expand = 1
+border_expand = 10
 

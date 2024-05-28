@@ -74,6 +74,7 @@ class Accuracy:
             
 
     def write_stats_file(self):
+        error = (self.calculated_stats.no_droplets-self.groundtruth_stats.no_droplets) / self.groundtruth_stats.no_droplets * 100
         statistics_file_path = path_to_statistics_pred_folder + '\\' + self.filename + '.txt'
         with open(statistics_file_path, 'w') as f:
 
@@ -84,10 +85,10 @@ class Accuracy:
             f.write(f"IOU overlapped: {self.iou:.2f}\n\n")
             f.write(f"Dice overlapped: {self.dice_coefficient:.2f}\n\n")
 
-            f.write(f"VMD calculated: {self.calculated_stats.vmd_value:.2f} VMD groundtruth: {self.groundtruth_stats.vmd_value:.2f}\n")
-            f.write(f"RSF calculated: {self.calculated_stats.rsf_value:.5f} RSF groundtruth: {self.groundtruth_stats.rsf_value:.5f}\n")
-            f.write(f"Coverage percentage calculated: {self.calculated_stats.coverage_percentage:.2f} Coverage percentage groundtruth: {self.groundtruth_stats.coverage_percentage:.2f}\n")
-            f.write(f"Number of droplets calculated: {self.calculated_stats.no_droplets:d} Number of droplets groundtruth: {self.groundtruth_stats.no_droplets:d}\n")
+            f.write(f"VMD calculated: {self.calculated_stats.vmd_value:.2f} \t VMD groundtruth: {self.groundtruth_stats.vmd_value:.2f}\n")
+            f.write(f"RSF calculated: {self.calculated_stats.rsf_value:.5f} \t RSF groundtruth: {self.groundtruth_stats.rsf_value:.5f}\n")
+            f.write(f"Coverage percentage calculated: {self.calculated_stats.coverage_percentage:.2f}\t Coverage percentage groundtruth: {self.groundtruth_stats.coverage_percentage:.2f}\n")
+            f.write(f"Number of droplets calculated: {self.calculated_stats.no_droplets:d}\t Number of droplets groundtruth: {self.groundtruth_stats.no_droplets:d}\t Error: {error:2f}")
             
     def write_scores_file(precision_o, recall_o, f1_score_o, iou, dice):
     
@@ -104,10 +105,11 @@ class Accuracy:
     def calculate_iou(self, gt_ov_mask, pred_ov_mask, gt_s_mask, pred_s_mask):
         intersection_ov = np.logical_and(gt_ov_mask, pred_ov_mask) 
         intersection_s = np.logical_and(gt_s_mask, pred_s_mask)
+        
         union_ov = np.logical_or(gt_ov_mask, pred_ov_mask) 
         union_s = np.logical_or(gt_s_mask, pred_s_mask)
 
-        iou = (np.sum(intersection_ov) + np.sum(intersection_s)) / (np.sum(union_ov) + np.sum(union_s))
+        iou = (np.sum(intersection_ov) + np.sum(intersection_s)) / (np.sum(union_ov) + np.sum(union_s))*100
         return iou
 
     def calculate_dice(self, gt_ov_mask, pred_ov_mask, gt_s_mask, pred_s_mask):
@@ -120,11 +122,13 @@ class Accuracy:
     
     def calculate_parameters(self, true_positives:int, true_negatives:int, false_positives:int, false_negatives:int):
         #accuracy = (true_positives + true_negatives) / (true_positives + true_negatives + false_positives + false_negatives) 
-        precision = true_positives / (true_positives + false_positives)
-        recall = true_positives / (true_positives + false_negatives)
-      
-        f1_score = 2 * (precision * recall) / (precision + recall)
-        return precision, recall, f1_score
+        if ((true_positives + false_positives) == 0) or true_positives == 0:  
+            return 0, 0, 0
+        else: 
+            precision = true_positives / (true_positives + false_positives)
+            recall = true_positives / (true_positives + false_negatives)
+            f1_score = 2 * (precision * recall) / (precision + recall)
+            return precision, recall, f1_score
 
 
         # self.true_positives_detect = 0
