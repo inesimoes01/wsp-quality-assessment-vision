@@ -11,6 +11,7 @@ from Droplet import *
 from Statistics import * 
 from Distortion import *
 from Algorithms import *
+from HoughTransform import *
 
 #TODO better overlapping count
 #TODO better coverage
@@ -64,10 +65,12 @@ class Calculated_Statistics:
             if contour_area < cv2.arcLength(contour, True): contour = cv2.convexHull(contour)
 
             # crop ROI of the droplet to analyze
+            #TODO change roi to be just a mask and not a crop of the original image
             roi_img, x_roi, y_roi = self.crop_ROI(contour)
 
             # check the shape to categorize it into 0: single, 1: elipse, 2: overlapped
-            shape = self.check_for_shape(contour, roi_img)
+            shape, no_circles = self.check_for_shape(contour, roi_img)
+
 
             match shape:
                 # circle single
@@ -76,7 +79,6 @@ class Calculated_Statistics:
                     (center_x, center_y), radius = cv2.minEnclosingCircle(contour)
                     diameter = 0.95*(np.sqrt((4*area)/np.pi))**0.91
                     self.droplets_data.append(Droplet(False, int(center_x), int(center_y), float(diameter), int(i), overlapped_ids))
-
                     cv2.circle(self.detected_image, (int(center_x), int(center_y)), int(radius), (255, 255, 255), 2)
                     
                 # elipse
@@ -90,8 +92,8 @@ class Calculated_Statistics:
                                 
                 # circles overlapped
                 case 2:
-                    # detect circles
-                    circles = self.hough_tansform(roi_img, x_roi, y_roi, contour_area)
+                    # detect circles and only return the main ones by clustering
+                    circles = HoughTransform(roi_img, x_roi, y_roi, contour_area, no_circles).circles
             
                     # save each one of the overlapped circles
                     if circles is not None:
@@ -104,7 +106,7 @@ class Calculated_Statistics:
                             j+=1
                             
                             self.droplets_data.append(Droplet(True, int(circle[0] + x_roi), int(circle[1] + y_roi), float(circle[2]*2), int(i), overlapped_ids))
-                            cv2.circle(self.detected_image, (int(circle[0] + x_roi), int(circle[1] + y_roi)), circle[2], (0, 255, 0), 2)
+                            cv2.circle(self.detected_image, (int(circle[0] + x_roi), int(circle[1] + y_roi)), int(circle[2]), (0, 255, 0), 2)
                             i+=1 
             
             if self.create_masks: self.create_mask(shape, contour)  
@@ -122,6 +124,26 @@ class Calculated_Statistics:
         self.calculate_stats()
     
 
+    def find_number_of_circles(self, contour):
+        output_img = np.zeros_like(self.image)
+        hull = cv2.convexHull(contour, returnPoints = False)
+        defects = cv2.convexityDefects(contour,hull)
+        no_convex_points = 0
+        if defects is not None:
+            for i in range(defects.shape[0]):
+                _, _, f, d = defects[i, 0]
+                far = tuple(contour[f][0])
+                depth = d / 256.0 
+
+                if depth > 1:
+                    no_convex_points +=1
+                    cv2.circle(output_img, far, 1, 255, -1)
+        if no_convex_points > 0:
+            return no_convex_points 
+        else:
+            return 1
+
+
     def create_mask(self, category, contour):
         if category == 2:
             cv2.drawContours(self.mask_overlapped, [contour], -1, 255, thickness=cv2.FILLED)
@@ -132,19 +154,22 @@ class Calculated_Statistics:
         # thesholding
         img = copy.copy(self.image)
         img = cv2.GaussianBlur(img, (5, 5), 3, 3)
-        th3 = cv2.adaptiveThreshold(img, 255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 21, 3)
-        # _, otsu_threshold = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-
-        edges = cv2.Canny(th3, 170, 200)
+        th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 3)
+        _, otsu_threshold = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    
+        edges = cv2.Canny(otsu_threshold, 170, 200)
         kernel = np.ones((100, 100),np.uint8)
         cv2.dilate(edges, kernel, iterations=1)
         self.canny = copy.copy(edges)
-
+ 
+    
         self.contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         height, width = self.image.shape
         self.contour_image = np.full((height, width, 3), (0), dtype=np.uint8)
+        
         cv2.drawContours(self.contour_image, self.contours, -1, (255), 1)
+ 
         
         # calculate total area with detected droplets
         self.contour_area = 0
@@ -155,21 +180,25 @@ class Calculated_Statistics:
         self.final_no_droplets = len(self.contours)
     
     def crop_ROI(self, contour):
+        # create aux image
+        output_image = np.zeros_like(self.roi_image)
+        cv2.drawContours(output_image, [contour], -1, 255, 1)
+
         x, y, w, h = cv2.boundingRect(contour)
-        
+
         x_border = max(0, x - border_expand)
         y_border = max(0, y - border_expand)
         w_border = min(self.contour_image.shape[1] - x_border, w + 2 * border_expand)
         h_border = min(self.contour_image.shape[0] - y_border, h + 2 * border_expand)
 
-        object_roi = self.contour_image[y_border:y_border + h_border, x_border:x_border + w_border]
+        object_roi = output_image[y_border:y_border + h_border, x_border:x_border + w_border]
         object_roi = cv2.cvtColor(object_roi, cv2.COLOR_RGB2BGR)
               
         return object_roi, x_border, y_border
 
     def check_for_shape(self, contour, roi_img):
         if len(contour) < 5:
-            return 
+            return -1, 0
         
         # fit elipse to the shape
         ellipse = cv2.fitEllipse(contour)
@@ -181,21 +210,26 @@ class Calculated_Statistics:
         perimeter = cv2.arcLength(contour, True)
         circularity = 4 * np.pi * (area / (perimeter ** 2))
         area_elipse = np.pi * axes[0]/2 * axes[1]/2
-        
+
+        no_circles = self.find_number_of_circles(contour)
+
         # circle
-        if aspect_ratio > elipse_threshold and circularity > circularity_threshold: 
+        if aspect_ratio > elipse_threshold and circularity > circularity_threshold and no_circles == 1: 
             cv2.drawContours(self.separate_image, [contour], -1, (102, 0, 204), 2)
             shape = 0
         # elipse
-        elif area_elipse - area < elipse_area_threshold and circularity < circularity_threshold:
+        elif area_elipse - area < elipse_area_threshold and circularity < circularity_threshold and no_circles == 1:
             cv2.drawContours(self.separate_image, [contour], -1, (204, 51, 153), 2)
             shape = 1
-        # overlapped
+        # elipse second chance
+        elif no_circles == 1:
+            cv2.drawContours(self.separate_image, [contour], -1, (204, 51, 153), 2)
+            shape = 1
         else:
             cv2.drawContours(self.separate_image, [contour], -1, (44, 156, 63), 2)
             shape = 2
 
-        return shape
+        return shape, no_circles
 
     def calculate_stats(self):
         droplet_diameter = [d.diameter for d in self.droplets_data]
@@ -222,123 +256,25 @@ class Calculated_Statistics:
         edge_points = [point[0] for contour in contours for point in contour]
         return edges
 
-    def hough_tansform(self, edges, x_roi, y_roi, area):
-    
-        gray = cv2.cvtColor(edges, cv2.COLOR_BGR2GRAY)
-
-        circles = cv2.HoughCircles(gray, 
-                                   cv2.HOUGH_GRADIENT, 
-                                   dp=1,                # Inverse ratio of accumulator resolution to image resolution. Higher values mean lower resolution/precision but potentially faster processing.
-                                   minDist=1,           # Minimum distance between centers of detected circles.
-                                   param1=200,          # Higher threshold of Canny edge detector.
-                                   param2=10,           # Accumulator threshold for circle centers at the detection stage. Smaller values may lead to more false detections.
-                                   minRadius=1,         # Minimum radius of circles to be detected.
-                                   maxRadius=0)         # Maximum radius of circles to be detected. If negative, it defaults to the maximum image dimension.
+   
         
-        edges_final = copy.copy(edges)
-
-        if circles is not None:
-            circles = np.uint16(np.around(circles))
-            circles = circles[0,:]
-            i_count = 0
-            j_count = 0
-
-            # sort them so the smallest circles are less likely to be deleted 
-            circles = sorted(circles, key=lambda x: x[2])
-
-            for circle in circles:
-                cv2.circle(edges, (int(circle[0]), int(circle[1])), int(circle[2]), (204, 51, 153), 1)
-                #cv2.circle(self.detected_image, (int(circle[0] + x_roi), int(circle[1] + y_roi)), circle[2], (204, 51, 153), 2)
-            # plt.imshow(edges)
-            # plt.show()
-            while(len(circles) > 1 and i_count < len(circles) - 1 ):
-                circle1 = circles[i_count]
-                j_count = 0
-
-                while(len(circles) > 1 and j_count < len(circles)): 
-                    if (j_count != i_count):
-                        circle2 = circles[j_count]
-                        r1 = int(circle1[2])
-                        r2 = int(circle2[2])
-                        x1 = int(circle1[0])
-                        x2 = int(circle2[0])
-                        y1 = int(circle1[1])
-                        y2 = int(circle2[1])
-
-                        # calculate distance between centers
-                        dist = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)   
-                        distance_threshold_related_to_area = distance_threshold * area  
-
-                        # if dist is bigger than the sum of the radius, circles dont overlap
-                        if dist >= r1 + r2:
-                            overlapping_area = 0
-                            j_count += 1
-                        
-                        # if one circle is almost completely within the other
-                        elif dist <= r2 or dist <= r1 or (dist <= distance_threshold_related_to_area):
-                            overlapping_area = math.pi * min(r1, r2) ** 2
-
-                            iou1, iou2 = self.check_iou(x1, x2, y1, y2, r1, r2, edges, gray)
-
-                            if iou1 >= iou2:
-                                circles = np.delete(np.array(circles), j_count, axis = 0)
-                            elif iou1 < iou2:
-                                circles = np.delete(np.array(circles), i_count, axis = 0)
-
-                        # calculate overlapping area
-                        else: 
-                            #TODO change this to be masks and overlap 
-                            part1 = r1**2 * math.acos((dist**2 + r1**2 - r2**2) / (2 * dist * r1))
-                            part2 = r2**2 * math.acos((dist**2 + r2**2 - r1**2) / (2 * dist * r2))
-                            part3 = 0.5 * math.sqrt((-dist + r1 + r2) * (dist + r1 - r2) * (dist - r1 + r2) * (dist + r1 + r2))
-                            overlapping_area = part1 + part2 + part3
-
-                            # if circles are too overlapped they loose meaning
-                            if overlapping_area > area * 0.60:
-                                circles = np.delete(np.array(circles), j_count, axis = 0)
-                            else: j_count += 1
-                        
-                        if i_count >= len(circles): 
-                            break
-                    
-                    else: j_count += 1
-                
-                i_count += 1
-
             
-            for circle in circles:
-                cv2.circle(edges_final, (int(circle[0]), int(circle[1])), int(circle[2]), (204, 51, 153), 1)
+                    # if one circle is almost completely within the other, remove the outside one
+                    #elif dist <= r2 or dist <= r1:
+                    # elif dist + min(r1, r2) <= max(r1, r2) or dist <= min(r1, r2):
+                    #     if (r2 <= r1):
+                    #         circles = np.delete(np.array(circles), i_count, axis = 0)
+                    #     else: 
+                    #         circles = np.delete(np.array(circles), j_count, axis = 0)
+                               # part1 = r1**2 * math.acos((dist**2 + r1**2 - r2**2) / (2 * dist * r1))
+                        # part2 = r2**2 * math.acos((dist**2 + r2**2 - r1**2) / (2 * dist * r2))
+                        # part3 = 0.5 * math.sqrt((-dist + r1 + r2) * (dist + r1 - r2) * (dist - r1 + r2) * (dist + r1 + r2))
+                        # overlapping_area = part1 + part2 + part3
 
-
-            # fig, axes = plt.subplots(1, 2, figsize=(10, 5))
-            # axes[0].imshow(edges)
-            # axes[0].axis('off')  # Hide the axis
-            # axes[1].imshow(edges_final)
-            # axes[1].axis('off') 
-
-
-            return circles
-            
-        
-        return circles
-    
-    def check_iou(self, x1, x2, y1, y2, r1, r2, edges, gray):
-        mask_check1 = np.zeros_like(edges)
-        mask_check2 = np.zeros_like(edges)
-        mask_check_original = np.zeros_like(edges)
-
-        original_contour, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        for contour in original_contour:
-            cv2.drawContours(mask_check_original, [contour], -1, 255, thickness=cv2.FILLED)
-        
-        # check which circle hits more pixels from the original image
-        cv2.circle(mask_check1, (x1, y1), r1, 255, thickness=cv2.FILLED)
-        cv2.circle(mask_check2, (x2, y2), r2, 255, thickness=cv2.FILLED)
-        
-        iou1 = np.sum(np.logical_and(mask_check1, mask_check_original)) / np.sum(np.logical_or(mask_check1, mask_check_original))
-        iou2 = np.sum(np.logical_and(mask_check2, mask_check_original)) / np.sum(np.logical_or(mask_check2, mask_check_original))
-        
-        return iou1, iou2
+                        # # if circles are too overlapped they loose meaning
+                        # if overlapping_area > area * 0.60:
+                        #     circles = np.delete(np.array(circles), j_count, axis = 0)
+                        # else: j_count += 1
 
 
 #  for i, circle in enumerate(circles[0,:]):

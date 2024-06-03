@@ -1,5 +1,12 @@
 import os
 import cv2
+import sys
+
+sys.path.insert(0, 'src/segmentation')
+sys.path.insert(0, 'src/common')
+
+from Util import * 
+
 
 def mask_to_label(input_dir , output_dir, class_id):
     for j in os.listdir(input_dir):
@@ -40,12 +47,16 @@ def mask_to_label(input_dir , output_dir, class_id):
             
 
 
-input_dir = 'images/artificial_dataset/masks/gt/overlapped'
-output_dir = 'images/artificial_dataset/masks/yolo_label/final'
 
-mask_to_label(input_dir , output_dir, 1)
 
-input_dir = 'images/artificial_dataset/masks/gt/single'
-output_dir = 'images/artificial_dataset/masks/yolo_label/final'
+input_dir = 'images\\dataset_rectangle\\masks\\single'
+output_dir = 'images\\dataset_rectangle\\yolo'
+
+delete_folder_contents(output_dir)
 
 mask_to_label(input_dir , output_dir, 0)
+
+input_dir = 'images\\dataset_rectangle\\masks\\overlapped'
+output_dir = 'images\\dataset_rectangle\\yolo'
+
+mask_to_label(input_dir , output_dir, 1)

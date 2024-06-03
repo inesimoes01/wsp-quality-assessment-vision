@@ -42,7 +42,6 @@ class Distortion:
             print("Could not find the paper in image " + filename)
             self.noPaper = True
             
-
         # order corners
         approx = sorted(approx, key=lambda x: x[0][0] + x[0][1])
         top_left = approx[0][0]
