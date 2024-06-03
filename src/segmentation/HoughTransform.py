@@ -13,12 +13,12 @@ from Variables import *
 show_plots = False
 
 class HoughTransform:
-    def __init__(self, edges, x_roi, y_roi, area, no_circles):
-        self.circles = self.hough_tansform(edges, x_roi, y_roi, area, no_circles)
+    def __init__(self, roi, no_circles, contour, area):
+        self.circles = self.hough_tansform(roi, no_circles, contour, area)
 
-    def hough_tansform(self, edges, x_roi, y_roi, area, no_circles):
+    def hough_tansform(self, roi, no_circles, contour, area):
     
-        gray = cv2.cvtColor(edges, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
 
         circles = cv2.HoughCircles(gray, 
                                    cv2.HOUGH_GRADIENT, 
@@ -29,37 +29,26 @@ class HoughTransform:
                                    minRadius=1,         # Minimum radius of circles to be detected.
                                    maxRadius=0)         # Maximum radius of circles to be detected. If negative, it defaults to the maximum image dimension.
         
-        edges_final = copy.copy(edges)
-     
+        roi_final1 = copy.copy(roi)
+        roi_final2 = copy.copy(roi)
 
         if circles is not None:
             circles = np.uint16(np.around(circles))
             circles = circles[0,:]
 
-            # sort them so the smallest circles are less likely to be deleted ????
-            circles = sorted(circles, key=lambda x: x[2], reverse=False)
-
-
-            # if (show_plots):
-            #for circle in circles:
-                #cv2.circle(edges, (int(circle[0]), int(circle[1])), int(circle[2]), (204, 51, 153), 1)
-                #cv2.circle(self.detected_image, (int(circle[0] + x_roi), int(circle[1] + y_roi)), circle[2], (204, 51, 153), 2)
-            # plt.imshow(edges)
-                # plt.show()
-
-            # kmeans approximation
-            circles = self.k_means_approximation(circles, edges_final, no_circles)
-
+            # kmeans approximation with the final number of circles
+            circles = self.k_means_approximation(circles, roi_final1, no_circles)
 
         return circles
 
-    def k_means_approximation(self, circles, edges, no_circles):
+            
+    def k_means_approximation(self, circles, roi, no_circles):
         results = []
 
         if (len(circles) < no_circles): 
             return circles
 
-        edges_aux = copy.copy(edges)
+        roi_aux = copy.copy(roi)
         model = KMeans(n_clusters=no_circles, random_state=0, n_init='auto').fit(circles)
         
         for circle in model.cluster_centers_:
@@ -67,7 +56,7 @@ class HoughTransform:
 
         return results
 
-    def remove_bad_circles(self, circles, area, edges, gray):
+    def remove_bad_circles(self, circles, area, roi, gray):
         i_count = 0
         j_count = 0
         while(len(circles) > 1 and i_count < len(circles) - 2):
@@ -84,14 +73,14 @@ class HoughTransform:
                     y1 = int(circle1[1])
                     y2 = int(circle2[1])
 
-                    no_pixels1 = self.calculate_no_pixels(x1, y1, r1, edges)
-                    no_pixels2 = self.calculate_no_pixels(x2, y2, r2, edges)
+                    no_pixels1 = self.calculate_no_pixels(x1, y1, r1, roi)
+                    no_pixels2 = self.calculate_no_pixels(x2, y2, r2, roi)
 
                     # calculate distance between centers
                     dist = math.sqrt((x1 - x2)**2 + (y1 - y2)**2)   
                     distance_threshold_related_to_area = distance_threshold * area  
 
-                    overlapping_pixels, total_pixels = self.check_overlapped(x1, x2, y1, y2, r1, r2, edges, gray) 
+                    overlapping_pixels, total_pixels = self.check_overlapped(x1, x2, y1, y2, r1, r2, roi, gray) 
 
                     # if dist is bigger than the sum of the radius, circles dont overlap
                     if dist >= r1 + r2:
@@ -102,7 +91,7 @@ class HoughTransform:
                     #     circles = np.delete(np.array(circles), j_count, axis = 0)
 
                     elif overlapping_pixels > min(no_pixels1, no_pixels2) * 0.90:
-                        iou1, iou2 = self.check_iou(x1, x2, y1, y2, r1, r2, edges, gray)
+                        iou1, iou2 = self.check_iou(x1, x2, y1, y2, r1, r2, roi, gray)
 
                         if iou1 >= iou2:
                             circles = np.delete(np.array(circles), j_count, axis = 0)
@@ -115,7 +104,7 @@ class HoughTransform:
 
                     # distnce between centers is small
                     elif (dist <= distance_threshold_related_to_area) or dist <= min(r1, r2) + 2:
-                        iou1, iou2 = self.check_iou(x1, x2, y1, y2, r1, r2, edges, gray)
+                        iou1, iou2 = self.check_iou(x1, x2, y1, y2, r1, r2, roi, gray)
 
                         if iou1 >= iou2:
                             circles = np.delete(np.array(circles), j_count, axis = 0)
@@ -125,7 +114,7 @@ class HoughTransform:
                     # calculate overlapping area
                     else:
                         #TODO change this to be masks and overlap 
-                        overlapping_pixels, total_pixels = self.check_overlapped(x1, x2, y1, y2, r1, r2, edges, gray) 
+                        overlapping_pixels, total_pixels = self.check_overlapped(x1, x2, y1, y2, r1, r2, roi, gray) 
                         if overlapping_pixels > total_pixels * 0.40:
                             circles = np.delete(np.array(circles), j_count, axis = 0)
                         j_count += 1
@@ -146,10 +135,10 @@ class HoughTransform:
 
         return circles
     
-    def check_iou(self, x1, x2, y1, y2, r1, r2, edges, gray):
-        mask_check1 = np.zeros_like(edges)
-        mask_check2 = np.zeros_like(edges)
-        mask_check_original = np.zeros_like(edges)
+    def check_iou(self, x1, x2, y1, y2, r1, r2, roi, gray):
+        mask_check1 = np.zeros_like(roi)
+        mask_check2 = np.zeros_like(roi)
+        mask_check_original = np.zeros_like(roi)
 
         original_contour, _ = cv2.findContours(gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for contour in original_contour:
@@ -164,11 +153,11 @@ class HoughTransform:
         
         return iou1, iou2
     
-    def check_overlapped(self, x1, x2, y1, y2, r1, r2, edges, gray):
+    def check_overlapped(self, x1, x2, y1, y2, r1, r2, roi, gray):
         # create mask1 and mask2
-        mask_check1 = np.zeros_like(edges)
-        mask_check2 = np.zeros_like(edges)
-        total_mask = np.zeros_like(edges)        
+        mask_check1 = np.zeros_like(roi)
+        mask_check2 = np.zeros_like(roi)
+        total_mask = np.zeros_like(roi)        
         cv2.circle(mask_check1, (x1, y1), r1, 255, thickness=cv2.FILLED)
         cv2.circle(mask_check2, (x2, y2), r2, 255, thickness=cv2.FILLED)
         cv2.circle(total_mask, (x1, y1), r1, 255, thickness=cv2.FILLED)
@@ -179,8 +168,8 @@ class HoughTransform:
     def safe_acos(self, value):
         # Ensure value is within the valid range for acos
         return math.acos(min(1, max(-1, value)))
-        # mask_check1 = np.zeros_like(edges)
-        # mask_check2 = np.zeros_like(edges)
+        # mask_check1 = np.zeros_like(roi)
+        # mask_check2 = np.zeros_like(roi)
         
         # # check which circle hits more pixels from the original image
         # cv2.circle(mask_check1, (x1, y1), r1, 255, thickness=cv2.FILLED)
@@ -189,15 +178,15 @@ class HoughTransform:
         # iou = np.sum(np.logical_and(mask_check1, mask_check2)) / np.sum(np.logical_or(mask_check1, mask_check2))
         
         # return iou     
-    def calculate_no_pixels(self, x, y, r, edges):
-        mask = np.zeros_like(edges)
+    def calculate_no_pixels(self, x, y, r, roi):
+        mask = np.zeros_like(roi)
         cv2.circle(mask, (x, y), r, 255, thickness=cv2.FILLED)
         return np.sum(mask == 255)
 
-            # good_circles1 = self.remove_bad_circles(circles, area, edges, gray)
+            # good_circles1 = self.remove_bad_circles(circles, area, roi, gray)
 
             # for circle in good_circles1:
-            #     cv2.circle(edges_final, (int(circle[0]), int(circle[1])), int(circle[2]), (204, 51, 153), 1)
+            #     cv2.circle(roi_final, (int(circle[0]), int(circle[1])), int(circle[2]), (204, 51, 153), 1)
 
             # if (show_plots):
             #     fig, axes = plt.subplots(1, 2, figsize=(10, 5))

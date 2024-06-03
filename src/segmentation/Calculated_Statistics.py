@@ -93,7 +93,7 @@ class Calculated_Statistics:
                 # circles overlapped
                 case 2:
                     # detect circles and only return the main ones by clustering
-                    circles = HoughTransform(roi_img, x_roi, y_roi, contour_area, no_circles).circles
+                    circles = HoughTransform(roi_img, no_circles, contour, area).circles
             
                     # save each one of the overlapped circles
                     if circles is not None:
@@ -127,22 +127,33 @@ class Calculated_Statistics:
     def find_number_of_circles(self, contour):
         output_img = np.zeros_like(self.image)
         hull = cv2.convexHull(contour, returnPoints = False)
-        defects = cv2.convexityDefects(contour,hull)
-        no_convex_points = 0
-        if defects is not None:
-            for i in range(defects.shape[0]):
-                _, _, f, d = defects[i, 0]
-                far = tuple(contour[f][0])
-                depth = d / 256.0 
 
-                if depth > 1:
-                    no_convex_points +=1
-                    cv2.circle(output_img, far, 1, 255, -1)
-        if no_convex_points > 0:
-            return no_convex_points 
+        # check for self intersections
+        self_intersections = False
+        for i in range(len(contour)):
+            for j in range(i + 2, len(contour) - (1 if i == 0 else 0)):
+                if cv2.norm(contour[i] - contour[j]) < 1e-5:
+                    self_intersections = True
+
+        if (self_intersections is False):
+            defects = cv2.convexityDefects(contour,hull)
+            no_convex_points = 0
+            if defects is not None:
+                for i in range(defects.shape[0]):
+                    _, _, f, d = defects[i, 0]
+                    far = tuple(contour[f][0])
+                    depth = d / 256.0 
+
+                    if depth > 1:
+                        no_convex_points +=1
+                        cv2.circle(output_img, far, 1, 255, -1)
+
+            if no_convex_points > 0:
+                return no_convex_points 
+            else:
+                return 1
         else:
-            return 1
-
+            return -1
 
     def create_mask(self, category, contour):
         if category == 2:
@@ -162,7 +173,6 @@ class Calculated_Statistics:
         cv2.dilate(edges, kernel, iterations=1)
         self.canny = copy.copy(edges)
  
-    
         self.contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         height, width = self.image.shape
@@ -170,7 +180,6 @@ class Calculated_Statistics:
         
         cv2.drawContours(self.contour_image, self.contours, -1, (255), 1)
  
-        
         # calculate total area with detected droplets
         self.contour_area = 0
         for contour in self.contours:
@@ -214,7 +223,11 @@ class Calculated_Statistics:
         no_circles = self.find_number_of_circles(contour)
 
         # circle
-        if aspect_ratio > elipse_threshold and circularity > circularity_threshold and no_circles == 1: 
+        if no_circles == -1:
+            cv2.drawContours(self.separate_image, [contour], -1, (102, 0, 204), 2)
+            shape = 0
+
+        elif aspect_ratio > elipse_threshold and circularity > circularity_threshold and no_circles == 1: 
             cv2.drawContours(self.separate_image, [contour], -1, (102, 0, 204), 2)
             shape = 0
         # elipse
