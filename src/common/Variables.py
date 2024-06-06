@@ -40,6 +40,8 @@ resolution = int(600*0.039)
 max_radius = 15 * math.ceil(resolution / 30)
 min_radius = math.ceil(resolution * 0.05)
 
+accuracy_distance_threshold = 5
+
 ### accuracy
 distance_threshold = 4/500
 diameter_threshold = 5

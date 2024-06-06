@@ -19,33 +19,26 @@ from HoughTransform import *
 #TODO quando uso
 
 class Calculated_Statistics:
-    """
-    Calculates the statistics of one image of a WSP 
-
-    Attributes:
-        image (MatLike): original image
-        filename (str): name of the image to save the corresponding in between steps of the algorithm
-        save_photo (bool): bool variable that indicates if the intermediate steps results should be saved
-    """
     def __init__(self, image, color_image, filename, save_images:bool, create_masks:bool):
         self.save_images = save_images
         self.create_masks = create_masks
-        if save_images:
-            self.path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
-            self.path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
-            create_folders(self.path_to_save_contours_overlapped)
-            create_folders(self.path_to_save_contours_single)
+        # if save_images:
+        #     self.path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
+        #     self.path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
+        #     create_folders(self.path_to_save_contours_overlapped)
+        #     create_folders(self.path_to_save_contours_single)
 
+        # save each step in a different image
+        self.roi_image = copy.copy(image)
+        self.contour_image = copy.copy(color_image)
+        self.detected_image = copy.copy(color_image)
+        self.hull_image = copy.copy(color_image)
+        self.separate_image = copy.copy(color_image)
         # get objects from image
         self.image = copy.copy(image)
         self.get_contours()
 
-        # save each step in a different image
-        self.roi_image = copy.copy(image)
-        self.enumerate_image = copy.copy(image)
-        self.diameter_image = copy.copy(image)
-        self.separate_image = copy.copy(image)
-        self.detected_image = copy.copy(color_image)
+
 
         # create masks
         if self.create_masks:
@@ -53,24 +46,59 @@ class Calculated_Statistics:
             self.mask_overlapped = copy.copy(mask)
             self.mask_single = copy.copy(mask)
 
-        # calculate diameter + save each contour   
+        # initialize variables
         self.droplets_data:list[Droplet]=[]
+        self.contour_area = 0
+        i=0
+        
+        # sort contours to catch the biggest ones first and remove the smaller ones inside before
+        self.contours = sorted(self.contours, key=cv2.contourArea, reverse=True)
 
-        for i, contour in enumerate(self.contours): 
-            overlapped_ids = []
+        self.ignore_ids = []
+
+        while(i < len(self.contours)):
+            if i in ignore_ids: 
+                i += 1
+                continue
+
+            contour = self.contours[i]
             contour_area = cv2.contourArea(contour)
-            
-            # eliminate small contours and try to close the contours
-            if len(contour) < 5: continue
-            if contour_area < cv2.arcLength(contour, True): contour = cv2.convexHull(contour)
+            self.contour_area += contour_area
+            overlapped_ids = []
 
-            # crop ROI of the droplet to analyze
-            #TODO change roi to be just a mask and not a crop of the original image
-            roi_img, x_roi, y_roi = self.crop_ROI(contour)
+            # treat small contours like a perfect circle
+            if len(contour) < 5: 
+                area = cv2.contourArea(contour)
+                (center_x, center_y), radius = cv2.minEnclosingCircle(contour)
+                diameter = 0.95*(np.sqrt((4*area)/np.pi))**0.91
+                self.droplets_data.append(Droplet(False, int(center_x), int(center_y), float(diameter), int(i), overlapped_ids))
+                cv2.circle(self.detected_image, (int(center_x), int(center_y)), int(radius), (255, 255, 255), 2)
+                i += 1
+                continue
+           
+            # when contour is not closed there is a chance of wrongly detected contours inside
+            if contour_area < cv2.arcLength(contour, True): 
+                self.remove_inside_contours(contour)
+
+            if i in self.ignore_ids: 
+                i += 1
+                continue             
+                
+            # treat small contours like a perfect circle
+            if len(contour) < 5: 
+                area = cv2.contourArea(contour)
+                (center_x, center_y), radius = cv2.minEnclosingCircle(contour)
+                diameter = 0.95*(np.sqrt((4*area)/np.pi))**0.91
+                self.droplets_data.append(Droplet(False, int(center_x), int(center_y), float(diameter), int(i), overlapped_ids))
+                cv2.circle(self.detected_image, (int(center_x), int(center_y)), int(radius), (255, 255, 255), 2)
+                i += 1
+                continue
+            
+            # get ROI of the contour to analyze
+            roi_mask, roi_img, x_roi, y_roi = self.crop_ROI(contour)
 
             # check the shape to categorize it into 0: single, 1: elipse, 2: overlapped
-            shape, no_circles = self.check_for_shape(contour, roi_img)
-
+            shape, no_circles = self.check_for_shape(contour, roi_img, roi_mask)
 
             match shape:
                 # circle single
@@ -93,25 +121,24 @@ class Calculated_Statistics:
                 # circles overlapped
                 case 2:
                     # detect circles and only return the main ones by clustering
-                    circles = HoughTransform(roi_img, no_circles, contour, area).circles
+                    circles = HoughTransform(roi_mask, no_circles, contour, contour_area).circles
             
                     # save each one of the overlapped circles
                     if circles is not None:
-                        circle_ids = list(range(i, i + len(circles) + 1))
+                        circle_ids = list(range(i, i + len(circles)))
                         j = 0
                         
                         for circle in circles:
                             overlapped_ids = []
                             overlapped_ids = circle_ids[:j] + circle_ids[j+1:]
-                            j+=1
                             
-                            self.droplets_data.append(Droplet(True, int(circle[0] + x_roi), int(circle[1] + y_roi), float(circle[2]*2), int(i), overlapped_ids))
+                            self.droplets_data.append(Droplet(True, int(circle[0] + x_roi), int(circle[1] + y_roi), float(circle[2]*2), int(i + j), overlapped_ids))
                             cv2.circle(self.detected_image, (int(circle[0] + x_roi), int(circle[1] + y_roi)), int(circle[2]), (0, 255, 0), 2)
-                            i+=1 
+                            j+=1
             
             if self.create_masks: self.create_mask(shape, contour)  
-    
-             
+            cv2.drawContours(self.contour_image, [contour], -1, (204, 51, 153), 1)
+
             i += 1
 
         # create the masks and calculate values for statistics
@@ -120,23 +147,45 @@ class Calculated_Statistics:
             cv2.imwrite(os.path.join(path_to_masks_single_pred_folder, filename + '.png'), self.mask_single)
 
         cv2.imwrite(os.path.join(path_to_detected_circles, filename + ".png"), self.detected_image)
+        cv2.imwrite(os.path.join(path_to_detected_circles, filename + "_countour.png"), self.contour_image)
+        cv2.imwrite(os.path.join(path_to_detected_circles, filename + "_canny.png"), self.canny) 
 
         self.calculate_stats()
-    
 
-    def find_number_of_circles(self, contour):
+    def remove_inside_contours(self, contour, index):
+        contour = cv2.convexHull(contour)
+        count = 0
+
+        (x2,y2), radius2 = cv2.minEnclosingCircle(contour)
+        
+        for contour_inside in self.contours:
+            if count != index:
+                for pt in contour_inside:
+                    point = tuple(pt[0])
+                    point = tuple([int(round(point[0]) ), int(round( point[1] )) ])
+                    result = cv2.pointPolygonTest(contour, point, False)
+                    if result >= 0:
+                        (x1,y1),radius1 = cv2.minEnclosingCircle(contour_inside)
+                        if radius1 > radius2:
+                            self.ignore_ids.append(index)
+                        else: self.ignore_ids.append(count)
+                        break
+                
+
+            count += 1   
+    
+    def is_point_in_contour(self, contour, point):
+        result = cv2.pointPolygonTest(contour, point, False)
+        return result >= 0
+
+    def find_number_of_circles(self, contour, roi_image):
         output_img = np.zeros_like(self.image)
         hull = cv2.convexHull(contour, returnPoints = False)
+        hull_points = cv2.convexHull(contour)
 
-        # check for self intersections
-        self_intersections = False
-        for i in range(len(contour)):
-            for j in range(i + 2, len(contour) - (1 if i == 0 else 0)):
-                if cv2.norm(contour[i] - contour[j]) < 1e-5:
-                    self_intersections = True
-
-        if (self_intersections is False):
-            defects = cv2.convexityDefects(contour,hull)
+        # if (self_intersections is False):
+        try:
+            defects = cv2.convexityDefects(contour, hull)
             no_convex_points = 0
             if defects is not None:
                 for i in range(defects.shape[0]):
@@ -152,9 +201,16 @@ class Calculated_Statistics:
                 return no_convex_points 
             else:
                 return 1
-        else:
+        except Exception as e:
+            print(e)
+           
+       
+            # plt.imshow(roi_image)
+            # plt.show()
+
             return -1
 
+   
     def create_mask(self, category, contour):
         if category == 2:
             cv2.drawContours(self.mask_overlapped, [contour], -1, 255, thickness=cv2.FILLED)
@@ -165,25 +221,27 @@ class Calculated_Statistics:
         # thesholding
         img = copy.copy(self.image)
         img = cv2.GaussianBlur(img, (5, 5), 3, 3)
-        th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 3)
-        _, otsu_threshold = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-        edges = cv2.Canny(otsu_threshold, 170, 200)
-        kernel = np.ones((100, 100),np.uint8)
-        cv2.dilate(edges, kernel, iterations=1)
+
+        # th2 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 3)
+        # th3 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 3)
+        # th4 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 51, 3)
+        th5 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 7, 1)
+        #_, otsu_threshold = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # plt.imshow(th5)
+        # plt.show()
+        edges = cv2.Canny(th5, 170, 200)
+        kernel = np.ones((5,5),np.uint8)
+        #edges = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
+        # edges = cv2.dilate(edges, kernel)
+        # edges = cv2.erode(edges, kernel)
+        #plotFourImages(th2, edges, th4, th5)
+
         self.canny = copy.copy(edges)
- 
         self.contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         height, width = self.image.shape
-        self.contour_image = np.full((height, width, 3), (0), dtype=np.uint8)
-        
-        cv2.drawContours(self.contour_image, self.contours, -1, (255), 1)
- 
-        # calculate total area with detected droplets
-        self.contour_area = 0
-        for contour in self.contours:
-            self.contour_area += cv2.contourArea(contour)
+        #self.contour_image = np.full((height, width, 3), (0), dtype=np.uint8)
+        cv2.drawContours(self.contour_image, self.contours, -1,(255, 255, 255), 1)
 
         # save number of contours
         self.final_no_droplets = len(self.contours)
@@ -200,15 +258,13 @@ class Calculated_Statistics:
         w_border = min(self.contour_image.shape[1] - x_border, w + 2 * border_expand)
         h_border = min(self.contour_image.shape[0] - y_border, h + 2 * border_expand)
 
-        object_roi = output_image[y_border:y_border + h_border, x_border:x_border + w_border]
-        object_roi = cv2.cvtColor(object_roi, cv2.COLOR_RGB2BGR)
+        object_roi_mask = output_image[y_border:y_border + h_border, x_border:x_border + w_border]
+        object_roi_img = self.roi_image[y_border:y_border + h_border, x_border:x_border + w_border]
+        object_roi_img = cv2.cvtColor(object_roi_img, cv2.COLOR_RGB2BGR)
               
-        return object_roi, x_border, y_border
+        return object_roi_mask, object_roi_img, x_border, y_border
 
-    def check_for_shape(self, contour, roi_img):
-        if len(contour) < 5:
-            return -1, 0
-        
+    def check_for_shape(self, contour, roi_img, roi_mask):
         # fit elipse to the shape
         ellipse = cv2.fitEllipse(contour)
         (_, axes, _) = ellipse
@@ -220,10 +276,12 @@ class Calculated_Statistics:
         circularity = 4 * np.pi * (area / (perimeter ** 2))
         area_elipse = np.pi * axes[0]/2 * axes[1]/2
 
-        no_circles = self.find_number_of_circles(contour)
+
+        no_circles = self.find_number_of_circles(contour, roi_img)
 
         # circle
         if no_circles == -1:
+    
             cv2.drawContours(self.separate_image, [contour], -1, (102, 0, 204), 2)
             shape = 0
 
@@ -269,7 +327,17 @@ class Calculated_Statistics:
         edge_points = [point[0] for contour in contours for point in contour]
         return edges
 
-   
+         # check for self intersections
+        # self_intersections = False
+        # for i in range(len(contour)):
+        #     for j in range(i + 2, len(contour) - (1 if i == 0 else 0)):
+        #         if cv2.norm(contour[i] - contour[j]) < 1e-5:
+        #             cv2.drawContours()
+        #             cv2.drawContours(output_img, [hull_points], -1, 255, 1)
+        #             plt.imshow(output_img)
+        #             plt.show()
+
+        #             self_intersections = True  
         
             
                     # if one circle is almost completely within the other, remove the outside one

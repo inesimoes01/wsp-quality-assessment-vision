@@ -18,9 +18,9 @@ class HoughTransform:
 
     def hough_tansform(self, roi, no_circles, contour, area):
     
-        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        #gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
 
-        circles = cv2.HoughCircles(gray, 
+        circles = cv2.HoughCircles(roi, 
                                    cv2.HOUGH_GRADIENT, 
                                    dp=1,                # Inverse ratio of accumulator resolution to image resolution. Higher values mean lower resolution/precision but potentially faster processing.
                                    minDist=1,           # Minimum distance between centers of detected circles.
@@ -44,6 +44,8 @@ class HoughTransform:
             
     def k_means_approximation(self, circles, roi, no_circles):
         results = []
+
+        circles = np.unique(circles, axis=0)
 
         if (len(circles) < no_circles): 
             return circles

@@ -47,13 +47,13 @@ if isArtificialDataset:
        
         out_image = copy.copy(in_image)
 
-        path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
-        path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
-        create_folders(path_to_save_contours_overlapped)
-        create_folders(path_to_save_contours_single)
+        # path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
+        # path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
+        # create_folders(path_to_save_contours_overlapped)
+        # create_folders(path_to_save_contours_single)
         
         # calculate statistics
-        calculated:Calculated_Statistics = Calculated_Statistics(out_image, in_image_colors, filename, path_to_save_contours_overlapped, path_to_save_contours_single)
+        calculated:Calculated_Statistics = Calculated_Statistics(out_image, in_image_colors, filename, False, True)
         droplets_calculated_dict = {droplet.id: droplet for droplet in calculated.droplets_data}
         stats_calculated:Statistics = calculated.stats
 
@@ -89,16 +89,17 @@ else:
         parts = file.split(".")
         filename = parts[0]
 
-
         # generate undistorted image
         try:    
-            image = cv2.imread(path_to_real_dataset_inesc_original + '\\' + file, cv2.IMREAD_GRAYSCALE)
+            image = cv2.imread(os.path.join(path_to_real_dataset_inesc_original, file), cv2.IMREAD_GRAYSCALE)
+            image_color = cv2.imread(os.path.join(path_to_real_dataset_inesc_original, file))
             dist = Distortion(image, filename, save_photo=True)
             if dist.noPaper: continue
 
-            undistorted_image = cv2.imread(path_to_real_dataset_inesc_undistorted + '\\' + filename + '.png', cv2.IMREAD_GRAYSCALE)
+            undistorted_image = cv2.imread(os.path.join(path_to_real_dataset_inesc_undistorted, filename + '.png'), cv2.IMREAD_GRAYSCALE)
+            undistorted_image_color = cv2.imread(os.path.join(path_to_real_dataset_inesc_undistorted, filename + '.png'))
             
-            calc_stats = Calculated_Statistics(undistorted_image, filename, save_images=True)
+            calc_stats = Calculated_Statistics(undistorted_image, undistorted_image_color, filename, save_images=True, create_masks=True)
 
             calc_stats.stats.save_stats_file(filename)
 

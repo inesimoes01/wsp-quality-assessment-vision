@@ -42,7 +42,7 @@ class Accuracy:
        
                 distance = np.sqrt((pred_stat.center_x - gt_stat.center_x)**2 + (pred_stat.center_y - gt_stat.center_y)**2 )
                 #print(gt_stat.id, ' ', pred_stat.id, ' ',distance, ' ', abs(pred_stat.diameter - gt_stat.diameter))
-                if distance < distance_threshold and abs(pred_stat.diameter - gt_stat.diameter) < diameter_threshold:
+                if distance < accuracy_distance_threshold and abs(pred_stat.diameter - gt_stat.diameter) < diameter_threshold:
                     #print(gt_stat.id, ' ', pred_stat.id, ' ',distance, ' ', abs(pred_stat.diameter - gt_stat.diameter))
                     self.save_pairs_id.append((gt_stat.id, pred_stat.id))
                     
