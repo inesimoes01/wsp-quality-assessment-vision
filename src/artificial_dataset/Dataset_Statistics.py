@@ -33,4 +33,3 @@ class Dataset_Statistics():
                 self.drop_diameter.append(row["Diameter"]) 
                 #if (row["isElipse"] == "False"):
     
-Dataset_Statistics()

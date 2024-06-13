@@ -25,7 +25,7 @@ delete_folder_contents(path_to_masks_overlapped_pred_folder)
 delete_folder_contents(path_to_detected_circles)
 
 
-isArtificialDataset = True
+isArtificialDataset = False
 
 TP_overlapped = 0
 FP_overlapped = 0
@@ -53,7 +53,7 @@ if isArtificialDataset:
         # create_folders(path_to_save_contours_single)
         
         # calculate statistics
-        calculated:Calculated_Statistics = Calculated_Statistics(out_image, in_image_colors, filename, False, True)
+        calculated:Calculated_Statistics = Calculated_Statistics(in_image_colors, filename, False, True)
         droplets_calculated_dict = {droplet.id: droplet for droplet in calculated.droplets_data}
         stats_calculated:Statistics = calculated.stats
 
@@ -93,13 +93,13 @@ else:
         try:    
             image = cv2.imread(os.path.join(path_to_real_dataset_inesc_original, file), cv2.IMREAD_GRAYSCALE)
             image_color = cv2.imread(os.path.join(path_to_real_dataset_inesc_original, file))
-            dist = Distortion(image, filename, save_photo=True)
+            dist = Distortion(image, image_color, filename, save_photo=True)
             if dist.noPaper: continue
 
             undistorted_image = cv2.imread(os.path.join(path_to_real_dataset_inesc_undistorted, filename + '.png'), cv2.IMREAD_GRAYSCALE)
             undistorted_image_color = cv2.imread(os.path.join(path_to_real_dataset_inesc_undistorted, filename + '.png'))
             
-            calc_stats = Calculated_Statistics(undistorted_image, undistorted_image_color, filename, save_images=True, create_masks=True)
+            calc_stats = Calculated_Statistics(undistorted_image_color, filename, save_images=True, create_masks=True)
 
             calc_stats.stats.save_stats_file(filename)
 

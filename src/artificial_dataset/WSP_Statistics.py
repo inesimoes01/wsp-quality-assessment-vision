@@ -63,7 +63,7 @@ class WSP_Statistics:
                 center_distance = np.sqrt((center_x2 - center_x1)**2 + (center_y2 - center_y1)**2)
 
                 # if they overlap, mark it as overlapped
-                if (center_distance < (r1 + r2) and id2 != id1):
+                if (center_distance - 2 < (r1 + r2) and id2 != id1):
                     droplet.overlappedIDs += [id2]
                     self.no_overlapped_droplets += 1
         #cv2.imwrite('images\\artificial_dataset\\numbered\\' ++ str(self.wsp_image.index) + '_groundtruth.png', self.enumerate_image)
