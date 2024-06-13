@@ -25,7 +25,7 @@ delete_folder_contents(path_to_masks_overlapped_pred_folder)
 delete_folder_contents(path_to_detected_circles)
 
 
-isArtificialDataset = False
+isArtificialDataset = True
 
 TP_overlapped = 0
 FP_overlapped = 0

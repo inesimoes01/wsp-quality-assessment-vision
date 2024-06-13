@@ -57,8 +57,10 @@ class Calculated_Statistics:
         i=0
         
         # sort contours to catch the biggest ones first and remove the smaller ones inside before
-        self.contours = sorted(self.contours, key=cv2.contourArea, reverse=True)
+        self.contours = sorted(self.contours, key=lambda c: cv2.arcLength(c, True), reverse=True)
         self.ignore_ids = []
+
+        len_contours_original = len(self.contours)
 
         while(i < len(self.contours)):
             if i in self.ignore_ids: 
@@ -71,13 +73,13 @@ class Calculated_Statistics:
             overlapped_ids = []
 
             # treat small contours like a perfect circle
-            if len(contour) < 5 and contour_area < 3: 
+            if len(contour) < 5 and contour_area < 3 and i < len_contours_original: 
                 if self.create_masks: self.create_mask(shape, contour)  
-                self.save_draw_circle_droplet(contour, overlapped_ids, i, contour_area, (160, 160, 160), height, width)
+                self.save_draw_circle_droplet(contour, overlapped_ids, i, contour_area, (200, 200, 200), height, width)
                 i += 1
                 continue    
 
-            elif len(contour) < 5:
+            elif len(contour) < 5 and i < len_contours_original:
                 if self.create_masks: self.create_mask(shape, contour)  
                 self.save_draw_circle_droplet(contour, overlapped_ids, i, contour_area, (160, 160, 160), height, width)
                 i += 1
@@ -92,7 +94,7 @@ class Calculated_Statistics:
                     continue
               
                 # treat small contours like a perfect circle
-                if len(contour[0]) < 5: 
+                if len(contour) < 5: 
                     if self.create_masks: self.create_mask(shape, contour)  
                     self.save_draw_circle_droplet(contour, overlapped_ids, i, contour_area, (255, 0, 51), height, width)
                   
@@ -153,8 +155,8 @@ class Calculated_Statistics:
             
             if self.create_masks: self.create_mask(shape, contour)  
 
-            roi_mask, roi_img, x_roi, y_roi, _, _ = self.crop_ROI(contour, border_expand)
-            cv2.drawContours(self.roi_image_color, [contour], -1, (255, 0, 0), thickness=1)
+            # roi_mask, roi_img, x_roi, y_roi, _, _ = self.crop_ROI(contour, border_expand)
+            # cv2.drawContours(self.roi_image_color, [contour], -1, (255, 0, 0), thickness=1)
             # plt.imshow(self.roi_image_color)
             # plt.show()
             # plt.imshow(roi_img)
@@ -208,12 +210,19 @@ class Calculated_Statistics:
         # close contour
         # TODO fix this so there are still convex points in the contour
         new_contour = cv2.convexHull(new_contour)
-        shifted_contour = np.array([[(point[0][0] + x, point[0][1] + y) for point in new_contour]])
+
+        shifted_contour = copy.copy(new_contour)
+        shifted_contour[:, :, 0] += x
+        shifted_contour[:, :, 1] += y
+        #shifted_contour = np.array([(point[0][0] + x, point[0][1] + y) for point in new_contour])
          
         cv2.drawContours(object_roi_img, [new_contour], -1, (255, 0, 0), thickness=1)
-        cv2.drawContours(self.contour_image, [shifted_contour], -1, (255, 0, 0), thickness=1)
+        cv2.drawContours(self.contour_image, [shifted_contour], -1, (255, 0, 0), thickness=5)
 
         # plt.imshow(object_roi_img)
+        # plt.show()
+
+        # plt.imshow(self.detected_image)
         # plt.show()
 
         # remove previous contours in that section of the image
