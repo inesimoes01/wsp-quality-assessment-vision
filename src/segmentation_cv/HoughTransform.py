@@ -5,11 +5,9 @@ import sys
 import math
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
-import array as arr
 
-sys.path.insert(0, 'src/common')
-from Util import *
-from Variables import *
+import config
+import Util
 
 show_plots = False
 
@@ -144,7 +142,7 @@ class HoughTransform:
 
                     # calculate distance between centers
                     dist = np.sqrt((x1 - x2)**2 + (y1 - y2)**2)   
-                    distance_threshold_related_to_area = distance_threshold * area  
+                    distance_threshold_related_to_area = config.DISTANCE_THRESHOLD * area  
 
                     # if dist is bigger than the sum of the radius, circles dont overlap
                     if dist >= r1 + r2:

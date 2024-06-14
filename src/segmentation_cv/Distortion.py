@@ -1,18 +1,11 @@
 import cv2
 import numpy as np
 import copy
-import sys
-
-from PIL import Image
+import os
 from matplotlib import pyplot as plt 
 
-sys.path.insert(0, 'src')
-sys.path.insert(0, 'src/common')
-from Util import *
-from Variables import *
-from Droplet import *
-
-#TODO make the detect rectangle without a magic number (50)
+import config
+import Util
 
 class Distortion:
     def __init__(self, image, image_color, filename, save_photo):
@@ -217,12 +210,12 @@ class Distortion:
             hull.append(cv2.convexHull(contour, False))
             cv2.drawContours(image, hull, -1, (255, 0, 0), 5)
         
-        plt.imshow(image)
-        plt.show()
+        # plt.imshow(image)
+        # plt.show()
         return hull[0]
 
     def save_undistorted_image(self, filename):
-        cv2.imwrite(os.path.join(path_to_real_dataset_inesc_undistorted, filename + '.png'), self.undistorted_image);
+        cv2.imwrite(os.path.join(config.DATA_REAL_RAW_DIR, filename + '.png'), self.undistorted_image);
 
 
 # im2 = Distortion("images\\inesc_dataset\\1_V1_A1.jpg").undistorted_image

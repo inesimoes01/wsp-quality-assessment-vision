@@ -2,16 +2,14 @@ import cv2
 import numpy as np
 import copy
 import os
-import sys
+import config
+import Util
 
-sys.path.insert(0, 'src/common')
-from Util import *
-#from Variables import *
-from Droplet import *
-from Statistics import * 
-from Distortion import *
-from Algorithms import *
-from HoughTransform import *
+from Droplet import Droplet
+from Statistics import Statistics
+from Distortion import Distortion
+
+from HoughTransform import HoughTransform
 
 #TODO better overlapping count
 #TODO better coverage
@@ -22,11 +20,6 @@ class Calculated_Statistics:
     def __init__(self, color_image, filename, save_images:bool, create_masks:bool):
         self.save_images = save_images
         self.create_masks = create_masks
-        # if save_images:
-        #     self.path_to_save_contours_overlapped = os.path.join(path_to_outputs_folder, "overlapped", filename)
-        #     self.path_to_save_contours_single = os.path.join(path_to_outputs_folder, "single", filename)
-        #     create_folders(self.path_to_save_contours_overlapped)
-        #     create_folders(self.path_to_save_contours_single)
 
         # save each step in a different image
         gray = cv2.cvtColor(color_image, cv2.COLOR_BGR2GRAY)
@@ -64,6 +57,9 @@ class Calculated_Statistics:
 
         while(i < len(self.contours)):
             if i in self.ignore_ids: 
+                if self.create_masks: self.create_mask(shape, contour)  
+                self.save_draw_circle_droplet(contour, overlapped_ids, i, contour_area, (0, 0, 0), height, width)
+                  
                 i += 1
                 continue
          
@@ -90,6 +86,7 @@ class Calculated_Statistics:
                 check, contour = self.remove_inside_contours(contour, i)
                 
                 if check == 0:
+   
                     i += 1
                     continue
               
@@ -100,19 +97,22 @@ class Calculated_Statistics:
                   
                     i += 1
                     continue    
+
            
             # check the shape to categorize it into 0: single, 1: elipse, 2: overlapped
             shape, no_convex_points = self.check_for_shape(contour, width, height)
 
             # not a real contour of a droplet so we skip
             if (no_convex_points == -1):
-                roi_mask, roi_img, x_roi, y_roi, _, _ = self.crop_ROI(contour, border_expand)
+
+                roi_mask, roi_img, x_roi, y_roi, _, _ = self.crop_ROI(contour, config.BORDER_EXPAND)
      
                 i += 1
                 continue
             
             # error of contour inside contour
             if (no_convex_points == -2):
+
                 #TODO add treatment
                 i += 1
                 continue
@@ -128,7 +128,7 @@ class Calculated_Statistics:
                 # circles overlapped
                 case 2:
                     # get ROI of the contour to analyze
-                    roi_mask, roi_img, x_roi, y_roi, _, _ = self.crop_ROI(contour, border_expand)
+                    roi_mask, roi_img, x_roi, y_roi, _, _ = self.crop_ROI(contour, config.BORDER_EXPAND)
                
                     # detect circles and only return the main ones by clustering
                     circles = HoughTransform(roi_mask, no_convex_points, contour, contour_area, roi_img).circles
@@ -149,29 +149,20 @@ class Calculated_Statistics:
                     else:
                         self.save_draw_elipse_droplet(contour, i, overlapped_ids, (0, 102, 51))
                                     
-                            
-                    # plt.imshow(roi_img)
-                    # plt.show()
             
             if self.create_masks: self.create_mask(shape, contour)  
 
-            # roi_mask, roi_img, x_roi, y_roi, _, _ = self.crop_ROI(contour, border_expand)
-            # cv2.drawContours(self.roi_image_color, [contour], -1, (255, 0, 0), thickness=1)
-            # plt.imshow(self.roi_image_color)
-            # plt.show()
-            # plt.imshow(roi_img)
-            # plt.show()
-            
+
             i += 1
 
         # create the masks and calculate values for statistics
         if self.create_masks:
-            cv2.imwrite(os.path.join(path_to_masks_overlapped_pred_folder, filename + '.png'), self.mask_overlapped)
-            cv2.imwrite(os.path.join(path_to_masks_single_pred_folder, filename + '.png'), self.mask_single)
+            cv2.imwrite(os.path.join(config.RESULTS_CV_MASK_OV_DIR, filename + '.png'), self.mask_overlapped)
+            cv2.imwrite(os.path.join(config.RESULTS_CV_MASK_SIN_DIR, filename + '.png'), self.mask_single)
 
-        cv2.imwrite(os.path.join(path_to_detected_circles, filename + ".png"), self.detected_image)
-        cv2.imwrite(os.path.join(path_to_detected_circles, filename + "_countour.png"), self.contour_image)
-        cv2.imwrite(os.path.join(path_to_detected_circles, filename + "_canny.png"), self.canny) 
+        cv2.imwrite(os.path.join(config.RESULTS_CV_DROPLETCLASSIFICATION_DIR, filename + ".png"), self.detected_image)
+        cv2.imwrite(os.path.join(config.RESULTS_CV_DROPLETCLASSIFICATION_DIR, filename + "_countour.png"), self.contour_image)
+        cv2.imwrite(os.path.join(config.RESULTS_CV_DROPLETCLASSIFICATION_DIR, filename + "_canny.png"), self.canny) 
 
         self.calculate_stats()
     
@@ -197,34 +188,37 @@ class Calculated_Statistics:
         
     def remove_inside_contours(self, contour, index):
         # get new contour with a new threshold
-        for i in range(3, border_expand):
+        for i in range(3, config.BORDER_EXPAND):
             new_contours, object_roi_img, x, y, w, h = self.get_new_contours(contour, i)
-            if len(new_contours) > 0 and cv2.contourArea(new_contours[0]) > 0.5 * w * h:
-                break
+            if len(new_contours) > 1:
+                contour_aux = cv2.convexHull(new_contours[0])
+                area = cv2.contourArea(contour_aux)
+                
+                if len(new_contours) > 0 and area > 0.4 * w * h:
+                    break
+
         
         if len(new_contours) < 1:
             return 0, new_contours
 
         new_contour = new_contours[0]
-
-        # close contour
-        # TODO fix this so there are still convex points in the contour
-        new_contour = cv2.convexHull(new_contour)
+        new_contour =cv2.convexHull(new_contour)
 
         shifted_contour = copy.copy(new_contour)
         shifted_contour[:, :, 0] += x
         shifted_contour[:, :, 1] += y
-        #shifted_contour = np.array([(point[0][0] + x, point[0][1] + y) for point in new_contour])
-         
-        cv2.drawContours(object_roi_img, [new_contour], -1, (255, 0, 0), thickness=1)
-        cv2.drawContours(self.contour_image, [shifted_contour], -1, (255, 0, 0), thickness=5)
 
+        #shifted_contour = np.array([(point[0][0] + x, point[0][1] + y) for point in new_contour])
+       
+        cv2.drawContours(object_roi_img, [new_contour], -1, (255, 0, 0), thickness=1)
+        cv2.drawContours(self.contour_image, [shifted_contour], -1, (255, 0, 255), thickness=2)
+        
         # plt.imshow(object_roi_img)
         # plt.show()
 
         # plt.imshow(self.detected_image)
         # plt.show()
-
+        
         # remove previous contours in that section of the image
         self.contours = [contour for contour in self.contours if not self.is_contour_in_roi(contour, x, y, h, w)]
         #TODO check if correct
@@ -234,28 +228,41 @@ class Calculated_Statistics:
     
     def get_new_contours(self, contour, pixel_border_expand):
         _, object_roi_img, x, y, h, w = self.crop_ROI(contour, pixel_border_expand)
+        middle_pixel = object_roi_img[h // 2, w // 2]
+        # assume middle pixel is of interest
+        threshold = 50
+        lower_bound = np.array([middle_pixel[0] - threshold, middle_pixel[1] - threshold, middle_pixel[2] - threshold])
+        upper_bound = np.array([middle_pixel[0] + threshold, middle_pixel[1] + threshold, middle_pixel[2] + threshold])
+        mask = cv2.inRange(object_roi_img, lower_bound, upper_bound)
+        result = cv2.bitwise_and(object_roi_img, object_roi_img, mask=mask)
+        
+        # plt.imshow(result)
+        # plt.show()
+
         img = copy.copy(object_roi_img)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        img = cv2.GaussianBlur(img, (5, 5), 0)
-        _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+        # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        # img = cv2.GaussianBlur(img, (5, 5), 0)
+        # _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+
+        edges = cv2.Canny(result, 170, 200)
+        new_contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        new_contours = sorted(new_contours, key=cv2.contourArea, reverse=True)
+
+        cv2.drawContours(img, new_contours, -1, (0, 0, 255), thickness=1)
         
         # plt.imshow(img)
         # plt.show()
         
-        edges = cv2.Canny(img, 170, 200)
-        new_contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        new_contours = sorted(new_contours, key=cv2.contourArea, reverse=True)
-
         return new_contours, object_roi_img, x, y, w, h
 
     def is_contour_in_roi(self, contour, x, y, h, w):
         for point in contour:
-            px, py = self.normalize_point(point[0])
+            px, py = point[0]
 
-            if not (x <= px <= x + w and y <= py <= y + h):
-                return False
-        
-        return True
+            if (x <= px <= x + w and y <= py <= y + h):
+                return True
+
+        return False
     
     def normalize_point(self, point):
         point = np.array(point)
@@ -380,7 +387,7 @@ class Calculated_Statistics:
             return 0, -1
         
         elif no_convex_points == 0: 
-            if (aspect_ratio > elipse_threshold and circularity > circularity_threshold):
+            if (aspect_ratio > config.ELIPSE_THRESHOLD and circularity > config.CIRCULARITY_THRESHOLD):
                 cv2.drawContours(self.separate_image, [contour], -1, (102, 0, 204), 2)
                 shape = 0   # circle
             else:
