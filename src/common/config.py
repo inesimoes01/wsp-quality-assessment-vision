@@ -1,9 +1,10 @@
 from pathlib import Path
 import math
 
-PROJ_ROOT = Path(__file__).resolve().parents[1]
+PROJ_ROOT = Path(__file__).resolve().parents[2]
 
-DATA_ARTIFICIAL_RAW_DIR = PROJ_ROOT / "data" / "artificial_dataset" / "raw" 
+
+DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
 DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
 DATA_ARTIFICIAL_RAW_INFO_DIR = DATA_ARTIFICIAL_RAW_DIR / "info"
 DATA_ARTIFICIAL_RAW_LABEL_DIR = DATA_ARTIFICIAL_RAW_DIR / "label"
@@ -11,7 +12,7 @@ DATA_ARTIFICIAL_RAW_MASK_SIN_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "single"
 DATA_ARTIFICIAL_RAW_MASK_OV_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "overlapped"
 DATA_ARTIFICIAL_RAW_STATISTICS_DIR = DATA_ARTIFICIAL_RAW_DIR / "statistics"
 
-DATA_REAL_RAW_DIR = PROJ_ROOT / "data" / "real_dataset" / "raw" 
+DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
 DATA_REAL_RAW_IMAGE_DIR = DATA_REAL_RAW_DIR / "image"
 DATA_REAL_RAW_INFO_DIR = DATA_REAL_RAW_DIR / "info"
 DATA_REAL_RAW_LABEL_DIR = DATA_REAL_RAW_DIR / "label"
@@ -19,7 +20,7 @@ DATA_REAL_RAW_MASK_SIN_DIR = DATA_REAL_RAW_DIR / "mask" / "single"
 DATA_REAL_RAW_MASK_OV_DIR = DATA_REAL_RAW_DIR / "mask" / "overlapped"
 DATA_REAL_RAW_STATISTICS_DIR = DATA_REAL_RAW_DIR / "statistics"
 
-RESULTS_CV_DIR = PROJ_ROOT / "results" / "computer_vision_algorithm"
+RESULTS_CV_DIR = Path("results") / "computer_vision_algorithm"
 RESULTS_CV_ACCURACY_DIR = RESULTS_CV_DIR / "accuracy"
 RESULTS_CV_DROPLETCLASSIFICATION_DIR = RESULTS_CV_DIR / "droplet_visual_classification"
 RESULTS_CV_INFO_DIR = RESULTS_CV_DIR / "info"

@@ -1,29 +1,38 @@
-import sys
 import cv2
 from matplotlib import pyplot as plt 
 import os
 import copy
 import numpy as np
 import pandas as pd
+import sys
 
+sys.path.insert(0, 'src/common')
+import config
+import Util
 from Calculated_Statistics import Calculated_Statistics
+
 from GroundTruth_Statistics import GroundTruth_Statistics
 from Accuracy import Accuracy
 from Statistics import Statistics
 from Distortion import Distortion
 
-import config
+# make sure all folders exist
+Util.create_folders(config.RESULTS_CV_ACCURACY_DIR)
+Util.create_folders(config.RESULTS_CV_DROPLETCLASSIFICATION_DIR)
+Util.create_folders(config.RESULTS_CV_INFO_DIR)
+Util.create_folders(config.RESULTS_CV_MASK_OV_DIR)
+Util.create_folders(config.RESULTS_CV_MASK_SIN_DIR)
+Util.create_folders(config.RESULTS_CV_STATISTICS_DIR)
+Util.create_folders(config.RESULTS_CV_UNDISTORTED_DIR)
 
-
-# delete old outputs
-
-# delete_folder_contents(path_to_outputs_folder)
-# delete_folder_contents(path_to_real_dataset_inesc_undistorted)
-# delete_folder_contents(path_to_statistics_pred_folder)
-# delete_folder_contents(path_to_masks_single_pred_folder)
-# delete_folder_contents(path_to_masks_overlapped_pred_folder)
-# delete_folder_contents(path_to_detected_circles)
-
+# delete folder contents
+Util.delete_folder_contents(config.RESULTS_CV_ACCURACY_DIR)
+Util.delete_folder_contents(config.RESULTS_CV_DROPLETCLASSIFICATION_DIR)
+Util.delete_folder_contents(config.RESULTS_CV_INFO_DIR)
+Util.delete_folder_contents(config.RESULTS_CV_MASK_OV_DIR)
+Util.delete_folder_contents(config.RESULTS_CV_MASK_SIN_DIR)
+Util.delete_folder_contents(config.RESULTS_CV_STATISTICS_DIR)
+Util.delete_folder_contents(config.RESULTS_CV_UNDISTORTED_DIR)
 
 isArtificialDataset = True
 
@@ -45,6 +54,7 @@ no_accum_c = 0
 
 
 k = 0
+
 # for each one of the images of the artificial dataset
 if isArtificialDataset:
     for file in os.listdir(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR):
@@ -52,13 +62,12 @@ if isArtificialDataset:
         parts = file.split(".")
         filename = parts[0]
         
-        # treat image
-        in_image = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR, filename + ".png"), cv2.IMREAD_GRAYSCALE)
-        in_image_colors = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR, filename + ".png"))  
-        out_image = copy.copy(in_image)
+        # read image
+        image_gray = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR, filename + ".png"), cv2.IMREAD_GRAYSCALE)
+        image_colors = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR, filename + ".png"))  
         
         # calculate statistics
-        calculated:Calculated_Statistics = Calculated_Statistics(in_image_colors, filename, False, True)
+        calculated:Calculated_Statistics = Calculated_Statistics(image_colors, image_gray, filename, False, True)
         droplets_calculated_dict = {droplet.id: droplet for droplet in calculated.droplets_data}
         stats_calculated:Statistics = calculated.stats
 
@@ -68,7 +77,7 @@ if isArtificialDataset:
         no_accum_c += stats_calculated.no_droplets
 
         # save ground truth
-        groundtruth:GroundTruth_Statistics = GroundTruth_Statistics(filename, out_image)
+        groundtruth:GroundTruth_Statistics = GroundTruth_Statistics(filename)
         droplets_groundtruth_dict = {droplet.id: droplet for droplet in groundtruth.droplets}
         stats_groundtruth:Statistics = groundtruth.stats
 
@@ -97,7 +106,7 @@ if isArtificialDataset:
     precision_overlapped, recall_overlapped, f1_score_overlapped, = Accuracy.calculate_parameters(acc, TP_overlapped, 0, FP_overlapped, FN_overlapped)
 
     Accuracy.write_scores_file(precision_overlapped, recall_overlapped, f1_score_overlapped, IOU, dice)
-    Accuracy.save_stats_cvs(stats_groundtruth, stats_calculated)
+    Accuracy.save_stats_cvs(stats_groundtruth, vmd_accum_gt, rsf_accum_gt, perc_accum_gt, no_accum_gt, vmd_accum_c, rsf_accum_c, perc_accum_c, no_accum_c)
 
 else: 
     for file in os.listdir(config.DATA_REAL_RAW_IMAGE_DIR):

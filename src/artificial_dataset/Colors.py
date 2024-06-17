@@ -24,9 +24,10 @@ class Colors:
 
     def generate_color(self):
         # DROPLET COLOR IN BGR
-        self.droplet_color = []
-        self.droplet_color.extend(self.interpolate_color((29, 33, 52), (61, 42, 64), 20))
-        self.droplet_color.extend(self.interpolate_color((89, 8, 37), (172, 4, 46), 20))
+        self.droplet_color_small = []
+        self.droplet_color_big = []
+        self.droplet_color_big.extend(self.interpolate_color((29, 33, 52), (61, 42, 64), 20))
+        self.droplet_color_small.extend(self.interpolate_color((89, 8, 37), (172, 4, 46), 20))
 
         # BACKGROUND COLOR IN RGB
         self.background_color_1 = (255, 244, 137)

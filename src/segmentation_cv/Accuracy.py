@@ -105,8 +105,12 @@ class Accuracy:
         union_ov = np.logical_or(gt_ov_mask, pred_ov_mask) 
         union_s = np.logical_or(gt_s_mask, pred_s_mask)
 
-        iou = (np.sum(intersection_ov) + np.sum(intersection_s)) / (np.sum(union_ov) + np.sum(union_s))*100
-        return iou
+        iou_overlapped = np.sum(intersection_ov) / np.sum(union_ov) * 100
+
+        iou_single = np.sum(intersection_s) / np.sum(union_s) * 100
+
+        iou_overall = (np.sum(intersection_ov) + np.sum(intersection_s)) / (np.sum(union_ov) + np.sum(union_s))*100
+        return iou_overall, iou_single, iou_overlapped
 
     def calculate_dice(self, gt_ov_mask, pred_ov_mask, gt_s_mask, pred_s_mask):
         intersection_ov = np.logical_and(gt_ov_mask, pred_ov_mask) 

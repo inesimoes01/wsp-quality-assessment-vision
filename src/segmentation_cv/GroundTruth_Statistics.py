@@ -9,9 +9,8 @@ from Statistics import Statistics
 #TODO read the ellipse bool
 
 class GroundTruth_Statistics:
-    def __init__(self, filename, image):
+    def __init__(self, filename):
         self.filename = filename
-        self.image = image
         self.read_stats_file()
         self.stats = Statistics(self.vmd_value, self.rsf_value, self.coverage_percentage, self.no_total_droplets, self.droplets)
 

@@ -21,6 +21,8 @@ path_to_labels_yolo = os.path.normpath('images\\artificial_dataset\\labels_yolo'
 path_to_detected_circles = os.path.normpath('images\\artificial_dataset\\circles_detected')
 
 
+path_to_error_cvs = os.path.normpath('images\\artificial_dataset\\statistic\\c')
+
 
 ### VALUES
 num_wsp = 500

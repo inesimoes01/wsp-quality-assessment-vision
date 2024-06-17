@@ -15,16 +15,17 @@ from Util import *
 
 sys.path.insert(0, 'src')
 from Droplet import *
-
+from Colors import *
 class WSP_Image:
-    def __init__(self, index:int, colors, total_no_droplets):
+    def __init__(self, index:int, colors:Colors, total_no_droplets):
         self.filename = index
         self.max_num_spots:int = max_num_spots
         self.min_num_spots:int = min_num_spots
         self.max_radius:int = max_radius
         self.width:float = width_mm * resolution
         self.height:float = height_mm * resolution
-        self.droplet_color = colors.droplet_color
+        self.droplet_color_small = colors.droplet_color_small
+        self.droplet_color_big = colors.droplet_color_big
         self.background_color_1 = colors.background_color_1
         self.background_color_2 = colors.background_color_2
         self.num_spots = total_no_droplets[index-250]
@@ -48,8 +49,14 @@ class WSP_Image:
         self.droplets_data:list[Droplet] = []
         for i in range(self.num_spots):
             isElipse = False
-            spot_color = self.droplet_color[np.random.randint(0, len(self.droplet_color))]
+            
             spot_radius = math.ceil(self.droplet_radius[i])
+
+            if spot_radius > 7:
+                spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
+            else:
+                spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
+                
             center_x = np.random.randint(spot_radius, self.width - spot_radius)
             center_y = np.random.randint(spot_radius, self.height - spot_radius)
             

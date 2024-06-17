@@ -5,7 +5,6 @@ import csv
 import cv2
 from Droplet import *
 
-
 def delete_old_files(file_path):
     for filename in os.listdir(file_path):
         path = os.path.join(file_path, filename)

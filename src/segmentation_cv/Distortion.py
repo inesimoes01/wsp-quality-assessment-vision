@@ -4,7 +4,7 @@ import copy
 import os
 from matplotlib import pyplot as plt 
 
-import config
+import config as config
 import Util
 
 class Distortion:
