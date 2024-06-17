@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, 'src/common')
 import config
 import Util
-from Calculated_Statistics import Calculated_Statistics
+from Segmentation_CV.Segmentation import Calculated_Statistics
 
 from GroundTruth_Statistics import GroundTruth_Statistics
 from Accuracy import Accuracy

@@ -3,7 +3,8 @@ import numpy as np
 import copy
 import os
 from matplotlib import pyplot as plt 
-
+import sys 
+sys.path.insert(0, 'src/common')
 import config as config
 import Util
 

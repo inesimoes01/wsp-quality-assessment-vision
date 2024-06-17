@@ -10,7 +10,7 @@ from Statistics import Statistics
 from HoughTransform import HoughTransform
 
 
-class Calculated_Statistics:
+class Segmentation:
     def __init__(self, image_color, image_gray, filename, save_images:bool, create_masks:bool):
         self.save_images = save_images
         self.create_masks = create_masks
@@ -21,7 +21,6 @@ class Calculated_Statistics:
         self.get_contours()
         self.contours = sorted(self.contours, key=lambda c: cv2.arcLength(c, True), reverse=True)
         len_contours_original = len(self.contours)
-
 
         i=0
         while(i < len(self.contours)):         
@@ -111,6 +110,8 @@ class Calculated_Statistics:
         self.color_image = copy.copy(image_color)
 
         self.height, self.width, _ = image_color.shape
+
+
         
         # create masks
         if self.create_masks:
@@ -149,6 +150,8 @@ class Calculated_Statistics:
             #diameter = 0.95*(np.sqrt((4*contour_area)/np.pi))**0.91
             self.droplets_data.append(Droplet(False, int(center_x), int(center_y), float(radius * 2), int(i), overlapped_ids))
             cv2.circle(self.detected_image, (int(center_x), int(center_y)), int(radius), color_array, 2)
+        
+
 
     def save_draw_elipse_droplet(self, contour, i, overlapped_ids, color_array, shape):
         if self.create_masks: self.create_mask(shape, contour)  
@@ -156,6 +159,7 @@ class Calculated_Statistics:
         elipse = cv2.fitEllipse(contour)
         self.droplets_data.append(Droplet(True, int(x), int(y) , float(minor), int(i), overlapped_ids))
         cv2.ellipse(self.detected_image, elipse, color = color_array, thickness=2)
+       
         
     def remove_inside_contours(self, contour, index):
         # get new contour with a new threshold
@@ -338,9 +342,9 @@ class Calculated_Statistics:
         return shape, no_convex_points
        
     def calculate_stats(self):
-        droplet_diameter = [d.diameter for d in self.droplets_data]
+        self.droplet_diameter = [d.diameter for d in self.droplets_data]
 
-        self.volume_list = sorted(Statistics.diameter_to_volume(droplet_diameter, self.width))
+        self.volume_list = sorted(Statistics.diameter_to_volume(self.droplet_diameter, self.width))
 
         cumulative_fraction = Statistics.calculate_cumulative_fraction(self.volume_list)
         vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.volume_list)
