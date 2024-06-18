@@ -4,24 +4,25 @@ import sys
 from matplotlib import pyplot as plt 
 import copy
 import csv
+import pandas as pd
 
 from Colors import *
 
 sys.path.insert(0, 'src/common')
 from Util import *
-from Variables import * 
+import config as config
 from Statistics import *
 
-from WSP_Image import WSP_Image
+from CreateWSP import CreateWSP
 
 class WSP_Statistics:
-    def __init__(self, wsp_image:WSP_Image, colors):
+    def __init__(self, wsp_image:CreateWSP, colors):
         self.colors = colors
         self.wsp_image = wsp_image
      
         self.find_overlapping_circles()
      
-        self.volume_list = sorted(Statistics.diameter_to_volume(self.wsp_image.droplet_diameter, wsp_image.width))
+        self.volume_list = sorted(Statistics.radius_to_volume(self.wsp_image.droplet_radius, wsp_image.width))
         
         cumulative_fraction = Statistics.calculate_cumulative_fraction(self.volume_list)
         vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.volume_list)
@@ -32,13 +33,14 @@ class WSP_Statistics:
         self.save_dropletinfo_csv()
         self.save_statistics_to_folder()
 
-        path_mask_overlapped = os.path.join(path_to_masks_overlapped_gt_folder, str(self.wsp_image.filename) + '.png')
-        path_mask_single = os.path.join(path_to_masks_single_gt_folder, str(self.wsp_image.filename) + '.png')
+        path_mask_overlapped = os.path.join(config.DATA_ARTIFICIAL_RAW_MASK_OV_DIR, str(self.wsp_image.filename) + '.png')
+        path_mask_single = os.path.join(config.DATA_ARTIFICIAL_RAW_MASK_SIN_DIR, str(self.wsp_image.filename) + '.png')
         self.create_masks(path_mask_overlapped, path_mask_single)
 
-        path_labels = os.path.join(path_to_labels_yolo, str(self.wsp_image.filename) + '.txt')
-        self.mask_to_label(path_mask_overlapped, path_labels, 1)
+        path_labels = os.path.join(config.DATA_ARTIFICIAL_RAW_LABEL_DIR, str(self.wsp_image.filename) + '.txt')
         self.mask_to_label(path_mask_single, path_labels, 0)
+        self.mask_to_label(path_mask_overlapped, path_labels, 1)
+        
 
   
     def find_overlapping_circles(self):
@@ -47,26 +49,24 @@ class WSP_Statistics:
 
         # iterate over each droplet and compare with all other droplets
         for droplet in self.wsp_image.droplets_data:
-            cv2.putText(self.enumerate_image, f'{droplet.id}', (int(droplet.center_x-droplet.diameter), int(droplet.center_y)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 2)
-
+            
             center_y1 = droplet.center_y
             center_x1 = droplet.center_x
-            r1 = int(droplet.diameter/2)
+            r1 = int(droplet.radius)
             id1 = droplet.id
 
             for droplet2 in self.wsp_image.droplets_data:
                 id2 = droplet2.id
                 center_y2 = droplet2.center_y
                 center_x2 = droplet2.center_x
-                r2 = int(droplet2.diameter/2)
+                r2 = int(droplet2.radius)
 
                 center_distance = np.sqrt((center_x2 - center_x1)**2 + (center_y2 - center_y1)**2)
 
                 # if they overlap, mark it as overlapped
-                if (center_distance - 2 < (r1 + r2) and id2 != id1):
+                if (center_distance < (r1 + r2) and id2 != id1):
                     droplet.overlappedIDs += [id2]
-                    self.no_overlapped_droplets += 1
-        #cv2.imwrite('images\\artificial_dataset\\numbered\\' ++ str(self.wsp_image.index) + '_groundtruth.png', self.enumerate_image)
+                    
        
     def verify_VDM(droplet_radii, vmd_value):
         check_vmd_s = 0
@@ -84,21 +84,31 @@ class WSP_Statistics:
         print("number of droplets ", check_vmd_s, " ", check_vmd_h, " ", equal)
     
     def save_statistics_to_folder(self):
-        statistics_file_path = os.path.join(path_to_statistics_gt_folder, str(self.wsp_image.filename) + '.txt')
-        with open(statistics_file_path, 'w') as f:
-            f.write(f"Number of droplets: {self.stats.no_droplets:d}\n")
-            f.write(f"Coverage percentage: {self.stats.coverage_percentage:.2f}\n")
-            f.write(f"VMD value: {self.stats.vmd_value:2f}\n")
-            f.write(f"RSF value: {self.stats.rsf_value:.2f}\n")
-            f.write(f"Number of overlapped droplets: {self.no_overlapped_droplets:d}\n")
+         
+        data = {
+            '': ['VMD', 'RSF', 'Coverage %', 'Nº Droplets', 'Overlapped Droplets %', 'Number of overlapped droplets'],
+            'GroundTruth': [self.stats.vmd_value, self.stats.rsf_value, self.stats.coverage_percentage, self.stats.no_droplets, self.stats.overlaped_percentage, self.stats.no_droplets_overlapped], 
+        }
+
+        df = pd.DataFrame(data)
+       
+        df.to_csv(os.path.join(config.DATA_ARTIFICIAL_RAW_STATISTICS_DIR, str(self.wsp_image.filename) + '.csv'), index=False, float_format='%.2f')
+        
+        # with open(statistics_file_path, 'w') as f:
+        #     f.write(f"Number of droplets: {self.stats.no_droplets:d}\n")
+        #     f.write(f"Coverage percentage: {self.stats.coverage_percentage:.2f}\n")
+        #     f.write(f"VMD value: {self.stats.vmd_value:2f}\n")
+        #     f.write(f"RSF value: {self.stats.rsf_value:.2f}\n")
+        #     f.write(f"Number of overlapped droplets: {self.no_overlapped_droplets:d}\n")
+        #     f.write(f"Percentage of overlapped droplets: {self.stats.overlaped_percentage:.2f}\n")
 
     def save_dropletinfo_csv(self):
-        csv_file = os.path.join(path_to_dropletinfo_gt_folder, str(self.wsp_image.filename) + '.csv')
+        csv_file = os.path.join(config.DATA_ARTIFICIAL_RAW_INFO_DIR, str(self.wsp_image.filename) + '.csv')
         with open(csv_file, mode='w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(["DropletID", "isElipse", "CenterX", "CenterY", "Diameter", "OverlappedDropletsID"])
+            writer.writerow(["DropletID", "isElipse", "CenterX", "CenterY", "Radius", "OverlappedDropletsID"])
             for drop in self.wsp_image.droplets_data:
-                row = [drop.id, drop.isElipse, drop.center_x, drop.center_y, drop.diameter, str(drop.overlappedIDs)]
+                row = [drop.id, drop.isElipse, drop.center_x, drop.center_y, drop.radius, str(drop.overlappedIDs)]
                 writer.writerow(row)
 
     def mask_to_label(self, path_mask, path_labels, classid):
@@ -131,7 +141,7 @@ class WSP_Statistics:
         mask_single = copy.copy(self.mask)
         
         for drop in self.wsp_image.droplets_data:
-            radius = int(drop.diameter/2)
+            radius = int(drop.radius)
             # single droplets
             if (drop.overlappedIDs == []):
                 if drop.isElipse:

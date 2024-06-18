@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, 'src/common')
 import config
 import Util
-from Segmentation_CV.Segmentation import Calculated_Statistics
+from Segmentation import Segmentation
 
 from GroundTruth_Statistics import GroundTruth_Statistics
 from Accuracy import Accuracy
@@ -46,11 +46,13 @@ vmd_accum_gt = 0
 rsf_accum_gt = 0
 perc_accum_gt = 0
 no_accum_gt = 0
+percov_accum_gt = 0
 
 vmd_accum_c = 0
 rsf_accum_c = 0
 perc_accum_c = 0
 no_accum_c = 0
+percov_accum_c = 0
 
 
 k = 0
@@ -67,7 +69,7 @@ if isArtificialDataset:
         image_colors = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR, filename + ".png"))  
         
         # calculate statistics
-        calculated:Calculated_Statistics = Calculated_Statistics(image_colors, image_gray, filename, False, True)
+        calculated:Segmentation = Segmentation(image_colors, image_gray, filename, False, True)
         droplets_calculated_dict = {droplet.id: droplet for droplet in calculated.droplets_data}
         stats_calculated:Statistics = calculated.stats
 
@@ -75,6 +77,7 @@ if isArtificialDataset:
         rsf_accum_c += stats_calculated.rsf_value
         perc_accum_c += stats_calculated.coverage_percentage
         no_accum_c += stats_calculated.no_droplets
+        percov_accum_c += stats_calculated.overlaped_percentage
 
         # save ground truth
         groundtruth:GroundTruth_Statistics = GroundTruth_Statistics(filename)
@@ -85,6 +88,7 @@ if isArtificialDataset:
         rsf_accum_gt += stats_groundtruth.rsf_value
         perc_accum_gt += stats_groundtruth.coverage_percentage
         no_accum_gt += stats_groundtruth.no_droplets
+        percov_accum_gt += stats_groundtruth.overlaped_percentage
 
         # calculate accuracy values
         acc:Accuracy = Accuracy(droplets_calculated_dict, droplets_groundtruth_dict, filename, stats_calculated, stats_groundtruth)
@@ -93,7 +97,7 @@ if isArtificialDataset:
         FP_overlapped += acc.false_positives_overlapped
         FN_overlapped += acc.false_negatives_overlapped
 
-        IOU += acc.iou 
+        IOU += acc.iou_overall
         dice += acc.dice_coefficient
         k+=1
         print(k, filename)
@@ -105,8 +109,8 @@ if isArtificialDataset:
     dice = dice / 10
     precision_overlapped, recall_overlapped, f1_score_overlapped, = Accuracy.calculate_parameters(acc, TP_overlapped, 0, FP_overlapped, FN_overlapped)
 
-    Accuracy.write_scores_file(precision_overlapped, recall_overlapped, f1_score_overlapped, IOU, dice)
-    Accuracy.save_stats_cvs(stats_groundtruth, vmd_accum_gt, rsf_accum_gt, perc_accum_gt, no_accum_gt, vmd_accum_c, rsf_accum_c, perc_accum_c, no_accum_c)
+    Accuracy.write_final_accuracy_file(precision_overlapped, recall_overlapped, f1_score_overlapped, IOU, dice)
+    Accuracy.write_final_statistics_file(stats_groundtruth, vmd_accum_gt, rsf_accum_gt, perc_accum_gt, no_accum_gt, percov_accum_gt, vmd_accum_c, rsf_accum_c, perc_accum_c, no_accum_c, percov_accum_c)
 
 else: 
     for file in os.listdir(config.DATA_REAL_RAW_IMAGE_DIR):
@@ -124,7 +128,7 @@ else:
             undistorted_image = cv2.imread(os.path.join(config.RESULTS_CV_UNDISTORTED_DIR, filename + '.png'), cv2.IMREAD_GRAYSCALE)
             undistorted_image_color = cv2.imread(os.path.join(config.RESULTS_CV_UNDISTORTED_DIR, filename + '.png'))
             
-            calc_stats = Calculated_Statistics(undistorted_image_color, filename, save_images=True, create_masks=True)
+            calc_stats = Segmentation(undistorted_image_color, filename, save_images=True, create_masks=True)
 
             calc_stats.stats.save_stats_file(filename)
 

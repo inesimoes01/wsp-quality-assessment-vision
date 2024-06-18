@@ -3,14 +3,21 @@ import math
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
-
-DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
+DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset_versions" / "only_single_circles" / "raw" 
 DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
 DATA_ARTIFICIAL_RAW_INFO_DIR = DATA_ARTIFICIAL_RAW_DIR / "info"
 DATA_ARTIFICIAL_RAW_LABEL_DIR = DATA_ARTIFICIAL_RAW_DIR / "label"
 DATA_ARTIFICIAL_RAW_MASK_SIN_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "single"
 DATA_ARTIFICIAL_RAW_MASK_OV_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "overlapped"
 DATA_ARTIFICIAL_RAW_STATISTICS_DIR = DATA_ARTIFICIAL_RAW_DIR / "statistics"
+
+# DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
+# DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
+# DATA_ARTIFICIAL_RAW_INFO_DIR = DATA_ARTIFICIAL_RAW_DIR / "info"
+# DATA_ARTIFICIAL_RAW_LABEL_DIR = DATA_ARTIFICIAL_RAW_DIR / "label"
+# DATA_ARTIFICIAL_RAW_MASK_SIN_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "single"
+# DATA_ARTIFICIAL_RAW_MASK_OV_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "overlapped"
+# DATA_ARTIFICIAL_RAW_STATISTICS_DIR = DATA_ARTIFICIAL_RAW_DIR / "statistics"
 
 DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
 DATA_REAL_RAW_IMAGE_DIR = DATA_REAL_RAW_DIR / "image"
@@ -32,20 +39,22 @@ RESULTS_CV_UNDISTORTED_DIR = RESULTS_CV_DIR / "undistorted"
 
 ### CREATE ARTIFICIAL DATASET VALUES
 
-NUM_WSP = 500                                   # how many images to create
-MAX_NUM_SPOTS = 1000                            # maximum number of spots per image
-MIN_NUM_SPOTS = 50                              # minimum number of spots per image
+NUM_WSP = 10                                   # how many images to create
+MAX_NUM_SPOTS = 5000                            # maximum number of spots per image
+MIN_NUM_SPOTS = 300                              # minimum number of spots per image
 
 WIDTH_MM, HEIGHT_MM = 76, 26                    # width and height trying to emulate with the artificial dataset
-RESOLUTION = int(600*0.039)                     # resolution of the image based on a minimum value previously agreed with professor
-MAX_RADIUS = 15 * math.ceil(RESOLUTION / 30)    # maximum radius for a droplet given the resolution of the image
+RESOLUTION = int(700*0.039)                     # resolution of the image based on a minimum value previously agreed with professor
+MAX_RADIUS = 10 * math.ceil(RESOLUTION / 30)    # maximum radius for a droplet given the resolution of the image
 MIN_RADIUS = math.ceil(RESOLUTION * 0.05)       # minimum radius for a droplet given the resolution of the image
 
-CHARACTERISTIC_PARTICLE_SIZE = 7.0              # characteristic particle size for distribution of droplet values
-UNIFORMITY_CONSTANT = 2.0                       # uniformity constant for distribution of droplet values
+CHARACTERISTIC_PARTICLE_SIZE = 3.5              # characteristic particle size for distribution of droplet values
+UNIFORMITY_CONSTANT = 2.5                       # uniformity constant for distribution of droplet values (smaller values make radius less uniform)
 
-MEAN_DROPLETS = 500                             # mean number of droplets per image for the normal distribution
-STD_DROPLETS = 200                              # standard deviation of droplets per image for the normal distribution
+MEAN_DROPLETS = 2000                             # mean number of droplets per image for the normal distribution
+STD_DROPLETS = 500                              # standard deviation of droplets per image for the normal distribution
+
+DROPLET_COLOR_THRESHOLD = 4                    # threshold for the radius for the droplet to be brown if lower or blue if higher
 
 ### COMPUTER VISION ALGORITHM ACCURACY VALUES
 
