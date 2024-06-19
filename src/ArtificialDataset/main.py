@@ -59,7 +59,7 @@ for i in range(config.NUM_WSP):
     print("Creating image number ", i + index)
 
     no_droplets = num_droplets_list[i]
-    wsp_image = CreateWSP(filename, colors, no_droplets, 3)
+    wsp_image = CreateWSP(filename, colors, no_droplets, 4)
     print("Image created. Calculating statistics...")
     WSP_Statistics(wsp_image, colors)
 

@@ -19,27 +19,34 @@ class WSP_Statistics:
     def __init__(self, wsp_image:CreateWSP, colors):
         self.colors = colors
         self.wsp_image = wsp_image
+        self.image_num = copy.copy(wsp_image.blur_image)
      
+        # find the circles that overlap
         self.find_overlapping_circles()
      
+        # calculate statistics
         self.volume_list = sorted(Statistics.radius_to_volume(self.wsp_image.droplet_radius, wsp_image.width))
-        
         cumulative_fraction = Statistics.calculate_cumulative_fraction(self.volume_list)
         vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.volume_list)
         coverage_percentage = Statistics.calculate_coverage_percentage_gt(self.wsp_image.rectangle, self.wsp_image.height, self.wsp_image.width, self.wsp_image.background_color_1, self.wsp_image.background_color_2)
         rsf_value = Statistics.calculate_rsf(cumulative_fraction, self.volume_list, vmd_value)
-       
+
+        # create info and statistics files
         self.stats:Statistics = Statistics(vmd_value, rsf_value, coverage_percentage, wsp_image.num_spots, wsp_image.droplets_data)
         self.save_dropletinfo_csv()
         self.save_statistics_to_folder()
 
+        # create masks
         path_mask_overlapped = os.path.join(config.DATA_ARTIFICIAL_RAW_MASK_OV_DIR, str(self.wsp_image.filename) + '.png')
         path_mask_single = os.path.join(config.DATA_ARTIFICIAL_RAW_MASK_SIN_DIR, str(self.wsp_image.filename) + '.png')
         self.create_masks(path_mask_overlapped, path_mask_single)
 
+        # create the labels
         path_labels = os.path.join(config.DATA_ARTIFICIAL_RAW_LABEL_DIR, str(self.wsp_image.filename) + '.txt')
         self.mask_to_label(path_mask_single, path_labels, 0)
         self.mask_to_label(path_mask_overlapped, path_labels, 1)
+
+ 
         
 
   
@@ -49,7 +56,6 @@ class WSP_Statistics:
 
         # iterate over each droplet and compare with all other droplets
         for droplet in self.wsp_image.droplets_data:
-            
             center_y1 = droplet.center_y
             center_x1 = droplet.center_x
             r1 = int(droplet.radius)
@@ -66,7 +72,11 @@ class WSP_Statistics:
                 # if they overlap, mark it as overlapped
                 if (center_distance < (r1 + r2) and id2 != id1):
                     droplet.overlappedIDs += [id2]
-                    
+            
+            cv2.putText(self.image_num, str(id1), (center_x1 + 2, center_y1), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 0), 1, cv2.LINE_AA)
+        path = os.path.join(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR, str(self.wsp_image.filename) + '_num.png')
+
+        cv2.imwrite(path, self.image_num) 
        
     def verify_VDM(droplet_radii, vmd_value):
         check_vmd_s = 0
@@ -91,16 +101,7 @@ class WSP_Statistics:
         }
 
         df = pd.DataFrame(data)
-       
         df.to_csv(os.path.join(config.DATA_ARTIFICIAL_RAW_STATISTICS_DIR, str(self.wsp_image.filename) + '.csv'), index=False, float_format='%.2f')
-        
-        # with open(statistics_file_path, 'w') as f:
-        #     f.write(f"Number of droplets: {self.stats.no_droplets:d}\n")
-        #     f.write(f"Coverage percentage: {self.stats.coverage_percentage:.2f}\n")
-        #     f.write(f"VMD value: {self.stats.vmd_value:2f}\n")
-        #     f.write(f"RSF value: {self.stats.rsf_value:.2f}\n")
-        #     f.write(f"Number of overlapped droplets: {self.no_overlapped_droplets:d}\n")
-        #     f.write(f"Percentage of overlapped droplets: {self.stats.overlaped_percentage:.2f}\n")
 
     def save_dropletinfo_csv(self):
         csv_file = os.path.join(config.DATA_ARTIFICIAL_RAW_INFO_DIR, str(self.wsp_image.filename) + '.csv')
@@ -145,86 +146,15 @@ class WSP_Statistics:
             # single droplets
             if (drop.overlappedIDs == []):
                 if drop.isElipse:
-                    cv2.ellipse(mask_single, (drop.center_x, drop.center_y), (radius, radius + 5), 5, 0, 360, 255, -1)
+                    cv2.ellipse(mask_single, (drop.center_x, drop.center_y), (radius, radius + config.ELIPSE_MAJOR_AXE_VALUE), 5, 0, 360, 255, -1)
                 else:
                     cv2.circle(mask_single, (drop.center_x, drop.center_y), radius, 255, -1)
             # overlapped droplets
             else:
                 if drop.isElipse:
-                    cv2.ellipse(mask_overlapped, (drop.center_x, drop.center_y), (radius, radius + 5), 5, 0, 360, 255, -1)
+                    cv2.ellipse(mask_overlapped, (drop.center_x, drop.center_y), (radius, radius + config.ELIPSE_MAJOR_AXE_VALUE), 5, 0, 360, 255, -1)
                 else:
                     cv2.circle(mask_overlapped, (drop.center_x, drop.center_y), radius, 255, -1)
         
         cv2.imwrite(path_mask_overlapped, mask_overlapped)
         cv2.imwrite(path_mask_single, mask_single)
-
-      
-
-
-  # def calculate_vmd(self):
-    #     volumes_sorted = sorted(self.wsp_image.droplet_radii)
-    #     total_volume = sum(volumes_sorted)
-    #     self.cumulative_fraction = np.cumsum(volumes_sorted) / total_volume
-
-    #     vmd_index = np.argmax(self.cumulative_fraction >= 0.5)
-    #     self.vmd_value = volumes_sorted[vmd_index]
-
-    # def calculate_coverage_percentage(self):
-    #                                     # Define the acceptable range for yellow color in RGB
-    #     background_lower = np.array(self.wsp_image.background_color_1, dtype=np.uint8)  # Lower bound for yellow
-    #     background_upper = np.array(self.wsp_image.background_color_2, dtype=np.uint8)  # Upper bound for yellow
-
-    #     # sum number of pixels that are part of the background
-    #     not_covered_area = 0
-    #     for y in range(self.wsp_image.height):
-    #         for x in range(self.wsp_image.width):
-    #             droplet_bgr = tuple(self.wsp_image.rectangle[y, x])
-
-    #             # Check if the pixel falls within the yellow range
-    #             isYellow = np.all([y, x] >= background_lower) and np.all([y, x] <= background_upper)
-    #             # check if pixel is yellow
-    #             if isYellow:
-    #                 print("ahhh")
-    #                 not_covered_area += 1
-        
-    #     # calculate percentage of paper that is coverered
-    #     self.total_area = self.wsp_image.width * self.wsp_image.height
-    #     self.coverage_percentage = ((self.total_area - not_covered_area) / self.total_area) * 100
-    
-    # def calculate_rsf(self):
-    #     self.dv_one = np.argmax(self.cumulative_fraction >= 0.1)
-    #     self.dv_nine = np.argmax(self.cumulative_fraction >= 0.9)
-
-    #     self.rsf_value = (self.dv_nine - self.dv_one) / self.vmd_value
-
-
-
-# class WSP_Statistics_Generator:
-#     def __init__(self):  
-#         self.total_num_droplets = 400
-#         self.vmd = 14
-#     def generate_radius(self):
-#         droplet_vol = []
-#         for i in range(self.total_num_droplets//2):
-#             droplet_vol.append(np.random.randint(0, 14))
-#         for i in range(self.total_num_droplets//2):
-#             droplet_vol.append(np.random.randint(14, 40))
-        
-#         return droplet_vol
-        
-# stats = WSP_Statistics_Generator()
-# droplet_vol = WSP_Statistics_Generator.generate_radius(stats)
-
-
-# volumes_sorted = sorted(droplet_vol)
-# total_volume = sum(volumes_sorted)
-# cumulative_fraction = np.cumsum(volumes_sorted) / total_volume
-
-# vmd_index = np.argmax(cumulative_fraction >= 0.5)
-# vmd_value = volumes_sorted[vmd_index]
-
-# print(vmd_value)
-
-
-
-

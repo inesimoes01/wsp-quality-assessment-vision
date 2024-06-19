@@ -27,6 +27,15 @@ DATA_REAL_RAW_MASK_SIN_DIR = DATA_REAL_RAW_DIR / "mask" / "single"
 DATA_REAL_RAW_MASK_OV_DIR = DATA_REAL_RAW_DIR / "mask" / "overlapped"
 DATA_REAL_RAW_STATISTICS_DIR = DATA_REAL_RAW_DIR / "statistics"
 
+
+DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
+DATA_REAL_PROC_IMAGE_DIR = DATA_REAL_PROC_DIR / "image"
+DATA_REAL_PROC_INFO_DIR = DATA_REAL_PROC_DIR / "info"
+DATA_REAL_PROC_LABEL_DIR = DATA_REAL_PROC_DIR / "label"
+DATA_REAL_PROC_MASK_SIN_DIR = DATA_REAL_PROC_DIR / "mask" / "single"
+DATA_REAL_PROC_MASK_OV_DIR = DATA_REAL_PROC_DIR / "mask" / "overlapped"
+DATA_REAL_PROC_STATISTICS_DIR = DATA_REAL_PROC_DIR / "statistics"
+
 RESULTS_CV_DIR = Path("results") / "computer_vision_algorithm"
 RESULTS_CV_ACCURACY_DIR = RESULTS_CV_DIR / "accuracy"
 RESULTS_CV_DROPLETCLASSIFICATION_DIR = RESULTS_CV_DIR / "droplet_visual_classification"
@@ -55,6 +64,10 @@ MEAN_DROPLETS = 2000                             # mean number of droplets per i
 STD_DROPLETS = 500                              # standard deviation of droplets per image for the normal distribution
 
 DROPLET_COLOR_THRESHOLD = 4                    # threshold for the radius for the droplet to be brown if lower or blue if higher
+
+ELIPSE_MAJOR_AXE_VALUE = 3                      # value to add to the spot radius to create the major axis of an elipse 
+
+OVERLAPPING_THRESHOLD = 2                         # value to add to the distance between centers to make sure the droplets are actually overlapping
 
 ### COMPUTER VISION ALGORITHM ACCURACY VALUES
 

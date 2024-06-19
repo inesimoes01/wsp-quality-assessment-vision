@@ -38,7 +38,6 @@ class CreateWSP:
         self.save_image(self.rectangle)
     
     
-
     def generate_one_wsp(self):
         # rectangle for background
         rectangle = self.create_background(self.background_color_1, self.background_color_2)
@@ -56,21 +55,14 @@ class CreateWSP:
             case 0:     # only singular circles inside the wsp
                 areThereElipses = False
                 for i in range(self.num_spots):
-                    isElipse = False
-                    
-                    spot_radius = math.ceil(self.droplet_radius[i])
-
-                    if spot_radius < config.DROPLET_COLOR_THRESHOLD:
-                        spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
-                    else:
-                        spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
+                    spot_radius, spot_color = self.get_radius_color(i)
                     
                     count = 0
                     while (True):
                         center_x = np.random.randint(spot_radius, self.width - spot_radius)
                         center_y = np.random.randint(spot_radius, self.height - spot_radius)
 
-                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius)
+                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i, areThereElipses)
                 
                         if not overlap_bool:
                             self.save_draw_droplet(areThereElipses, int(center_x), int(center_y), int(spot_radius), spot_color, i)
@@ -83,21 +75,14 @@ class CreateWSP:
             case 1:     # only singular droplets (circular and elipse)
                 areThereElipses = True
                 for i in range(self.num_spots):
-                    isElipse = False
-                    
-                    spot_radius = math.ceil(self.droplet_radius[i])
-
-                    if spot_radius < config.DROPLET_COLOR_THRESHOLD:
-                        spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
-                    else:
-                        spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
+                    spot_radius, spot_color = self.get_radius_color(i)
                     
                     count = 0
                     while (True):
                         center_x = np.random.randint(spot_radius, self.width - spot_radius)
                         center_y = np.random.randint(spot_radius, self.height - spot_radius)
 
-                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius)
+                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i, areThereElipses)
                 
                         if not overlap_bool:
                             self.save_draw_droplet(areThereElipses, int(center_x), int(center_y), int(spot_radius), spot_color, i)
@@ -110,12 +95,7 @@ class CreateWSP:
             case 2:     # overlapped and singular circles
                 areThereElipses = False
                 for i in range(self.num_spots):
-                    isElipse = False
-                    
-                    spot_radius = math.ceil(self.droplet_radius[i])
-
-                    if spot_radius < config.DROPLET_COLOR_THRESHOLD: spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
-                    else: spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
+                    spot_radius, spot_color = self.get_radius_color(i)
                         
                     center_x = np.random.randint(spot_radius, self.width - spot_radius)
                     center_y = np.random.randint(spot_radius, self.height - spot_radius)
@@ -125,13 +105,8 @@ class CreateWSP:
             case 3:     # overlapped and singular droplets (circles and elipses)
                 areThereElipses = True
                 for i in range(self.num_spots):
-                    isElipse = False
-                    
-                    spot_radius = math.ceil(self.droplet_radius[i])
+                    spot_radius, spot_color = self.get_radius_color(i)
 
-                    if spot_radius < config.DROPLET_COLOR_THRESHOLD: spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
-                    else: spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
-                        
                     center_x = np.random.randint(spot_radius, self.width - spot_radius)
                     center_y = np.random.randint(spot_radius, self.height - spot_radius)
                     
@@ -158,14 +133,16 @@ class CreateWSP:
                         center_y = np.random.randint(5, self.height - 5)
 
                         for k in range(no_drops_in_set): 
-                            spot_radius = math.ceil(self.droplet_radius[count_total_no_droplets])
-                            if spot_radius < config.DROPLET_COLOR_THRESHOLD: spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
-                            else: spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
-
+                            spot_radius, spot_color = self.get_radius_color(count_total_no_droplets)
+                            no_rand = random.randint(0, 1)
                             # if n_spot is even it will move to be on the right of the original circle
                             # if n_spot is odd it will move to be under the original circle
-                            if k % 2 == 0: center_x += self.droplet_radius[count_total_no_droplets - 1 ]
-                            else: center_y += self.droplet_radius[count_total_no_droplets - 1] 
+                            if no_rand == 0:
+                                center_x += self.droplet_radius[count_total_no_droplets - 1] + self.droplet_radius[count_total_no_droplets]
+                            else: 
+                                center_y += self.droplet_radius[count_total_no_droplets - 1] + self.droplet_radius[count_total_no_droplets]
+                            # if k % 2 == 0: center_x += self.droplet_radius[count_total_no_droplets - 1 ]
+                            # else: center_y += self.droplet_radius[count_total_no_droplets - 1] 
                                 
                             count_total_no_droplets += 1
 
@@ -183,7 +160,7 @@ class CreateWSP:
                             center_x = np.random.randint(spot_radius, self.width - spot_radius)
                             center_y = np.random.randint(spot_radius, self.height - spot_radius)
 
-                            overlapping = self.check_if_overlapping(center_x, center_y, spot_radius)
+                            overlapping = self.check_if_overlapping(center_x, center_y, spot_radius, count_total_no_droplets, areThereElipses)
 
                             if not overlapping:
                                 break
@@ -194,12 +171,22 @@ class CreateWSP:
                     
         self.droplet_radius = [r.radius for r in self.droplets_data]
 
+    def get_radius_color(self, i):
+        spot_radius = math.ceil(self.droplet_radius[i])
+
+        if spot_radius < config.DROPLET_COLOR_THRESHOLD:
+            spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
+        else:
+            spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
+
+        return spot_radius, spot_color
+
     def save_draw_droplet(self, areThereElipses, center_x, center_y, spot_radius, spot_color, i):
         isElipse = False
         if areThereElipses:
-            if (i % 10 == 1): 
+            if (i % 10 == 0): 
                 isElipse = True
-                cv2.ellipse(self.rectangle, (center_x, center_y), (spot_radius, spot_radius + 5), 5, 0, 360, spot_color, -1)
+                cv2.ellipse(self.rectangle, (center_x, center_y), (spot_radius, spot_radius + config.ELIPSE_MAJOR_AXE_VALUE), 5, 0, 360, spot_color, -1)
             else: cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
         else:
             cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
@@ -217,15 +204,33 @@ class CreateWSP:
 
         return numbers
     
-    def check_if_overlapping(self, center_x, center_y, spot_radius):
+    def check_if_overlapping(self, center_x, center_y, spot_radius, i, areThereElipses):
         overlapping = False
+
         for droplet in self.droplets_data:
             distance = math.sqrt((center_x - droplet.center_x)**2 + (center_y - droplet.center_y)**2)
-            if distance - 5 < spot_radius + droplet.radius:
-                overlapping = True
-                break
+
+            # circle and circle
+            if ((i % 10 == 1) and not droplet.isElipse):
+                # add a small value to make sure the droplets are actually overlapped and not just touching
+                if distance < spot_radius + droplet.radius + config.OVERLAPPING_THRESHOLD:
+                    overlapping = True
+                    break
+
+            # circle and elipse or elipse and circle
+            elif (((i % 10 == 1) and droplet.isElipse) or ((i % 10 == 0) and not droplet.isElipse)) and areThereElipses:
+                if distance < spot_radius + droplet.radius + config.ELIPSE_MAJOR_AXE_VALUE + config.OVERLAPPING_THRESHOLD:
+                    overlapping = True
+                    break
+
+            # elipse and elipse
+            elif ((i % 10 == 0) and droplet.isElipse) and areThereElipses:
+                if distance < spot_radius + droplet.radius + config.ELIPSE_MAJOR_AXE_VALUE * 2 + config.OVERLAPPING_THRESHOLD:
+                    overlapping = True
+                    break
 
         return overlapping
+    
     def add_shadow(self):
         # create shadow shape
         shadow_mask = np.zeros_like(self.rectangle[:, :, 0], dtype=np.uint8)
@@ -237,8 +242,6 @@ class CreateWSP:
         # apply shadow effect 
         return cv2.addWeighted(self.rectangle, 1, shadow_mask_3channel, -0.2, -0.5)
     
-
-
     def create_background(self, color1, color2):
         rectangle = Image.new('RGBA', (self.width, self.height), (0, 0, 0, 0))
 
