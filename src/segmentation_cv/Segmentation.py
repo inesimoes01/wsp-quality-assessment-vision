@@ -271,7 +271,6 @@ class Segmentation:
             cv2.drawContours(self.mask_single, [contour], -1, 255, thickness=cv2.FILLED)
 
     def get_contours(self):        
-    
         img = copy.copy(self.image)
         img = cv2.GaussianBlur(img, (5, 5), 0)
         threshold = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 2)   
