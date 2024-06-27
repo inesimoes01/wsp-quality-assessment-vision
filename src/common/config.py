@@ -1,7 +1,9 @@
 from pathlib import Path
 import math
+import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
+
 
 DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset_versions" / "only_single_circles" / "raw" 
 DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
@@ -10,6 +12,7 @@ DATA_ARTIFICIAL_RAW_LABEL_DIR = DATA_ARTIFICIAL_RAW_DIR / "label"
 DATA_ARTIFICIAL_RAW_MASK_SIN_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "single"
 DATA_ARTIFICIAL_RAW_MASK_OV_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "overlapped"
 DATA_ARTIFICIAL_RAW_STATISTICS_DIR = DATA_ARTIFICIAL_RAW_DIR / "statistics"
+DATA_ARTIFICIAL_RAW_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_versions", "only_single_circles", "raw" , "background.png")
 
 # DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
 # DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
@@ -45,29 +48,32 @@ RESULTS_CV_MASK_OV_DIR = RESULTS_CV_DIR / "mask" / "overlapped"
 RESULTS_CV_STATISTICS_DIR = RESULTS_CV_DIR / "statistics"
 RESULTS_CV_UNDISTORTED_DIR = RESULTS_CV_DIR / "undistorted"
 
+YOLO_MODEL_DIR = Path("models") 
+
 
 ### CREATE ARTIFICIAL DATASET VALUES
 
-NUM_WSP = 10                                   # how many images to create
+NUM_WSP = 10                                    # how many images to create
 MAX_NUM_SPOTS = 5000                            # maximum number of spots per image
-MIN_NUM_SPOTS = 300                              # minimum number of spots per image
+MIN_NUM_SPOTS = 300                             # minimum number of spots per image
 
 WIDTH_MM, HEIGHT_MM = 76, 26                    # width and height trying to emulate with the artificial dataset
-RESOLUTION = int(700*0.039)                     # resolution of the image based on a minimum value previously agreed with professor
+RESOLUTION = int(465*0.039)                     # resolution of the image based on a minimum value previously agreed with professor
 MAX_RADIUS = 10 * math.ceil(RESOLUTION / 30)    # maximum radius for a droplet given the resolution of the image
 MIN_RADIUS = math.ceil(RESOLUTION * 0.05)       # minimum radius for a droplet given the resolution of the image
 
-CHARACTERISTIC_PARTICLE_SIZE = 3.5              # characteristic particle size for distribution of droplet values
-UNIFORMITY_CONSTANT = 2.5                       # uniformity constant for distribution of droplet values (smaller values make radius less uniform)
+CHARACTERISTIC_PARTICLE_SIZE = 5              # characteristic particle size for distribution of droplet values
+UNIFORMITY_CONSTANT = 3                       # uniformity constant for distribution of droplet values (smaller values make radius less uniform)
 
-MEAN_DROPLETS = 2000                             # mean number of droplets per image for the normal distribution
+MEAN_DROPLETS = 2000                            # mean number of droplets per image for the normal distribution
 STD_DROPLETS = 500                              # standard deviation of droplets per image for the normal distribution
 
-DROPLET_COLOR_THRESHOLD = 4                    # threshold for the radius for the droplet to be brown if lower or blue if higher
+DROPLET_COLOR_THRESHOLD_1 = 3                     # threshold for the radius for the droplet to be brown if lower or blue if higher
+DROPLET_COLOR_THRESHOLD_2 = 5                     # threshold for the radius for the droplet to be brown if lower or blue if higher
 
 ELIPSE_MAJOR_AXE_VALUE = 3                      # value to add to the spot radius to create the major axis of an elipse 
 
-OVERLAPPING_THRESHOLD = 2                         # value to add to the distance between centers to make sure the droplets are actually overlapping
+OVERLAPPING_THRESHOLD = 2                       # value to add to the distance between centers to make sure the droplets are actually overlapping
 
 ### COMPUTER VISION ALGORITHM ACCURACY VALUES
 

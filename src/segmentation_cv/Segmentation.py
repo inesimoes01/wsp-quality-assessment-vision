@@ -341,9 +341,9 @@ class Segmentation:
         return shape, no_convex_points
        
     def calculate_stats(self):
-        self.droplet_diameter = [d.diameter for d in self.droplets_data]
+        self.droplet_radius = [d.radius for d in self.droplets_data]
 
-        self.volume_list = sorted(Statistics.diameter_to_volume(self.droplet_diameter, self.width))
+        self.volume_list = sorted(Statistics.radius_to_volume(self.droplet_radius, self.width))
 
         cumulative_fraction = Statistics.calculate_cumulative_fraction(self.volume_list)
         vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.volume_list)

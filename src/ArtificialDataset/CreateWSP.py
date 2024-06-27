@@ -9,6 +9,9 @@ import copy
 import math
 from PIL.PngImagePlugin import PngInfo
 import random
+import CreateDroplet
+import CreateBackground
+from CreateShapes import Shapes
 
 
 sys.path.insert(0, 'src/common')
@@ -17,45 +20,44 @@ from Util import *
 
 sys.path.insert(0, 'src')
 from Droplet import *
-from Colors import *
+from CreateColors import *
 
 class CreateWSP:
-    def __init__(self, index:int, colors:Colors, num_spots, type_of_dataset):
+    def __init__(self, index:int, colors:Colors, shapes:Shapes, num_spots, type_of_dataset):
         self.filename = index
         self.max_num_spots:int = config.MAX_NUM_SPOTS
         self.min_num_spots:int = config.MIN_NUM_SPOTS
         self.width:float = config.WIDTH_MM * config.RESOLUTION
         self.height:float = config.HEIGHT_MM * config.RESOLUTION
-        self.droplet_color_small = colors.droplet_color_small
-        self.droplet_color_big = colors.droplet_color_big
-        self.background_color_1 = colors.background_color_1
-        self.background_color_2 = colors.background_color_2
         self.num_spots = num_spots
+        self.colors = colors
+        self.shapes = shapes
 
         self.type_of_dataset = type_of_dataset
-
+       
+        # generate the droplet sizes given a rosin rammler distribution
+        self.droplet_radius = self.generate_droplet_sizes_rosin_rammler(config.CHARACTERISTIC_PARTICLE_SIZE, config.UNIFORMITY_CONSTANT, self.num_spots)
+        
+        CreateBackground.create_background(self.colors.background_color_1, self.colors.background_color_2, self.width, self.height)
+        self.rectangle = cv2.imread(config.DATA_ARTIFICIAL_RAW_BACKGROUND_IMG, cv2.IMREAD_COLOR)
+        self.rectangle = cv2.cvtColor(self.rectangle, cv2.COLOR_BGR2RGB)
+        
         self.generate_one_wsp()
+
         self.save_image(self.rectangle)
     
     
     def generate_one_wsp(self):
         # rectangle for background
-        rectangle = self.create_background(self.background_color_1, self.background_color_2)
-        rectangle.save("temp.png")
-        self.rectangle = cv2.imread("temp.png")
-
-        # generate the droplet sizes given a rosin rammler distribution
-        self.droplet_radius = self.generate_droplet_sizes_rosin_rammler(config.CHARACTERISTIC_PARTICLE_SIZE, config.UNIFORMITY_CONSTANT, self.num_spots)
         self.droplets_data:list[Droplet] = []
         areThereElipses = False
 
-        # TODO maybe make the circles be outside the wsp
         match self.type_of_dataset:
 
             case 0:     # only singular circles inside the wsp
                 areThereElipses = False
                 for i in range(self.num_spots):
-                    spot_radius, spot_color = self.get_radius_color(i)
+                    spot_radius, spot_color = self.get_droplet(i)
                     
                     count = 0
                     while (True):
@@ -75,7 +77,7 @@ class CreateWSP:
             case 1:     # only singular droplets (circular and elipse)
                 areThereElipses = True
                 for i in range(self.num_spots):
-                    spot_radius, spot_color = self.get_radius_color(i)
+                    spot_radius, spot_color = self.get_droplet(i)
                     
                     count = 0
                     while (True):
@@ -95,7 +97,7 @@ class CreateWSP:
             case 2:     # overlapped and singular circles
                 areThereElipses = False
                 for i in range(self.num_spots):
-                    spot_radius, spot_color = self.get_radius_color(i)
+                    spot_radius, spot_color = self.get_droplet(i)
                         
                     center_x = np.random.randint(spot_radius, self.width - spot_radius)
                     center_y = np.random.randint(spot_radius, self.height - spot_radius)
@@ -105,7 +107,7 @@ class CreateWSP:
             case 3:     # overlapped and singular droplets (circles and elipses)
                 areThereElipses = True
                 for i in range(self.num_spots):
-                    spot_radius, spot_color = self.get_radius_color(i)
+                    spot_radius, spot_color = self.get_droplet(i)
 
                     center_x = np.random.randint(spot_radius, self.width - spot_radius)
                     center_y = np.random.randint(spot_radius, self.height - spot_radius)
@@ -133,7 +135,7 @@ class CreateWSP:
                         center_y = np.random.randint(5, self.height - 5)
 
                         for k in range(no_drops_in_set): 
-                            spot_radius, spot_color = self.get_radius_color(count_total_no_droplets)
+                            spot_radius, spot_color = self.get_droplet(count_total_no_droplets)
                             no_rand = random.randint(0, 1)
                             # if n_spot is even it will move to be on the right of the original circle
                             # if n_spot is odd it will move to be under the original circle
@@ -168,27 +170,34 @@ class CreateWSP:
                         count_total_no_droplets += 1
                         self.save_draw_droplet(areThereElipses, int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
 
-                    
         self.droplet_radius = [r.radius for r in self.droplets_data]
 
-    def get_radius_color(self, i):
+    def get_droplet(self, i):
         spot_radius = math.ceil(self.droplet_radius[i])
+        spot_color = (255, 255, 255)
 
-        if spot_radius < config.DROPLET_COLOR_THRESHOLD:
-            spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
-        else:
-            spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
+        # if spot_radius < config.DROPLET_COLOR_THRESHOLD_1:
+        #     spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
+        # else:
+        #     spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
 
         return spot_radius, spot_color
 
     def save_draw_droplet(self, areThereElipses, center_x, center_y, spot_radius, spot_color, i):
+
         isElipse = False
         if areThereElipses:
             if (i % 10 == 0): 
                 isElipse = True
-                cv2.ellipse(self.rectangle, (center_x, center_y), (spot_radius, spot_radius + config.ELIPSE_MAJOR_AXE_VALUE), 5, 0, 360, spot_color, -1)
-            else: cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
+                CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb, self.colors.background_color_1)
+
+                #cv2.ellipse(self.rectangle, (center_x, center_y), (spot_radius, spot_radius + config.ELIPSE_MAJOR_AXE_VALUE), 5, 0, 360, spot_color, -1)
+            else: CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb,  self.colors.background_color_1)
+
+                #cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
         else:
+            CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb, self.colors.background_color_1)
+
             cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
 
         self.droplets_data.append(Droplet(isElipse, center_x, center_y, spot_radius, i+1, [], spot_color))
@@ -241,94 +250,13 @@ class CreateWSP:
 
         # apply shadow effect 
         return cv2.addWeighted(self.rectangle, 1, shadow_mask_3channel, -0.2, -0.5)
-    
-    def create_background(self, color1, color2):
-        rectangle = Image.new('RGBA', (self.width, self.height), (0, 0, 0, 0))
-
-        # Draw first polygon with radial gradient
-        polygon = [(0, 0), (self.width, 0),(self.width, self.height), (0, self.height), ]
-        point = (self.height*2/3, self.width/4)
-        rectangle = self.radial_gradient(rectangle, polygon, point, color1, color2)
-
-        return rectangle
-    
-    # Draw polygon with linear gradient from point 1 to point 2 and ranging
-    # from color 1 to color 2 on given image
-    def linear_gradient(self, i, poly, p1, p2, c1, c2):
-
-        # Draw initial polygon, alpha channel only, on an empty canvas of image size
-        ii = Image.new('RGBA', i.size, (0, 0, 0, 0))
-        draw = ImageDraw.Draw(ii)
-        draw.polygon(poly, fill=(0, 0, 0, 255), outline=None)
-
-        # Calculate angle between point 1 and 2
-        p1 = np.array(p1)
-        p2 = np.array(p2)
-        angle = np.arctan2(p2[1] - p1[1], p2[0] - p1[0]) / np.pi * 180
-
-        # Rotate and crop shape
-        temp = ii.rotate(angle, expand=True)
-        temp = temp.crop(temp.getbbox())
-        wt, ht = temp.size
-
-        # Create gradient from color 1 to 2 of appropriate size
-        gradient = np.linspace(c1, c2, wt, True).astype(np.uint8)
-        gradient = np.tile(gradient, [2 * ht, 1, 1])
-        gradient = Image.fromarray(gradient)
-
-        # Paste gradient on blank canvas of sufficient size
-        temp = Image.new('RGBA', (max(i.size[0], gradient.size[0]),
-                                max(i.size[1], gradient.size[1])), (0, 0, 0, 0))
-        temp.paste(gradient)
-        gradient = temp
-
-        # Rotate and translate gradient appropriately
-        x = np.sin(angle * np.pi / 180) * ht
-        y = np.cos(angle * np.pi / 180) * ht
-        gradient = gradient.rotate(-angle, center=(0, 0),
-                                translate=(p1[0] + x, p1[1] - y))
-
-        # Paste gradient on temporary image
-        ii.paste(gradient.crop((0, 0, ii.size[0], ii.size[1])), mask=ii)
-
-        # Paste temporary image on actual image
-        i.paste(ii, mask=ii)
-
-        return i
-
-    # Draw polygon with radial gradient from point to the polygon border
-    # ranging from color 1 to color 2 on given image
-    def radial_gradient(self, i, poly, p, c1, c2):
-
-        # Draw initial polygon, alpha channel only, on an empty canvas of image size
-        ii = Image.new('RGBA', i.size, (0, 0, 0, 0))
-        draw = ImageDraw.Draw(ii)
-        draw.polygon(poly, fill=(0, 0, 0, 255), outline=None)
-
-        # Use polygon vertex with highest distance to given point as end of gradient
-        p = np.array(p)
-        max_dist = max([np.linalg.norm(np.array(v) - p) for v in poly])
-
-        # Calculate color values (gradient) for the whole canvas
-        x, y = np.meshgrid(np.arange(i.size[0]), np.arange(i.size[1]))
-        c = np.linalg.norm(np.stack((x, y), axis=2) - p, axis=2) / max_dist
-        c = np.tile(np.expand_dims(c, axis=2), [1, 1, 3])
-        c = (c1 * (1 - c) + c2 * c).astype(np.uint8)
-        c = Image.fromarray(c)
-
-        # Paste gradient on temporary image
-        ii.paste(c, mask=ii)
-
-        # Paste temporary image on actual image
-        i.paste(ii, mask=ii)
-
-        return i
 
     def save_image(self, image):
         path = os.path.join(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR, str(self.filename) + '.png')
 
         self.blur_image = cv2.GaussianBlur(image, (3, 3), 0)
-        cv2.imwrite(path, self.blur_image)  
+        rgb_image = cv2.cvtColor(self.blur_image, cv2.COLOR_BGR2RGB)
+        cv2.imwrite(path, rgb_image)
 
     def generate_droplet_sizes_rosin_rammler(self, x_o, n, no_droplets):
         # list of size no_droplets with random numbers from 0 to 1

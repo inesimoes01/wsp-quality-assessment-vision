@@ -6,7 +6,7 @@ import copy
 import csv
 import pandas as pd
 
-from Colors import *
+from CreateColors import *
 
 sys.path.insert(0, 'src/common')
 from Util import *
@@ -28,7 +28,7 @@ class WSP_Statistics:
         self.volume_list = sorted(Statistics.radius_to_volume(self.wsp_image.droplet_radius, wsp_image.width))
         cumulative_fraction = Statistics.calculate_cumulative_fraction(self.volume_list)
         vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.volume_list)
-        coverage_percentage = Statistics.calculate_coverage_percentage_gt(self.wsp_image.rectangle, self.wsp_image.height, self.wsp_image.width, self.wsp_image.background_color_1, self.wsp_image.background_color_2)
+        coverage_percentage = Statistics.calculate_coverage_percentage_gt(self.wsp_image.rectangle, self.wsp_image.height, self.wsp_image.width, self.wsp_image.colors.background_color_1, self.wsp_image.colors.background_color_2)
         rsf_value = Statistics.calculate_rsf(cumulative_fraction, self.volume_list, vmd_value)
 
         # create info and statistics files

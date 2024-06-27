@@ -34,7 +34,7 @@ Util.delete_folder_contents(config.RESULTS_CV_MASK_SIN_DIR)
 Util.delete_folder_contents(config.RESULTS_CV_STATISTICS_DIR)
 Util.delete_folder_contents(config.RESULTS_CV_UNDISTORTED_DIR)
 
-isArtificialDataset = True
+isArtificialDataset = False
 
 TP_overlapped = 0
 FP_overlapped = 0
@@ -112,33 +112,46 @@ if isArtificialDataset:
     Accuracy.write_final_accuracy_file(precision_overlapped, recall_overlapped, f1_score_overlapped, IOU, dice)
     Accuracy.write_final_statistics_file(stats_groundtruth, vmd_accum_gt, rsf_accum_gt, perc_accum_gt, no_accum_gt, percov_accum_gt, vmd_accum_c, rsf_accum_c, perc_accum_c, no_accum_c, percov_accum_c)
 
-else: 
-    for file in os.listdir(config.DATA_REAL_RAW_IMAGE_DIR):
-        # get name of the file
-        parts = file.split(".")
-        filename = parts[0]
+# else: 
+    # for file in os.listdir(config.DATA_REAL_RAW_IMAGE_DIR):
+    #     # get name of the file
+    #     parts = file.split(".")
+    #     filename = parts[0]
 
-        # generate undistorted image
-        try:    
-            image = cv2.imread(os.path.join(config.DATA_REAL_RAW_IMAGE_DIR, file), cv2.IMREAD_GRAYSCALE)
-            image_color = cv2.imread(os.path.join(config.DATA_REAL_RAW_IMAGE_DIR, file))
-            dist = Distortion(image, image_color, filename, save_photo=True)
-            if dist.noPaper: continue
+    #     # generate undistorted image
+    #     try:    
+    #         image = cv2.imread(os.path.join(config.DATA_REAL_RAW_IMAGE_DIR, file), cv2.IMREAD_GRAYSCALE)
+    #         image_color = cv2.imread(os.path.join(config.DATA_REAL_RAW_IMAGE_DIR, file))
+    #         dist = Distortion(image, image_color, filename, save_photo=True)
+    #         if dist.noPaper: continue
 
-            undistorted_image = cv2.imread(os.path.join(config.RESULTS_CV_UNDISTORTED_DIR, filename + '.png'), cv2.IMREAD_GRAYSCALE)
-            undistorted_image_color = cv2.imread(os.path.join(config.RESULTS_CV_UNDISTORTED_DIR, filename + '.png'))
+    #         undistorted_image = cv2.imread(os.path.join(config.RESULTS_CV_UNDISTORTED_DIR, filename + '.png'), cv2.IMREAD_GRAYSCALE)
+    #         undistorted_image_color = cv2.imread(os.path.join(config.RESULTS_CV_UNDISTORTED_DIR, filename + '.png'))
             
-            calc_stats = Segmentation(undistorted_image_color, filename, save_images=True, create_masks=True)
+    #         calc_stats = Segmentation(undistorted_image_color, filename, save_images=True, create_masks=True)
 
-            calc_stats.stats.save_stats_file(filename)
+    #         calc_stats.stats.save_stats_file(filename)
 
-        except Exception as e:
-            print("An error occurred:", e)
+    #     except Exception as e:
+    #         print("An error occurred:", e)
         
 
 
+file = "Convencional_Interior_Arv1_2m.png"
+filename = "Convencional_Interior_Arv1_2m"
+image = cv2.imread(os.path.join(config.DATA_REAL_RAW_IMAGE_DIR, file), cv2.IMREAD_GRAYSCALE)
+print(image)
+plt.imshow(image)
+plt.show()
+image_color = cv2.imread(os.path.join(config.DATA_REAL_RAW_IMAGE_DIR, file))
+dist = Distortion(image, image_color, filename, save_photo=True)
 
+undistorted_image = cv2.imread(os.path.join(config.RESULTS_CV_UNDISTORTED_DIR, filename + '.png'), cv2.IMREAD_GRAYSCALE)
+undistorted_image_color = cv2.imread(os.path.join(config.RESULTS_CV_UNDISTORTED_DIR, filename + '.png'))
 
+calc_stats = Segmentation(undistorted_image_color, undistorted_image, filename, save_images=True, create_masks=True)
+
+calc_stats.stats.save_stats_file(filename)
 
 
         

@@ -16,6 +16,8 @@ class Distortion:
         # detect the contour of the rectangle
         self.largest_contour = self.detect_rectangle_alternative(image_color)
         cv2.drawContours(self.image, [self.largest_contour], -1, (0, 0, 0), 5)
+        plt.imshow(self.image)
+        plt.show()
 
         # remove distortion from the image
         maxWidth, maxHeight = self.calculate_points(filename)
@@ -205,6 +207,9 @@ class Distortion:
         contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
+        cv2.drawContours(image, contours, -1, (0, 0, 0), 5)
+        plt.imshow(image)
+        plt.show()
         hull = []
         #contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         for contour in contours:
@@ -216,7 +221,7 @@ class Distortion:
         return hull[0]
 
     def save_undistorted_image(self, filename):
-        cv2.imwrite(os.path.join(config.DATA_REAL_RAW_DIR, filename + '.png'), self.undistorted_image);
+        cv2.imwrite(os.path.join(config.RESULTS_CV_UNDISTORTED_DIR, filename + '.png'), self.undistorted_image);
 
 
 # im2 = Distortion("images\\inesc_dataset\\1_V1_A1.jpg").undistorted_image

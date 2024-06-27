@@ -2,10 +2,11 @@ import os
 import time
 import numpy as np
 
-from Colors import Colors
+from CreateColors import Colors
 from WSPStatistics import WSP_Statistics
 from CreateWSP import CreateWSP
 import sys
+from CreateShapes import Shapes
 
 sys.path.insert(0, 'src/common')
 import config as config
@@ -48,6 +49,7 @@ if deleteDataset == "n":
     index = int(index) + 1
 
 colors = Colors()
+shapes = Shapes()
 
 num_droplets_list = generate_normal_distribution_num_droplets()
 
@@ -59,7 +61,7 @@ for i in range(config.NUM_WSP):
     print("Creating image number ", i + index)
 
     no_droplets = num_droplets_list[i]
-    wsp_image = CreateWSP(filename, colors, no_droplets, 4)
+    wsp_image = CreateWSP(filename, colors, shapes, no_droplets, 3)
     print("Image created. Calculating statistics...")
     WSP_Statistics(wsp_image, colors)
 
