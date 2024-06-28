@@ -1,8 +1,11 @@
 from PIL import Image, ImageDraw
 import numpy as np
+import sys
 import random
+sys.path.insert(0, 'src/common')
 import config
 import cv2
+
 
 def create_background(color1, color2, width, height):
     rectangle = Image.new('RGBA', (width, height), (0, 0, 0, 0))
@@ -94,8 +97,12 @@ def radial_gradient(i, poly, p, c1, c2):
     x, y = np.meshgrid(np.arange(i.size[0]), np.arange(i.size[1]))
     c = np.linalg.norm(np.stack((x, y), axis=2) - p, axis=2) / max_dist
     c = np.tile(np.expand_dims(c, axis=2), [1, 1, 3])
+
+    
     c = (c1 * (1 - c) + c2 * c).astype(np.uint8)
+    c = (c).astype(np.uint8)
     c = Image.fromarray(c)
+    #c = Image.fromarray(c)
 
     # Paste gradient on temporary image
     ii.paste(c, mask=ii)

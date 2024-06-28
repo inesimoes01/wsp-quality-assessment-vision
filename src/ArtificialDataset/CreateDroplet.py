@@ -1,11 +1,29 @@
 import numpy as np
+import sys
+sys.path.insert(0, 'src/common')
 import config
-
+from shapely import geometry
+from matplotlib import pyplot as plt 
+import cv2
+import CreateBackground
+from PIL import Image, ImageDraw
+import ShapeList
+import re
+from shapely.ops import nearest_points
+from shapely import geometry, Point
 
 brown_colors = [ '#190e00', '#1f150c', '#0e0f13', '#131514', '#1b0f19', '#14141c', '#1b141c', '#131522', '#0c0d22', '#181123', '#141325', '#1c1527', '#181729', '#1b1a2a']
 dark_blue_colors=['#09082a', '#0f0c2b', '#181130', '#0a0a30', '#030430', '#160e33', '#000233', '#191935', '#0e0d35', '#0e0d35', '#140c35', '#181736', '#060838', '#060838', '#060a3a', '#060a3a', '#11143d', '#0d0b3d', '#0e1040', '#030444', '#060845', '#0d0b4a', '#0b094a', '#070654']
 light_blue_color = ['#2c2bb7', '#2e2db5', '#2524ac', '#2d29a2', '#352ea0', '#2c2897', '#272595', '#221d91', '#18107f', '#181872']
 
+def create_concentric_polygons(coords, scale_factors, min_corner, center):
+    original_polygon = geometry.Polygon(coords)
+    polygons = []
+    for scale in scale_factors:
+        distance = center.distance(min_corner) * scale
+        new_polygon = original_polygon.buffer(-distance)
+        polygons.append(new_polygon)
+    return polygons
 
 def hex_to_rgb(hex_code):
     hex_code = hex_code.lstrip('#')
@@ -21,6 +39,88 @@ def interpolate_color(color1, color2, t):
     g = int(color1[1] * (1 - t) + color2[1] * t)
     b = int(color1[2] * (1 - t) + color2[2] * t)
     return (r, g, b)
+
+
+def draw_polygon(img, roi_points, center_x, center_y):
+    draw_three_layer_polygon(img, roi_points, center_x, center_y)
+
+def draw_three_layer_polygon(img, roi_points, center_x, center_y):
+    image_height, image_width = img.shape[:2]
+    
+    roi_width = max(roi_points, key=lambda x: (x[0]))[0]
+    roi_height = max(roi_points, key=lambda x: (x[1]))[1]
+
+    
+    
+    original_polygon = geometry.Polygon(roi_points)
+    xs = [i[0] for i in roi_points]
+    ys = [i[1] for i in roi_points]
+    roi_center_x = 0.5 * min(xs) + 0.5 * max(xs)
+    roi_center_y = 0.5 * min(ys) + 0.5 * max(ys)
+    center = geometry.Point(roi_center_x, roi_center_y)
+
+    translation_vector_x = int(center_x - roi_center_x)
+    translation_vector_y = int(center_y - roi_center_y)
+
+    # check all the points in the roi 
+    for y in range(roi_height):
+        for x in range(roi_width):
+            p = Point(x, y)
+            if original_polygon.contains(p):
+
+                # get distance to the nearest edge of the polygon
+                nearest_edge = nearest_points(p, original_polygon.exterior)[1]
+
+                # normalize the distance: distance of the p to the nearest edge 
+                # divided by the distance of the nearest edge to the center
+                distance = (p.distance(center)) / (center.distance(nearest_edge))
+
+                # depending on the distance to the nearest edge, we color it differently
+                if distance < 0.5:  # Inner part (0 to 60% of the radius)
+                    t = distance / 0.5  # Scale t to [0, 1]
+                    color_index = int(t * (len(light_blue_rgb) - 1))
+                    t = (t * (len(light_blue_rgb) - 1)) - color_index
+                    color1 = light_blue_rgb[color_index % len(light_blue_rgb)]
+                    color2 = light_blue_rgb[(color_index + 1) % len(light_blue_rgb)]
+                    interpolated_color = interpolate_color(color1, color2, t)
+                
+                elif distance < 0.7:  # middle part (60% to 70% of the radius)
+                    t = (distance - 0.5) / 0.2  # Scale t to [0, 1]
+                    inner_color_index = len(light_blue_rgb) - 1
+                    middle_color_index = int(t * (len(dark_blue_rgb) - 1))
+                    t_middle = t * (len(dark_blue_rgb) - 1) - middle_color_index
+
+                    inner_color = light_blue_rgb[inner_color_index]
+                    middle_color1 = dark_blue_rgb[middle_color_index % len(dark_blue_rgb)]
+                    middle_color2 = dark_blue_rgb[(middle_color_index + 1) % len(dark_blue_rgb)]
+
+                    middle_interpolated_color = interpolate_color(middle_color1, middle_color2, t_middle)
+                    interpolated_color = interpolate_color(inner_color, middle_interpolated_color, t)
+                            
+                elif distance < 0.85:  # outer part (70% to 90% of the radius)
+                    t = (distance - 0.7) / 0.15 # Scale t to [0, 1]
+                    middle_color_index = len(dark_blue_rgb) - 1
+                    outer_color_index = int(t * (len(brown_rgb) - 1))
+                    t_outer = t * (len(brown_rgb) - 1) - outer_color_index
+
+                    middle_color = dark_blue_rgb[middle_color_index]
+                    outer_color1 = brown_rgb[outer_color_index % len(brown_rgb)]
+                    outer_color2 = brown_rgb[(outer_color_index + 1) % len(brown_rgb)]
+
+                    outer_interpolated_color = interpolate_color(outer_color1, outer_color2, t_outer)
+                    interpolated_color = interpolate_color(middle_color, outer_interpolated_color, t)
+                
+                else : # make sure to blend with background
+                    t = (distance - 0.85) / 0.15
+                    color_index = int(t * (len(brown_rgb) - 1))
+                    color1 = brown_rgb[color_index % len(brown_rgb)]
+                    color2 = (255, 255, 0)
+                    interpolated_color = interpolate_color(color1, color2, t)
+
+                if y + translation_vector_y < image_height and x + translation_vector_x < image_width:
+                    img[y + translation_vector_y, x + translation_vector_x] = np.array(interpolated_color).astype(np.uint8)
+
+
 
 
 def draw_perfect_circle(img, center, radius, inner_colors, middle_colors, outer_colors, background_color):

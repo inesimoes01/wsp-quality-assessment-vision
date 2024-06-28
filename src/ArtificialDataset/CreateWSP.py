@@ -184,21 +184,24 @@ class CreateWSP:
         return spot_radius, spot_color
 
     def save_draw_droplet(self, areThereElipses, center_x, center_y, spot_radius, spot_color, i):
-
         isElipse = False
         if areThereElipses:
             if (i % 10 == 0): 
                 isElipse = True
-                CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb, self.colors.background_color_1)
+                CreateDroplet.draw_polygon(self.rectangle, self.shapes.list_roi_shapes[0], center_x, center_y)
+                #CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb, self.colors.background_color_1)
 
                 #cv2.ellipse(self.rectangle, (center_x, center_y), (spot_radius, spot_radius + config.ELIPSE_MAJOR_AXE_VALUE), 5, 0, 360, spot_color, -1)
-            else: CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb,  self.colors.background_color_1)
+            else: 
+                CreateDroplet.draw_polygon(self.rectangle, self.shapes.list_roi_shapes[0],center_x, center_y)
+                #CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb,  self.colors.background_color_1)
 
                 #cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
         else:
-            CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb, self.colors.background_color_1)
+            CreateDroplet.draw_polygon(self.rectangle, self.shapes.list_roi_shapes[0], center_x, center_y)
+            #CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb, self.colors.background_color_1)
 
-            cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
+            #cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
 
         self.droplets_data.append(Droplet(isElipse, center_x, center_y, spot_radius, i+1, [], spot_color))
 

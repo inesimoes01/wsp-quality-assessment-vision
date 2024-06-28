@@ -46,9 +46,6 @@ class WSP_Statistics:
         self.mask_to_label(path_mask_single, path_labels, 0)
         self.mask_to_label(path_mask_overlapped, path_labels, 1)
 
- 
-        
-
   
     def find_overlapping_circles(self):
         self.no_overlapped_droplets = 0
