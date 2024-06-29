@@ -3,75 +3,16 @@ import cv2
 from matplotlib import pyplot as plt 
 from shapely import geometry, Point
 import matplotlib.pyplot as plt
-import CreateBackground
-from PIL import Image, ImageDraw
-import ShapeList
-import re
-from shapely.ops import nearest_points
 
 
-def hex_to_rgb(hex_code):
-    hex_code = hex_code.lstrip('#')
-    rgb = tuple(int(hex_code[i:i+2], 16) for i in (0, 2, 4))
-    return rgb
-
-brown_colors = [ '#190e00', '#1f150c', '#0e0f13', '#131514', '#1b0f19', '#14141c', '#1b141c', '#131522', '#0c0d22', '#181123', '#141325', '#1c1527', '#181729', '#1b1a2a']
-dark_blue_colors=['#09082a', '#0f0c2b', '#181130', '#0a0a30', '#030430', '#160e33', '#000233', '#191935', '#0e0d35', '#0e0d35', '#140c35', '#181736', '#060838', '#060838', '#060a3a', '#060a3a', '#11143d', '#0d0b3d', '#0e1040', '#030444', '#060845', '#0d0b4a', '#0b094a', '#070654']
-light_blue_color = ['#2c2bb7', '#2e2db5', '#2524ac', '#2d29a2', '#352ea0', '#2c2897', '#272595', '#221d91', '#18107f', '#181872']
-
-brown_rgb = [hex_to_rgb(color) for color in brown_colors]
-light_blue_rgb = [hex_to_rgb(color) for color in light_blue_color]
-dark_blue_rgb = [hex_to_rgb(color) for color in dark_blue_colors]
-
-def interpolate_color(color1, color2, t):
-    r = int(color1[0] * (1 - t) + color2[0] * t)
-    g = int(color1[1] * (1 - t) + color2[1] * t)
-    b = int(color1[2] * (1 - t) + color2[2] * t)
-    return (r, g, b)
-
-class Shapes():
-    def __init__(self):
-        self.list_roi_shapes = []
-        
-        shapes = ShapeList.shapes
-
-        for shape in shapes:
-            # get the value of the points in a small area as to be able to easily scale the polygon
-            scaled_points = np.array(self.convert_to_real_coordinates(shape, 512, 512))
-            x, y, w, h = cv2.boundingRect(scaled_points)
-            roi_points = np.array(self.get_roi_points(scaled_points, x, y))
-            
-
-            self.list_roi_shapes.append(roi_points)   
-
-            # yellow = (255, 255, 0)  # BGR for yellow
-            # img = np.full((50, 50, 3), yellow, dtype=np.uint8)
-
-            # cv2.fillPoly(img, roi_points, (255, 0, 0))
-            # plt.imshow(img)
-            # plt.show()
-
-
-
-
-
-    def convert_to_real_coordinates(self, points, image_width, image_height):
-        real_coordinates = []
-        for point in points:
-            percentage_x, percentage_y = point
-            real_x = (percentage_x / 100) * image_width
-            real_y = (percentage_y / 100) * image_height
-            real_coordinates.append([int(real_x), int(real_y)])
-        return real_coordinates
-
-    def get_roi_points(self, points, x, y):
-        roi_points = []
-        for point in points:
-            old_x, old_y = point
-            new_x = old_x - x
-            new_y = old_y - y
-            roi_points.append([int(new_x), int(new_y)])
-        return roi_points
+class DropletShape():
+    def __init__(self, id, width, height, max_distance, roi_points, roi_points_colored):
+        self.id = id
+        self.width = width
+        self.height = height
+        self.max_distance = max_distance
+        self.roi_points = roi_points
+        self.roi_points_colored = roi_points_colored
 
     def resize_polygon(self, coords, target_diameter, isExpanding):
         _, _, w, h = cv2.boundingRect(coords)

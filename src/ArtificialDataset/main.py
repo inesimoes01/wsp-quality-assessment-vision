@@ -6,7 +6,10 @@ from CreateColors import Colors
 from WSPStatistics import WSP_Statistics
 from CreateWSP import CreateWSP
 import sys
-from CreateShapes import Shapes
+from DropletShape import DropletShape
+import ShapeList
+
+
 
 sys.path.insert(0, 'src/common')
 import config as config
@@ -34,7 +37,6 @@ if deleteDataset == "y":
     create_folders(config.DATA_ARTIFICIAL_RAW_LABEL_DIR)
 
     # manage folders
-
     delete_folder_contents(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR)
     delete_folder_contents(config.DATA_ARTIFICIAL_RAW_STATISTICS_DIR)
     delete_folder_contents(config.DATA_ARTIFICIAL_RAW_INFO_DIR)
@@ -48,8 +50,9 @@ if deleteDataset == "n":
     index = input("What is the last index? ")
     index = int(index) + 1
 
+# IMPORT SHAPES AND COLORS
 colors = Colors()
-shapes = Shapes()
+shapes, polygons_by_size = ShapeList.save_all_shapes()
 
 num_droplets_list = generate_normal_distribution_num_droplets()
 
@@ -61,7 +64,7 @@ for i in range(config.NUM_WSP):
     print("Creating image number ", i + index)
 
     no_droplets = num_droplets_list[i]
-    wsp_image = CreateWSP(filename, colors, shapes, no_droplets, 3)
+    wsp_image = CreateWSP(filename, colors, shapes, polygons_by_size, no_droplets, 1)
     print("Image created. Calculating statistics...")
     WSP_Statistics(wsp_image, colors)
 

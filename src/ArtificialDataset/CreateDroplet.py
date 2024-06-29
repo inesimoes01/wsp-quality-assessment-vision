@@ -11,6 +11,8 @@ import ShapeList
 import re
 from shapely.ops import nearest_points
 from shapely import geometry, Point
+from DropletShape import DropletShape
+import random
 
 brown_colors = [ '#190e00', '#1f150c', '#0e0f13', '#131514', '#1b0f19', '#14141c', '#1b141c', '#131522', '#0c0d22', '#181123', '#141325', '#1c1527', '#181729', '#1b1a2a']
 dark_blue_colors=['#09082a', '#0f0c2b', '#181130', '#0a0a30', '#030430', '#160e33', '#000233', '#191935', '#0e0d35', '#0e0d35', '#140c35', '#181736', '#060838', '#060838', '#060a3a', '#060a3a', '#11143d', '#0d0b3d', '#0e1040', '#030444', '#060845', '#0d0b4a', '#0b094a', '#070654']
@@ -41,20 +43,20 @@ def interpolate_color(color1, color2, t):
     return (r, g, b)
 
 
-def draw_polygon(img, roi_points, center_x, center_y):
-    draw_three_layer_polygon(img, roi_points, center_x, center_y)
+def draw_polygon(img, size, center_x, center_y, shape_instance:DropletShape):
+    if size < config.DROPLET_COLOR_THRESHOLD_1:
+        draw_three_layer_polygon(img, shape_instance, center_x, center_y)
+    elif size < config.DROPLET_COLOR_THRESHOLD_2:
+        draw_three_layer_polygon(img, shape_instance, center_x, center_y)
+    else:
+        draw_three_layer_polygon(img, shape_instance, center_x, center_y)
 
-def draw_three_layer_polygon(img, roi_points, center_x, center_y):
+def draw_three_layer_polygon(img, shape:DropletShape, center_x, center_y):
     image_height, image_width = img.shape[:2]
     
-    roi_width = max(roi_points, key=lambda x: (x[0]))[0]
-    roi_height = max(roi_points, key=lambda x: (x[1]))[1]
-
-    
-    
-    original_polygon = geometry.Polygon(roi_points)
-    xs = [i[0] for i in roi_points]
-    ys = [i[1] for i in roi_points]
+    original_polygon = geometry.Polygon(shape.roi_points)
+    xs = [i[0] for i in shape.roi_points]
+    ys = [i[1] for i in shape.roi_points]
     roi_center_x = 0.5 * min(xs) + 0.5 * max(xs)
     roi_center_y = 0.5 * min(ys) + 0.5 * max(ys)
     center = geometry.Point(roi_center_x, roi_center_y)
@@ -63,8 +65,8 @@ def draw_three_layer_polygon(img, roi_points, center_x, center_y):
     translation_vector_y = int(center_y - roi_center_y)
 
     # check all the points in the roi 
-    for y in range(roi_height):
-        for x in range(roi_width):
+    for y in range(shape.height):
+        for x in range(shape.width):
             p = Point(x, y)
             if original_polygon.contains(p):
 
@@ -120,7 +122,16 @@ def draw_three_layer_polygon(img, roi_points, center_x, center_y):
                 if y + translation_vector_y < image_height and x + translation_vector_x < image_width:
                     img[y + translation_vector_y, x + translation_vector_x] = np.array(interpolated_color).astype(np.uint8)
 
+    
+def choose_polygon(polygons_by_size, size):
+    chosen_id = -1
+    if size in polygons_by_size:
+        chosen_id = random.choice(polygons_by_size[size])
+    
+    if chosen_id == -1:
+        chosen_id = random.choice(polygons_by_size[8])
 
+    return chosen_id
 
 
 def draw_perfect_circle(img, center, radius, inner_colors, middle_colors, outer_colors, background_color):

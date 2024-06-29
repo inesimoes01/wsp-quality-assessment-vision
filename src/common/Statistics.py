@@ -23,7 +23,14 @@ class Statistics:
         
         self.overlaped_percentage = self.no_droplets_overlapped / self.no_droplets * 100
     
-        
+    def calculate_statistics(volumes_sorted, image, contour_area):
+        cumulative_fraction = Statistics.calculate_cumulative_fraction(volumes_sorted)
+        vmd_value = Statistics.calculate_vmd(cumulative_fraction, volumes_sorted)
+        coverage_percentage = Statistics.calculate_coverage_percentage_c(image, contour_area)
+        rsf_value = Statistics.calculate_rsf(cumulative_fraction, volumes_sorted, vmd_value)
+        return vmd_value, coverage_percentage, rsf_value
+
+
     def calculate_cumulative_fraction(volumes_sorted):
         total_volume = sum(volumes_sorted)
         return np.cumsum(volumes_sorted) / total_volume
@@ -54,8 +61,9 @@ class Statistics:
         total_area = image_width * image_height
         return ((total_area - not_covered_area) / total_area) * 100
     
-    def calculate_coverage_percentage_c(image, image_height, image_width, contour_area):
-        total_area = image_height * image_width
+    def calculate_coverage_percentage_c(image, contour_area):
+        height, width, _ = image.shape
+        total_area = height * width
 
         return contour_area / total_area * 100
 

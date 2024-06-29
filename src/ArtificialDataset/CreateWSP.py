@@ -11,7 +11,8 @@ from PIL.PngImagePlugin import PngInfo
 import random
 import CreateDroplet
 import CreateBackground
-from CreateShapes import Shapes
+from DropletShape import DropletShape
+from shapely import Polygon
 
 
 sys.path.insert(0, 'src/common')
@@ -23,7 +24,7 @@ from Droplet import *
 from CreateColors import *
 
 class CreateWSP:
-    def __init__(self, index:int, colors:Colors, shapes:Shapes, num_spots, type_of_dataset):
+    def __init__(self, index:int, colors:Colors, shapes:list[DropletShape], polygons_by_size, num_spots, type_of_dataset):
         self.filename = index
         self.max_num_spots:int = config.MAX_NUM_SPOTS
         self.min_num_spots:int = config.MIN_NUM_SPOTS
@@ -31,7 +32,10 @@ class CreateWSP:
         self.height:float = config.HEIGHT_MM * config.RESOLUTION
         self.num_spots = num_spots
         self.colors = colors
+        self.polygons_by_size = polygons_by_size
         self.shapes = shapes
+
+        self.droplet_area = 0
 
         self.type_of_dataset = type_of_dataset
        
@@ -50,72 +54,55 @@ class CreateWSP:
     def generate_one_wsp(self):
         # rectangle for background
         self.droplets_data:list[Droplet] = []
-        areThereElipses = False
 
         match self.type_of_dataset:
 
             case 0:     # only singular circles inside the wsp
-                areThereElipses = False
                 for i in range(self.num_spots):
-                    spot_radius, spot_color = self.get_droplet(i)
+                    spot_radius = math.ceil(self.droplet_radius[i])
                     
                     count = 0
                     while (True):
                         center_x = np.random.randint(spot_radius, self.width - spot_radius)
                         center_y = np.random.randint(spot_radius, self.height - spot_radius)
 
-                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i, areThereElipses)
+                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i)
                 
                         if not overlap_bool:
-                            self.save_draw_droplet(areThereElipses, int(center_x), int(center_y), int(spot_radius), spot_color, i)
+                            self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, i)
                             break
                         
                         count += 1
                         if count > 100:
                             break
             
-            case 1:     # only singular droplets (circular and elipse)
-                areThereElipses = True
                 for i in range(self.num_spots):
-                    spot_radius, spot_color = self.get_droplet(i)
+                    spot_radius = math.ceil(self.droplet_radius[i])
                     
                     count = 0
                     while (True):
                         center_x = np.random.randint(spot_radius, self.width - spot_radius)
                         center_y = np.random.randint(spot_radius, self.height - spot_radius)
 
-                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i, areThereElipses)
+                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i)
                 
                         if not overlap_bool:
-                            self.save_draw_droplet(areThereElipses, int(center_x), int(center_y), int(spot_radius), spot_color, i)
+                            self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, i)
                             break
                         
                         count += 1
                         if count > 100:
                             break
-
-            case 2:     # overlapped and singular circles
-                areThereElipses = False
-                for i in range(self.num_spots):
-                    spot_radius, spot_color = self.get_droplet(i)
-                        
-                    center_x = np.random.randint(spot_radius, self.width - spot_radius)
-                    center_y = np.random.randint(spot_radius, self.height - spot_radius)
-
-                    self.save_draw_droplet(areThereElipses, int(center_x), int(center_y), int(spot_radius), spot_color, i)
                     
-            case 3:     # overlapped and singular droplets (circles and elipses)
-                areThereElipses = True
+            case 1:     # overlapped and singular droplets (circles and elipses)
                 for i in range(self.num_spots):
-                    spot_radius, spot_color = self.get_droplet(i)
-
+                    spot_radius = math.ceil(self.droplet_radius[i])
                     center_x = np.random.randint(spot_radius, self.width - spot_radius)
                     center_y = np.random.randint(spot_radius, self.height - spot_radius)
                     
-                    self.save_draw_droplet(areThereElipses, int(center_x), int(center_y), int(spot_radius), spot_color, i)
+                    self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), i)
 
-            case 4:     # classes overlapped and singular are leveled
-                areThereElipses = True
+            case 2:     # classes overlapped and singular are leveled
                 count_overlapping_sets = 0
                 count_single = 0
                 num_overlapping_droplets = math.ceil(self.num_spots * 1 / 3)  
@@ -135,7 +122,7 @@ class CreateWSP:
                         center_y = np.random.randint(5, self.height - 5)
 
                         for k in range(no_drops_in_set): 
-                            spot_radius, spot_color = self.get_droplet(count_total_no_droplets)
+                            spot_radius = math.ceil(self.droplet_radius[count_total_no_droplets])
                             no_rand = random.randint(0, 1)
                             # if n_spot is even it will move to be on the right of the original circle
                             # if n_spot is odd it will move to be under the original circle
@@ -148,7 +135,7 @@ class CreateWSP:
                                 
                             count_total_no_droplets += 1
 
-                            self.save_draw_droplet(areThereElipses, int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
+                            self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
 
                         count_overlapping_sets += 1
                     
@@ -162,48 +149,29 @@ class CreateWSP:
                             center_x = np.random.randint(spot_radius, self.width - spot_radius)
                             center_y = np.random.randint(spot_radius, self.height - spot_radius)
 
-                            overlapping = self.check_if_overlapping(center_x, center_y, spot_radius, count_total_no_droplets, areThereElipses)
+                            overlapping = self.check_if_overlapping(center_x, center_y, spot_radius, count_total_no_droplets)
 
                             if not overlapping:
                                 break
                         
                         count_total_no_droplets += 1
-                        self.save_draw_droplet(areThereElipses, int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
+                        self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
 
         self.droplet_radius = [r.radius for r in self.droplets_data]
 
-    def get_droplet(self, i):
-        spot_radius = math.ceil(self.droplet_radius[i])
-        spot_color = (255, 255, 255)
 
-        # if spot_radius < config.DROPLET_COLOR_THRESHOLD_1:
-        #     spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
-        # else:
-        #     spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
+    def save_draw_droplet(self, center_x, center_y, spot_radius, i):
+        # choose shape for droplet based on the diameter
+        shape_id = CreateDroplet.choose_polygon(self.polygons_by_size, spot_radius)
+        polygon = self.shapes[shape_id]
 
-        return spot_radius, spot_color
+        # draw polygon
+        CreateDroplet.draw_polygon(self.rectangle, spot_radius, center_x, center_y, polygon)
 
-    def save_draw_droplet(self, areThereElipses, center_x, center_y, spot_radius, spot_color, i):
-        isElipse = False
-        if areThereElipses:
-            if (i % 10 == 0): 
-                isElipse = True
-                CreateDroplet.draw_polygon(self.rectangle, self.shapes.list_roi_shapes[0], center_x, center_y)
-                #CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb, self.colors.background_color_1)
+        # save statistics and droplet info
+        self.droplet_area += Polygon(polygon.roi_points).area
+        self.droplets_data.append(Droplet(center_x, center_y, spot_radius, i+1, []))
 
-                #cv2.ellipse(self.rectangle, (center_x, center_y), (spot_radius, spot_radius + config.ELIPSE_MAJOR_AXE_VALUE), 5, 0, 360, spot_color, -1)
-            else: 
-                CreateDroplet.draw_polygon(self.rectangle, self.shapes.list_roi_shapes[0],center_x, center_y)
-                #CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb,  self.colors.background_color_1)
-
-                #cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
-        else:
-            CreateDroplet.draw_polygon(self.rectangle, self.shapes.list_roi_shapes[0], center_x, center_y)
-            #CreateDroplet.draw_perfect_circle(self.rectangle, (center_x, center_y), spot_radius, self.colors.light_blue_rgb, self.colors.dark_blue_rgb, self.colors.brown_rgb, self.colors.background_color_1)
-
-            #cv2.circle(self.rectangle, (center_x, center_y), spot_radius, spot_color, -1)
-
-        self.droplets_data.append(Droplet(isElipse, center_x, center_y, spot_radius, i+1, [], spot_color))
 
     def generate_overlapping_value(self, no_overlap_sets, no_droplets):
         numbers = [2] * no_overlap_sets

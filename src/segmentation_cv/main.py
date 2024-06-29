@@ -34,7 +34,7 @@ Util.delete_folder_contents(config.RESULTS_CV_MASK_SIN_DIR)
 Util.delete_folder_contents(config.RESULTS_CV_STATISTICS_DIR)
 Util.delete_folder_contents(config.RESULTS_CV_UNDISTORTED_DIR)
 
-isArtificialDataset = False
+isArtificialDataset = True
 
 TP_overlapped = 0
 FP_overlapped = 0

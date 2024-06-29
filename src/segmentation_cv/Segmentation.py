@@ -345,9 +345,11 @@ class Segmentation:
 
         self.volume_list = sorted(Statistics.radius_to_volume(self.droplet_radius, self.width))
 
-        cumulative_fraction = Statistics.calculate_cumulative_fraction(self.volume_list)
-        vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.volume_list)
-        rsf_value = Statistics.calculate_rsf(cumulative_fraction, self.volume_list, vmd_value)
-        coverage_percentage = Statistics.calculate_coverage_percentage_c(self.image, self.height, self.width, self.contour_area)
+        vmd_value, rsf_value, coverage_percentage = Statistics.calculate_statistics(self.volume_list, self.image, self.contour_area)
+
+        # cumulative_fraction = Statistics.calculate_cumulative_fraction(self.volume_list)
+        # vmd_value = Statistics.calculate_vmd(cumulative_fraction, self.volume_list)
+        # rsf_value = Statistics.calculate_rsf(cumulative_fraction, self.volume_list, vmd_value)
+        # coverage_percentage = Statistics.calculate_coverage_percentage_c(self.image, self.height, self.width, self.contour_area)
 
         self.stats = Statistics(vmd_value, rsf_value, coverage_percentage, self.final_no_droplets, self.droplets_data)
