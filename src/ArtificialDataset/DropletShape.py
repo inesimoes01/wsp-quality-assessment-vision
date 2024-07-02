@@ -6,11 +6,12 @@ import matplotlib.pyplot as plt
 
 
 class DropletShape():
-    def __init__(self, id, width, height, max_distance, roi_points, roi_points_colored):
+    def __init__(self, id, width, height, max_distance, polygon, roi_points, roi_points_colored = None):
         self.id = id
         self.width = width
         self.height = height
         self.max_distance = max_distance
+        self.polygon = polygon
         self.roi_points = roi_points
         self.roi_points_colored = roi_points_colored
 

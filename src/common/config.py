@@ -48,6 +48,8 @@ RESULTS_CV_MASK_OV_DIR = RESULTS_CV_DIR / "mask" / "overlapped"
 RESULTS_CV_STATISTICS_DIR = RESULTS_CV_DIR / "statistics"
 RESULTS_CV_UNDISTORTED_DIR = RESULTS_CV_DIR / "undistorted"
 
+RESULTS_LATEX = Path("results") / "latex"
+
 YOLO_MODEL_DIR = Path("models") 
 
 
@@ -62,8 +64,8 @@ RESOLUTION = int(465*0.039)                     # resolution of the image based 
 MAX_RADIUS = 10 * math.ceil(RESOLUTION / 30)    # maximum radius for a droplet given the resolution of the image
 MIN_RADIUS = math.ceil(RESOLUTION * 0.05)       # minimum radius for a droplet given the resolution of the image
 
-CHARACTERISTIC_PARTICLE_SIZE = 5              # characteristic particle size for distribution of droplet values
-UNIFORMITY_CONSTANT = 3                       # uniformity constant for distribution of droplet values (smaller values make radius less uniform)
+CHARACTERISTIC_PARTICLE_SIZE = 15                # characteristic particle size for distribution of droplet values
+UNIFORMITY_CONSTANT = 3                         # uniformity constant for distribution of droplet values (smaller values make radius less uniform)
 
 MEAN_DROPLETS = 2000                            # mean number of droplets per image for the normal distribution
 STD_DROPLETS = 500                              # standard deviation of droplets per image for the normal distribution

@@ -35,12 +35,14 @@ class Colors:
         # DROPLET COLOR IN BGR
         self.droplet_color_small = []
         self.droplet_color_big = []
-        self.droplet_color_big.extend(self.interpolate_color((29, 33, 52), (61, 42, 64), 20))
-        self.droplet_color_small.extend(self.interpolate_color((89, 8, 37), (172, 4, 46), 20))
+        # self.droplet_color_big.extend(self.interpolate_color((29, 33, 52), (61, 42, 64), 20))
+        # self.droplet_color_small.extend(self.interpolate_color((89, 8, 37), (172, 4, 46), 20))
 
         # BACKGROUND COLOR IN RGB
-        self.background_color_1 = (255, 244, 137)
-        self.background_color_2 = (159, 127, 19)
+        self.background_colors =[]
+        background_color_1 = (255, 244, 137)
+        background_color_2 = (159, 127, 19)
+        self.background_colors.extend(self.interpolate_color(background_color_1, background_color_2, 30))
 
     def hex_to_rgb(self, hex_code):
         hex_code = hex_code.lstrip('#')

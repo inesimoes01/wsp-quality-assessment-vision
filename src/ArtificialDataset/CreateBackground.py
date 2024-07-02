@@ -6,14 +6,25 @@ sys.path.insert(0, 'src/common')
 import config
 import cv2
 
+def choose_background_color(background_colors):
+    color1_index = random.randint(0, len(background_colors))
+    color2_index = random.randint(0, len(background_colors))
 
-def create_background(color1, color2, width, height):
+    return background_colors[color1_index], background_colors[color2_index]
+
+
+def create_background(colors, width, height):
+    color1, color2 = choose_background_color(colors)
+
     rectangle = Image.new('RGBA', (width, height), (0, 0, 0, 0))
 
-    # Draw first polygon with radial gradient
-    polygon = [(0, 0), (width, 0),(width, height), (0, height), ]
-    point = (height*2/3, width/4)
-    rectangle = radial_gradient(rectangle, polygon, point, color1, color2)
+    # draw first polygon with radial gradient
+    polygon = [(0, 0), (width, 0), (width, height), (0, height)]
+
+    point_x = random.randint(0, height)
+    point_y = random.randint(0, width)
+
+    rectangle = radial_gradient(rectangle, polygon, (point_x, point_y), color1, color2)
 
     rectangle.save(config.DATA_ARTIFICIAL_RAW_BACKGROUND_IMG)
 
@@ -32,7 +43,6 @@ def add_noise(img):
           
         img[y_coord][x_coord] = img[y_coord, x_coord] - 15
 
-          
     return img 
   
 

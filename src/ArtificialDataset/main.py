@@ -3,12 +3,11 @@ import time
 import numpy as np
 
 from CreateColors import Colors
-from WSPStatistics import WSP_Statistics
+from DatasetResults import DatasetResults
 from CreateWSP import CreateWSP
 import sys
 from DropletShape import DropletShape
 import ShapeList
-
 
 
 sys.path.insert(0, 'src/common')
@@ -65,8 +64,9 @@ for i in range(config.NUM_WSP):
 
     no_droplets = num_droplets_list[i]
     wsp_image = CreateWSP(filename, colors, shapes, polygons_by_size, no_droplets, 1)
+
     print("Image created. Calculating statistics...")
-    WSP_Statistics(wsp_image, colors)
+    DatasetResults(wsp_image, colors)
 
     end_time = time.time()
     elapsed_time = end_time - start_time
