@@ -1,5 +1,0 @@
-Number of droplets: 864
-Coverage percentage: 14.25
-VMD value: 0.364243
-RSF value: 1.12
-Number of overlapped droplets: 494
