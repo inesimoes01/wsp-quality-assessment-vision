@@ -28,8 +28,8 @@ class Accuracy:
         # read the predicted and ground truth masks
         pred_overlapped_mask = cv2.imread(os.path.join(config.RESULTS_CV_MASK_OV_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
         pred_single_mask = cv2.imread(os.path.join(config.RESULTS_CV_MASK_SIN_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
-        gt_overlapped_mask = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_RAW_MASK_OV_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
-        gt_single_mask = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_RAW_MASK_SIN_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
+        gt_overlapped_mask = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_MASK_OV_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
+        gt_single_mask = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_MASK_SIN_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
         
         # calculate accuracy
         self.iou_overall, self.iou_single, self.iou_overlapped = self.calculate_iou(pred_overlapped_mask, gt_overlapped_mask, pred_single_mask, gt_single_mask)
@@ -38,7 +38,7 @@ class Accuracy:
 
     def find_pairs(self):
         data = {
-            'DropletID': ['isElipse', 'CenterX', 'CenterY', 'Diameter', 'OverlappedDropletsID', '', 'DropletID_GT', 'isElipse_GT', 'CenterX_GT', 'CenterY_GT', 'Diameter_GT', 'OverlappedDropletsID_GT'],
+            'DropletID': ['CenterX', 'CenterY', 'Area', 'OverlappedDropletsID', '', 'DropletID_GT', 'CenterX_GT', 'CenterY_GT', 'Area_GT', 'OverlappedDropletsID_GT'],
         }
 
         df = pd.DataFrame(columns=data)
@@ -48,12 +48,12 @@ class Accuracy:
             for gt_stat in self.groundtruth_droplets.values():
                 distance = np.sqrt((pred_stat.center_x - gt_stat.center_x)**2 + (pred_stat.center_y - gt_stat.center_y)**2 )
                 
-                if distance < config.ACCURACY_DISTANCE_THRESHOLD and abs(pred_stat.diameter - gt_stat.diameter) < config.ACCURACY_DIAMETER_THRESHOLD:
+                if distance < config.ACCURACY_DISTANCE_THRESHOLD and abs(pred_stat.area - gt_stat.area) < config.ACCURACY_DIAMETER_THRESHOLD:
                     self.save_pairs_id.append((gt_stat.id, pred_stat.id))
                     
-                    new_row = {'DropletID': pred_stat.id, 'isElipse': pred_stat.isElipse, 'CenterX': pred_stat.center_x, 'CenterY': pred_stat.center_y, 'Diameter': pred_stat.diameter, 'OverlappedDropletsID': pred_stat.overlappedIDs, 
+                    new_row = {'DropletID': pred_stat.id, 'CenterX': pred_stat.center_x, 'CenterY': pred_stat.center_y, 'Area': pred_stat.area, 'OverlappedDropletsID': pred_stat.overlappedIDs, 
                         '': '', 
-                        'DropletID_GT': gt_stat.id, 'isElipse_GT': gt_stat.isElipse, 'CenterX_GT': gt_stat.center_x, 'CenterY_GT': gt_stat.center_y, 'Diameter_GT': gt_stat.diameter, 'OverlappedDropletsID_GT': gt_stat.overlappedIDs 
+                        'DropletID_GT': gt_stat.id, 'CenterX_GT': gt_stat.center_x, 'CenterY_GT': gt_stat.center_y, 'Area_GT': gt_stat.area, 'OverlappedDropletsID_GT': gt_stat.overlappedIDs 
                         }
                     df = df._append(new_row, ignore_index=True)
                     break

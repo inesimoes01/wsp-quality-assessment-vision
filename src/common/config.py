@@ -5,22 +5,33 @@ import os
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
 
-DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset_versions" / "only_single_circles" / "raw" 
-DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
-DATA_ARTIFICIAL_RAW_INFO_DIR = DATA_ARTIFICIAL_RAW_DIR / "info"
-DATA_ARTIFICIAL_RAW_LABEL_DIR = DATA_ARTIFICIAL_RAW_DIR / "label"
-DATA_ARTIFICIAL_RAW_MASK_SIN_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "single"
-DATA_ARTIFICIAL_RAW_MASK_OV_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "overlapped"
-DATA_ARTIFICIAL_RAW_STATISTICS_DIR = DATA_ARTIFICIAL_RAW_DIR / "statistics"
-DATA_ARTIFICIAL_RAW_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_versions", "only_single_circles", "raw" , "background.png")
-
-# DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
+# DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset_versions" / "only_single_circles" / "raw" 
 # DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
 # DATA_ARTIFICIAL_RAW_INFO_DIR = DATA_ARTIFICIAL_RAW_DIR / "info"
 # DATA_ARTIFICIAL_RAW_LABEL_DIR = DATA_ARTIFICIAL_RAW_DIR / "label"
 # DATA_ARTIFICIAL_RAW_MASK_SIN_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "single"
 # DATA_ARTIFICIAL_RAW_MASK_OV_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "overlapped"
 # DATA_ARTIFICIAL_RAW_STATISTICS_DIR = DATA_ARTIFICIAL_RAW_DIR / "statistics"
+# DATA_ARTIFICIAL_RAW_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_versions", "only_single_circles", "raw" , "background.png")
+
+DATA_ARTIFICIAL_WSP_DIR = Path("data") / "artificial_dataset" / "wsp" 
+DATA_ARTIFICIAL_WSP_IMAGE_DIR = DATA_ARTIFICIAL_WSP_DIR / "image"
+DATA_ARTIFICIAL_WSP_INFO_DIR = DATA_ARTIFICIAL_WSP_DIR / "info"
+DATA_ARTIFICIAL_WSP_LABEL_DIR = DATA_ARTIFICIAL_WSP_DIR / "label"
+DATA_ARTIFICIAL_WSP_MASK_SIN_DIR = DATA_ARTIFICIAL_WSP_DIR / "mask" / "single"
+DATA_ARTIFICIAL_WSP_MASK_OV_DIR = DATA_ARTIFICIAL_WSP_DIR / "mask" / "overlapped"
+DATA_ARTIFICIAL_WSP_STATISTICS_DIR = DATA_ARTIFICIAL_WSP_DIR / "statistics"
+DATA_ARTIFICIAL_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_main", "raw" , "background.png")
+
+DATA_ARTIFICIAL_BG_DIR = Path("data") / "artificial_dataset" / "background" 
+DATA_ARTIFICIAL_BG_IMAGE_DIR = DATA_ARTIFICIAL_BG_DIR / "image"
+DATA_ARTIFICIAL_BG_LABEL_DIR = DATA_ARTIFICIAL_BG_DIR / "label"
+
+DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
+DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
+DATA_ARTIFICIAL_RAW_LABEL_DIR = DATA_ARTIFICIAL_RAW_DIR / "label"
+
+
 
 DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
 DATA_REAL_RAW_IMAGE_DIR = DATA_REAL_RAW_DIR / "image"
@@ -55,8 +66,8 @@ YOLO_MODEL_DIR = Path("models")
 
 ### CREATE ARTIFICIAL DATASET VALUES
 
-NUM_WSP = 10                                    # how many images to create
-MAX_NUM_SPOTS = 5000                            # maximum number of spots per image
+NUM_WSP = 1000                                    # how many images to create
+MAX_NUM_SPOTS = 7000                            # maximum number of spots per image
 MIN_NUM_SPOTS = 300                             # minimum number of spots per image
 
 WIDTH_MM, HEIGHT_MM = 76, 26                    # width and height trying to emulate with the artificial dataset

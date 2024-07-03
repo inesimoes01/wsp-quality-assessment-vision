@@ -14,16 +14,21 @@ from shapely.affinity import translate
 from shapely import geometry, Point
 from DropletShape import DropletShape
 import random
-#brown_colors = ['#1b1a2a', '#181729', '#1c1527', '#141325', '#181123', '#0c0d22', '#131522', '#1b141c', '#14141c', '#1b0f19', '#131514', '#0e0f13', '#1f150c', '#190e00']
-# from dark to light
-brown_colors = [ '#190e00', '#1f150c', '#0e0f13', '#131514', '#1b0f19', '#14141c', '#1b141c', '#131522', '#0c0d22', '#181123', '#141325', '#1c1527', '#181729', '#1b1a2a']
-# from dark to light
-dark_blue_colors=['#09082a', '#0f0c2b', '#181130', '#0a0a30', '#030430', '#160e33', '#000233', '#191935', '#0e0d35', '#0e0d35', '#140c35', '#181736', '#060838', '#060838', '#060a3a', '#060a3a', '#11143d', '#0d0b3d', '#0e1040', '#030444', '#060845', '#0d0b4a', '#0b094a', '#070654']
-#dark_blue_colors = ['#070654', '#0b094a', '#0d0b4a', '#060845', '#030444', '#0e1040', '#0d0b3d', '#11143d', '#060a3a', '#060a3a', '#060838', '#060838', '#181736', '#140c35', '#0e0d35', '#0e0d35', '#191935', '#000233', '#160e33', '#030430', '#0a0a30', '#181130', '#0f0c2b', '#09082a']
-# from light to dark
-#light_blue_color = ['#2c2bb7', '#2e2db5', '#2524ac', '#2d29a2', '#352ea0', '#2c2897', '#272595', '#221d91', '#18107f', '#181872']
-# from dark to light
-light_blue_color = ['#181872', '#18107f', '#221d91', '#272595', '#2c2897', '#352ea0', '#2d29a2', '#2524ac', '#2e2db5', '#2c2bb7']
+# #brown_colors = ['#1b1a2a', '#181729', '#1c1527', '#141325', '#181123', '#0c0d22', '#131522', '#1b141c', '#14141c', '#1b0f19', '#131514', '#0e0f13', '#1f150c', '#190e00']
+# # from dark to light
+# brown_colors = [ '#190e00', '#1f150c', '#0e0f13', '#131514', '#1b0f19', '#14141c', '#1b141c', '#131522', '#0c0d22', '#181123', '#141325', '#1c1527', '#181729', '#1b1a2a']
+# # from dark to light
+# dark_blue_colors=['#09082a', '#0f0c2b', '#181130', '#0a0a30', '#030430', '#160e33', '#000233', '#191935', '#0e0d35', '#0e0d35', '#140c35', '#181736', '#060838', '#060838', '#060a3a', '#060a3a', '#11143d', '#0d0b3d', '#0e1040', '#030444', '#060845', '#0d0b4a', '#0b094a', '#070654']
+# #dark_blue_colors = ['#070654', '#0b094a', '#0d0b4a', '#060845', '#030444', '#0e1040', '#0d0b3d', '#11143d', '#060a3a', '#060a3a', '#060838', '#060838', '#181736', '#140c35', '#0e0d35', '#0e0d35', '#191935', '#000233', '#160e33', '#030430', '#0a0a30', '#181130', '#0f0c2b', '#09082a']
+# # from light to dark
+# #light_blue_color = ['#2c2bb7', '#2e2db5', '#2524ac', '#2d29a2', '#352ea0', '#2c2897', '#272595', '#221d91', '#18107f', '#181872']
+# # from dark to light
+# light_blue_color = ['#181872', '#18107f', '#221d91', '#272595', '#2c2897', '#352ea0', '#2d29a2', '#2524ac', '#2e2db5', '#2c2bb7']
+
+brown_colors = [ '#220000', '#2a0700', '#330000', '#4a1800', '#4c2000', '#512600', '#542900', '#552809']
+dark_blue_colors = ['#5b1a30', '#4e0634', '#5e0b35', '#651f37', '#5e223b', '#65203f', '#65203f', '#571241']
+light_blue_color = ['#63219f',  '#642aa5',  '#7f24a5',  '#812ba6',  '#6a0fa8',  '#690eab',  '#7b25ac',  '#7530ad',  '#752eb0',  '#7e22b1',  '#8b27bb',  '#732ebd',  '#8e23bf',  '#7326c0',  '#853fc3',  '#812ec6',  '#8125c6',  '#6b1ec6',  '#8727c7',  '#892ace',  '#742dd1',  '#8038e4',  '#aa52e6',  '#a248e6']
+
 def create_concentric_polygons(coords, scale_factors, min_corner, center):
     original_polygon = geometry.Polygon(coords)
     polygons = []
@@ -119,7 +124,7 @@ def paint_polygon(img, polygon):
                     interpolated_color = interpolate_color(inner_color, middle_interpolated_color, t)
                 
                 else:
-                    t = (distance - 4) / size - 4
+                    t = (distance - 4) / size 
                     color_index = int(t * (len(light_blue_rgb) - 1))
                     t = (t * (len(light_blue_rgb) - 1)) - color_index
                     color1 = light_blue_rgb[color_index % len(light_blue_rgb)]

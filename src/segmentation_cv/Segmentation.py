@@ -4,6 +4,7 @@ import copy
 import os
 import config
 import Util
+from matplotlib import pyplot as plt 
 
 from Droplet import Droplet
 from Statistics import Statistics
@@ -22,7 +23,7 @@ class Segmentation:
         self.contours = sorted(self.contours, key=lambda c: cv2.arcLength(c, True), reverse=True)
         len_contours_original = len(self.contours)
 
-        i=0
+        i = 0
         while(i < len(self.contours)):         
             contour = self.contours[i]
             contour_area = cv2.contourArea(contour)
@@ -31,12 +32,12 @@ class Segmentation:
 
             # treat small contours like a perfect circle
             if len(contour) < 5 and contour_area < 3 and i < len_contours_original: 
-                self.save_draw_circle_droplet(contour, overlapped_ids, i, (200, 200, 200), 0)
+                self.save_draw_circle_droplet(contour, overlapped_ids, i, (200, 200, 200), 0, contour_area)
                 i += 1
                 continue    
 
             elif len(contour) < 5 and i < len_contours_original:
-                self.save_draw_circle_droplet(contour, overlapped_ids, i, (160, 160, 160), 0)
+                self.save_draw_circle_droplet(contour, overlapped_ids, i, (160, 160, 160), 0, contour_area)
                 i += 1
                 continue
            
@@ -50,7 +51,7 @@ class Segmentation:
               
                 # treat small contours like a perfect circle
                 if len(contour) < 5: 
-                    self.save_draw_circle_droplet(contour, overlapped_ids, i, (255, 0, 51), 0)
+                    self.save_draw_circle_droplet(contour, overlapped_ids, i, (255, 0, 51), 0, contour_area)
                     i += 1
                     continue    
 
@@ -65,10 +66,10 @@ class Segmentation:
             
             match shape:
                 case 0: # circle single
-                    self.save_draw_circle_droplet(contour, overlapped_ids, i, (255, 255, 255), 0)
+                    self.save_draw_circle_droplet(contour, overlapped_ids, i, (255, 255, 255), 0, contour_area)
                 
                 case 1: # elipse
-                    self.save_draw_elipse_droplet(contour, i, overlapped_ids, (102, 0, 102), 1)
+                    self.save_draw_elipse_droplet(contour, i, overlapped_ids, (102, 0, 102), 1, contour_area)
                 
                 case 2: # circles overlapped
 
@@ -80,11 +81,11 @@ class Segmentation:
             
                     # save each one of the overlapped circles
                     if circles is not None:                    
-                        self.save_draw_overlapped_droplet(circles, x_roi, y_roi, i, contour)
+                        self.save_draw_overlapped_droplet(circles, x_roi, y_roi, i, contour, contour_area)
                         
 
                     else:
-                        self.save_draw_elipse_droplet(contour, i, overlapped_ids, (0, 102, 51), 1)
+                        self.save_draw_elipse_droplet(contour, i, overlapped_ids, (0, 102, 51), 1, contour_area)
                                     
             i += 1
 
@@ -124,13 +125,14 @@ class Segmentation:
         self.contour_area = 0
 
         self.ignore_ids = []
+
     def is_circle_within_image(self, height, width, x, y, radius):
         # check if the circle is within the image boundaries
         if (x - radius >= 0) and (x + radius <= width) and (y - radius >= 0) and (y + radius <= height):
             return True
         return False
     
-    def save_draw_overlapped_droplet(self, circles, x_roi, y_roi, i, contour):
+    def save_draw_overlapped_droplet(self, circles, x_roi, y_roi, i, contour, area):
         if self.create_masks: self.create_mask(2, contour) 
         circle_ids = list(range(i, i + len(circles)))
         j = 0
@@ -138,28 +140,25 @@ class Segmentation:
             overlapped_ids = []
             overlapped_ids = circle_ids[:j] + circle_ids[j+1:]
             
-            self.droplets_data.append(Droplet(True, int(circle[0] + x_roi), int(circle[1] + y_roi), float(circle[2]*2), int(i + j), overlapped_ids))
+            self.droplets_data.append(Droplet(int(circle[0] + x_roi), int(circle[1] + y_roi), area, int(i + j), overlapped_ids, float(circle[2]*2)))
             cv2.circle(self.detected_image, (int(circle[0] + x_roi), int(circle[1] + y_roi)), int(circle[2]), (0, 255, 0), 2)
             j+=1
             
-    def save_draw_circle_droplet(self, contour, overlapped_ids, i, color_array, shape):
+    def save_draw_circle_droplet(self, contour, overlapped_ids, i, color_array, shape, area):
         if self.create_masks: self.create_mask(shape, contour) 
         (center_x, center_y), radius = cv2.minEnclosingCircle(contour)
 
         if (self.is_circle_within_image(self.height, self.width, center_x, center_y, radius)):
             #diameter = 0.95*(np.sqrt((4*contour_area)/np.pi))**0.91
-            self.droplets_data.append(Droplet(False, int(center_x), int(center_y), float(radius * 2), int(i), overlapped_ids))
+            self.droplets_data.append(Droplet(int(center_x), int(center_y), area, int(i), overlapped_ids, float(radius * 2),))
             cv2.circle(self.detected_image, (int(center_x), int(center_y)), int(radius), color_array, 2)
-        
 
-
-    def save_draw_elipse_droplet(self, contour, i, overlapped_ids, color_array, shape):
+    def save_draw_elipse_droplet(self, contour, i, overlapped_ids, color_array, shape, area):
         if self.create_masks: self.create_mask(shape, contour)  
         (x, y), (major, minor), angle = cv2.fitEllipse(contour)
         elipse = cv2.fitEllipse(contour)
-        self.droplets_data.append(Droplet(True, int(x), int(y) , float(minor), int(i), overlapped_ids))
+        self.droplets_data.append(Droplet(int(x), int(y), area, int(i), overlapped_ids, float(minor)))
         cv2.ellipse(self.detected_image, elipse, color = color_array, thickness=2)
-       
         
     def remove_inside_contours(self, contour, index):
         # get new contour with a new threshold
@@ -273,12 +272,20 @@ class Segmentation:
     def get_contours(self):        
         img = copy.copy(self.image)
         img = cv2.GaussianBlur(img, (5, 5), 0)
-        threshold = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 2)   
-        edges = cv2.Canny(threshold, 170, 200)
+
+        _, threshold = cv2.threshold(img, 150, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        #threshold = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 2)   
+        
+        edges = cv2.Canny(threshold, 0, 255)
+        Util.plotTwoImages(edges, threshold)
+        # plt.imshow(edges)
+        # plt.show()
        
         self.contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        cv2.drawContours(self.contour_image, self.contours, -1, (255, 255, 255), 1)
+        cv2.drawContours(self.contour_image, self.contours, -1, (255, 255, 255), cv2.FILLED)
 
+        plt.imshow(self.contour_image)
+        plt.show()
         # save number of contours
         self.final_no_droplets = len(self.contours)
     
@@ -341,9 +348,9 @@ class Segmentation:
         return shape, no_convex_points
        
     def calculate_stats(self):
-        self.droplet_radius = [d.radius for d in self.droplets_data]
+        self.droplet_area = [d.area for d in self.droplets_data]
 
-        self.volume_list = sorted(Statistics.radius_to_volume(self.droplet_radius, self.width))
+        self.volume_list = sorted(Statistics.area_to_volume(self.droplet_area, self.width))
 
         vmd_value, rsf_value, coverage_percentage = Statistics.calculate_statistics(self.volume_list, self.image, self.contour_area)
 

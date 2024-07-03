@@ -40,7 +40,7 @@ class Statistics:
         return volumes_sorted[vmd_index]
 
     def calculate_coverage_percentage(image, contour_area):
-        height, width, _ = image.shape
+        height, width = image.shape[:2]
         total_area = height * width
         return contour_area / total_area * 100
 

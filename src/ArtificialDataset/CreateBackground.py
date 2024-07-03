@@ -7,8 +7,8 @@ import config
 import cv2
 
 def choose_background_color(background_colors):
-    color1_index = random.randint(0, len(background_colors))
-    color2_index = random.randint(0, len(background_colors))
+    color1_index = random.randint(0, len(background_colors) - 1)
+    color2_index = random.randint(0, len(background_colors) - 1)
 
     return background_colors[color1_index], background_colors[color2_index]
 

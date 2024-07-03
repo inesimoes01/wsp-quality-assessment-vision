@@ -1,6 +1,8 @@
 import os
 import csv
 import ast
+import pandas as pd
+
 
 import config
 from Droplet import Droplet
@@ -15,26 +17,30 @@ class GroundTruth_Statistics:
         self.stats = Statistics(self.vmd_value, self.rsf_value, self.coverage_percentage, self.no_total_droplets, self.droplets)
 
     def read_stats_file(self):
-        stats_file_path = (os.path.join(config.DATA_ARTIFICIAL_RAW_STATISTICS_DIR, self.filename + ".txt"))
-        with open(stats_file_path, 'r') as f:
-            lines = f.readlines()
-            self.no_total_droplets = int(lines[0].split(":")[1].strip())
-            self.coverage_percentage = float(lines[1].split(":")[1].strip())
-            self.vmd_value = float(lines[2].split(":")[1].strip())
-            self.rsf_value = float(lines[3].split(":")[1].strip())
-            self.no_overlapped_droplets = int(lines[4].split(":")[1].strip())
+        stats_file_path = (os.path.join(config.DATA_ARTIFICIAL_WSP_STATISTICS_DIR, self.filename + ".csv"))
+        data = pd.read_csv(stats_file_path)
+
+        # Assign each value to a variable
+        self.vmd_value = data.at[0, 'GroundTruth']
+        self.rsf_value = data.at[1, 'GroundTruth']
+        self.coverage_percentage = data.at[2, 'GroundTruth']
+        self.no_total_droplets = data.at[3, 'GroundTruth']
+        self.overlapped_percentage = data.at[4, 'GroundTruth']
+        self.no_overlapped_droplets = data.at[5, 'GroundTruth']
+                  
 
         self.droplets:list[Droplet] = []
-        dropletinfo_file_path = (os.path.join(config.DATA_ARTIFICIAL_RAW_INFO_DIR, self.filename + ".csv"))
+        dropletinfo_file_path = (os.path.join(config.DATA_ARTIFICIAL_WSP_INFO_DIR, self.filename + ".csv"))
+        
         with open(dropletinfo_file_path, 'r') as f:
             csv_reader = csv.reader(f)
             isFirst = True
             for row in csv_reader:
                 if (isFirst): isFirst = False
                 else: 
-                    overlapped = row[5]
-                    if (row[5] != []):
+                    overlapped = row[4]
+                    if (row[4] != []):
                         overlapped = ast.literal_eval(overlapped)
                     
-                    self.droplets.append(Droplet(row[1], int(row[2]), int(row[3]), int(row[4]), int(row[0]), overlapped))
+                    self.droplets.append(Droplet(int(row[1]), int(row[2]), int(row[3]), int(row[0]), overlapped))
         
