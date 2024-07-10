@@ -71,7 +71,8 @@ def save_all_shapes():
         polygon = geometry.Polygon(roi_points)
         min_x, min_y, max_x, max_y = polygon.bounds
         max_distance = int(np.sqrt((max_y - min_y) ** 2 + (max_x - min_x) ** 2))
-
+        
+        #area = int(polygon.area)
         list_roi_shapes.append(DropletShape(i, w, h, max_distance, polygon, roi_points, roi_points))   
 
         if max_distance not in polygons_by_size:

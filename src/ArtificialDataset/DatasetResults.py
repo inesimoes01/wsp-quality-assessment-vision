@@ -21,9 +21,11 @@ class DatasetResults:
         self.colors = colors
         self.wsp_image = wsp_image
         self.image_num = copy.copy(wsp_image.blur_image)
-     
+
+        area_list = [drop.droplet_data.area for drop in wsp_image.list_of_individual_shapes_in_image]
+
         # calculate statistics
-        self.volume_list = sorted(Statistics.area_to_volume(self.wsp_image.droplet_area_rosin, wsp_image.width))
+        self.volume_list = sorted(Statistics.area_to_volume(area_list, wsp_image.width))
         vmd_value, coverage_percentage, rsf_value = Statistics.calculate_statistics(self.volume_list, self.wsp_image.rectangle, self.wsp_image.droplet_area)
 
         # create info and statistics files
@@ -33,12 +35,12 @@ class DatasetResults:
         self.save_statistics_to_folder()
 
         # create masks
-        path_mask_overlapped = os.path.join(config.DATA_ARTIFICIAL_RAW_MASK_OV_DIR, str(self.wsp_image.filename) + '.png')
-        path_mask_single = os.path.join(config.DATA_ARTIFICIAL_RAW_MASK_SIN_DIR, str(self.wsp_image.filename) + '.png')
+        path_mask_overlapped = os.path.join(config.DATA_ARTIFICIAL_WSP_MASK_OV_DIR, str(self.wsp_image.filename) + '.png')
+        path_mask_single = os.path.join(config.DATA_ARTIFICIAL_WSP_MASK_SIN_DIR, str(self.wsp_image.filename) + '.png')
         self.create_masks(path_mask_overlapped, path_mask_single)
 
         # create the labels
-        path_labels = os.path.join(config.DATA_ARTIFICIAL_RAW_LABEL_DIR, str(self.wsp_image.filename) + '.txt')
+        path_labels = os.path.join(config.DATA_ARTIFICIAL_WSP_LABEL_DIR, str(self.wsp_image.filename) + '.txt')
         CreateMask.write_label_file(path_labels, self.wsp_image.annotation_labels)
         # self.mask_to_label(path_mask_single, path_labels, 0)
         # self.mask_to_label(path_mask_overlapped, path_labels, 1)
@@ -94,16 +96,16 @@ class DatasetResults:
         }
 
         df = pd.DataFrame(data)
-        df.to_csv(os.path.join(config.DATA_ARTIFICIAL_RAW_STATISTICS_DIR, str(self.wsp_image.filename) + '.csv'), index=False, float_format='%.2f')
+        df.to_csv(os.path.join(config.DATA_ARTIFICIAL_WSP_STATISTICS_DIR, str(self.wsp_image.filename) + '.csv'), index=False, float_format='%.2f')
 
     def save_dropletinfo_csv(self, droplet_data:list[Droplet]):
-        csv_file = os.path.join(config.DATA_ARTIFICIAL_RAW_INFO_DIR, str(self.wsp_image.filename) + '.csv')
+        csv_file = os.path.join(config.DATA_ARTIFICIAL_WSP_INFO_DIR, str(self.wsp_image.filename) + '.csv')
         
         with open(csv_file, mode='w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(["DropletID", "CenterX", "CenterY", "Area", "OverlappedDropletsID"])
+            writer.writerow(["DropletID", "CenterX", "CenterY", "Area", "OverlappedDropletsID", "Size"])
             for drop in droplet_data:
-                row = [drop.id, drop.center_x, drop.center_y, drop.area, str(drop.overlappedIDs)]
+                row = [drop.id, drop.center_x, drop.center_y, drop.area, str(drop.overlappedIDs), drop.radius]
                 writer.writerow(row)
 
     # def mask_to_label(self, path_mask, path_labels, classid):

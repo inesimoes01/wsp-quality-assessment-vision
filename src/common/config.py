@@ -14,14 +14,23 @@ PROJ_ROOT = Path(__file__).resolve().parents[2]
 # DATA_ARTIFICIAL_RAW_STATISTICS_DIR = DATA_ARTIFICIAL_RAW_DIR / "statistics"
 # DATA_ARTIFICIAL_RAW_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_versions", "only_single_circles", "raw" , "background.png")
 
-DATA_ARTIFICIAL_WSP_DIR = Path("data") / "artificial_dataset" / "wsp" 
+DATA_ARTIFICIAL_WSP_DIR = Path("data") / "artificial_dataset_3" / "wsp" 
 DATA_ARTIFICIAL_WSP_IMAGE_DIR = DATA_ARTIFICIAL_WSP_DIR / "image"
 DATA_ARTIFICIAL_WSP_INFO_DIR = DATA_ARTIFICIAL_WSP_DIR / "info"
 DATA_ARTIFICIAL_WSP_LABEL_DIR = DATA_ARTIFICIAL_WSP_DIR / "label"
 DATA_ARTIFICIAL_WSP_MASK_SIN_DIR = DATA_ARTIFICIAL_WSP_DIR / "mask" / "single"
 DATA_ARTIFICIAL_WSP_MASK_OV_DIR = DATA_ARTIFICIAL_WSP_DIR / "mask" / "overlapped"
 DATA_ARTIFICIAL_WSP_STATISTICS_DIR = DATA_ARTIFICIAL_WSP_DIR / "statistics"
-DATA_ARTIFICIAL_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_main", "raw" , "background.png")
+DATA_ARTIFICIAL_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_3", "wsp" , "background.png")
+
+DATA_ARTIFICIAL_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
+DATA_ARTIFICIAL_AUGMENTED_IMAGE_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "image"
+DATA_ARTIFICIAL_AUGMENTED_INFO_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "info"
+DATA_ARTIFICIAL_AUGMENTED_LABEL_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "label"
+DATA_ARTIFICIAL_AUGMENTED_MASK_SIN_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "mask" / "single"
+DATA_ARTIFICIAL_AUGMENTED_MASK_OV_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "mask" / "overlapped"
+DATA_ARTIFICIAL_AUGMENTED_STATISTICS_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "statistics"
+DATA_ARTIFICIAL_AUGMENTED_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_main", "raw" , "background.png")
 
 DATA_ARTIFICIAL_BG_DIR = Path("data") / "artificial_dataset" / "background" 
 DATA_ARTIFICIAL_BG_IMAGE_DIR = DATA_ARTIFICIAL_BG_DIR / "image"
@@ -76,7 +85,7 @@ MAX_RADIUS = 10 * math.ceil(RESOLUTION / 30)    # maximum radius for a droplet g
 MIN_RADIUS = math.ceil(RESOLUTION * 0.05)       # minimum radius for a droplet given the resolution of the image
 
 CHARACTERISTIC_PARTICLE_SIZE = 15                # characteristic particle size for distribution of droplet values
-UNIFORMITY_CONSTANT = 3                         # uniformity constant for distribution of droplet values (smaller values make radius less uniform)
+UNIFORMITY_CONSTANT = 5                         # uniformity constant for distribution of droplet values (smaller values make radius less uniform)
 
 MEAN_DROPLETS = 2000                            # mean number of droplets per image for the normal distribution
 STD_DROPLETS = 500                              # standard deviation of droplets per image for the normal distribution

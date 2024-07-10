@@ -29,9 +29,9 @@ def create_folders(file_path):
 def save_dropletinfo_csv(file_path, droplet_info:list[Droplet]):
     with open(file_path, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(["DropletID", "isElipse", "CenterX", "CenterY", "Diameter", "OverlappedDropletsID"])
+        writer.writerow(["DropletID", "CenterX", "CenterY", "Area", "OverlappedDropletsID"])
         for drop in droplet_info:
-            row = [drop.id, drop.isElipse, drop.center_x, drop.center_y, drop.diameter, str(drop.overlappedIDs)]
+            row = [drop.id, drop.center_x, drop.center_y, drop.area, str(drop.overlappedIDs)]
             writer.writerow(row)
 
 def mask_to_label(path_mask, path_labels, classid):

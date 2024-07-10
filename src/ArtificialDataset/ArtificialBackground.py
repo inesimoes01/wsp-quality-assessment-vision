@@ -16,8 +16,13 @@ def resize_image(image, target_width, target_height):
         resized_image = image
     return resized_image
 
-def read_yolo_label_wsp(lines, image_height_original, image_width_original, w, h, dx, dy):
+def read_yolo_label_wsp(lines, image_height_original, image_width_original, x_re, y_re, w, h, dx, dy):
     polygon_coordinates = []
+
+    min_x = x_re
+    max_x = x_re + w
+    min_y = y_re 
+    max_y = y_re + h
 
     for line in lines:
         data = line.strip().split()
@@ -34,15 +39,17 @@ def read_yolo_label_wsp(lines, image_height_original, image_width_original, w, h
             rot_x = int(image_width_original - y)
             rot_y = int(x)
 
-            # # trans_x = w / image_width_original
-            # # trans_y = h / image_height_original
+            # # # trans_x = w / image_width_original
+            # # # trans_y = h / image_height_original
             
             # # translation
             trans_x = rot_x + dx
             trans_y = rot_y + dy
             
-            coordinates.append((trans_x, trans_y))
-            
+            # coordinates.append((trans_x, trans_y))
+            if min_x <= trans_x <= max_x and min_y <= trans_y <= max_y:
+                coordinates.append((trans_x, trans_y))
+        
             #new_coords = np.array([[img_height - y, x] for x, y in coords])
         polygon_coordinates.append(np.array(coordinates, dtype=np.int32))
 
@@ -87,9 +94,10 @@ def compress_to_resolution(image_path, resolution):
     img.save(image_path)
 
 
-last_index = 0
+last_index = 1590
 wsp_image_width = 468
 wsp_image_height = 1368
+
 for background_file in os.listdir(config.DATA_ARTIFICIAL_BG_IMAGE_DIR):
     #compress_to_resolution(os.path.join(config.DATA_ARTIFICIAL_BG_IMAGE_DIR, background_file), )
     bg_filename = os.path.splitext(background_file)[0]
@@ -122,7 +130,7 @@ for background_file in os.listdir(config.DATA_ARTIFICIAL_BG_IMAGE_DIR):
 
     
     for index in range(10):
-        index += last_index + 1000
+        index += last_index
         
         # load wsp_image created previously
         wsp_image = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR, str(index) + ".png"))
@@ -136,17 +144,41 @@ for background_file in os.listdir(config.DATA_ARTIFICIAL_BG_IMAGE_DIR):
         warped_new_image = np.zeros_like(resized_background)
         warped_new_image[y:y+h, x:x+w] = resized_new_image
         wsp_image_height_rez, wsp_image_width_rez = wsp_image.shape[:2]
-        
-        result_image = cv2.bitwise_and(resized_background, 255 - rectangle_mask) + cv2.bitwise_and(warped_new_image, rectangle_mask)
 
+        result_image = cv2.bitwise_and(resized_background, 255 - rectangle_mask) + cv2.bitwise_and(warped_new_image, rectangle_mask)
+        
         # get new coordinates of the droplets
         wsp_label_file = os.path.join(config.DATA_ARTIFICIAL_WSP_LABEL_DIR, str(index) + ".txt")
         with open(wsp_label_file, 'r') as file:
             wsp_lines = file.readlines()
 
-        wsp_annotations = read_yolo_label_wsp(wsp_lines, wsp_image_height, wsp_image_width, w, h, x, y)
+        wsp_annotations = read_yolo_label_wsp(wsp_lines, wsp_image_height, wsp_image_width, x, y, w, h, x, y)
+     
+
+        # for coords in wsp_annotations:
+        #     # Warp the coordinates
+        #     polygon_array = np.array(coords, dtype=np.float32)
+        #     polygon_array = np.array([polygon_array])
+            
+        #     # Warp the polygon using the perspective transform matrix
+        #     warped_polygon = cv2.perspectiveTransform(polygon_array, M)
+            
+        #     # Convert back to a list of tuples
+        #     warped_polygon = warped_polygon[0]
+        #     new_annotations.append(warped_polygon)
+        #     # coords_homogeneous = np.hstack([coords, np.ones((coords.shape[0], 1))])
+        #     # warped_coords = cv2.perspectiveTransform(coords_homogeneous[], M)[0]
+        #     # new_annotations.append(warped_coords)
+
+        # for coords in wsp_annotations:
+        #     pts = coords.astype(np.int32)
+        #     cv2.polylines(result_image, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
+                    
+        # plt.imshow(result_image)
+        # plt.show()
         
         new_label_file = os.path.join(config.DATA_ARTIFICIAL_RAW_LABEL_DIR, f"{index}.txt")
+
         with open(new_label_file, 'w') as file:
             for coords in wsp_annotations:
                 coord_str = " ".join([f"{p[0] / image_width_rez} {p[1] / image_height_rez}" for p in coords])
