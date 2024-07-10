@@ -67,9 +67,11 @@ if isArtificialDataset:
         # read image
         image_gray = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR, filename + ".png"), cv2.IMREAD_GRAYSCALE)
         image_colors = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR, filename + ".png"))  
+
+        image_colors = cv2.cvtColor(image_colors, cv2.COLOR_BGR2RGB)
         
         # calculate statistics
-        calculated:Segmentation = Segmentation(image_colors, image_gray, filename, False, True)
+        calculated:Segmentation = Segmentation(image_colors, image_gray, filename, False, True, 1)
         droplets_calculated_dict = {droplet.id: droplet for droplet in calculated.droplets_data}
         stats_calculated:Statistics = calculated.stats
 
@@ -98,7 +100,7 @@ if isArtificialDataset:
         FN_overlapped += acc.false_negatives_overlapped
 
         IOU += acc.iou_overall
-        dice += acc.dice_coefficient
+
         k+=1
         print(k, filename)
         if k==10: 
