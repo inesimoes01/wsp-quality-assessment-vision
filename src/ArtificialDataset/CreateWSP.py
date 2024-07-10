@@ -35,15 +35,16 @@ class ShapeInImage:
         self.shape_index = shape_index
         self.points = points
         self.droplet_data = droplet_data
+  
 
 
 class CreateWSP:
-    def __init__(self, index:int, colors:Colors, shapes:list[DropletShape], polygons_by_size, num_spots, type_of_dataset):
+    def __init__(self, index:int, colors:Colors, shapes:list[DropletShape], polygons_by_size, num_spots, type_of_dataset, reso, charac):
         self.filename = index
         self.max_num_spots:int = config.MAX_NUM_SPOTS
         self.min_num_spots:int = config.MIN_NUM_SPOTS
-        self.width:float = config.WIDTH_MM * config.RESOLUTION
-        self.height:float = config.HEIGHT_MM * config.RESOLUTION
+        self.width:float = config.WIDTH_MM * reso
+        self.height:float = config.HEIGHT_MM * reso 
         self.num_spots = num_spots
         self.colors = colors
         self.polygons_by_size = polygons_by_size
@@ -53,11 +54,11 @@ class CreateWSP:
 
 
         # generate the droplet sizes, which is assumed to be the area, given a rosin rammler distribution and the centers
-        self.droplet_area_rosin = RosinRammlerDistribution.generate_droplet_sizes_rosin_rammler(self.num_spots)
+        self.droplet_size_rosin = RosinRammlerDistribution.generate_droplet_sizes_rosin_rammler(self.num_spots, charac)
 
         # save latex files
-        if index == 0:
-            RosinRammlerDistribution.fit_droplet_size_graph(self.droplet_area_rosin)
+        # if index == 0:
+        #     RosinRammlerDistribution.fit_droplet_size_graph(self.droplet_size_rosin)
         
         # generate the center coordinates for each one of the droplets
         self.droplet_coordinates = self.generate_droplet_coordinates()
@@ -66,7 +67,7 @@ class CreateWSP:
         # background colors change to create a more diverse dataset
        
         CreateBackground.create_background(self.colors.background_colors, self.width, self.height)
-        self.rectangle = cv2.imread(config.DATA_ARTIFICIAL_RAW_BACKGROUND_IMG, cv2.IMREAD_COLOR)
+        self.rectangle = cv2.imread(config.DATA_ARTIFICIAL_WSP_BACKGROUND_IMG, cv2.IMREAD_COLOR)
         self.rectangle = cv2.cvtColor(self.rectangle, cv2.COLOR_BGR2RGB)
         
 
@@ -86,42 +87,42 @@ class CreateWSP:
 
         match self.type_of_dataset:
 
-            case 0:     # only singular circles inside the wsp
-                for i in range(self.num_spots):
-                    spot_radius = math.ceil(self.droplet_area_rosin[i])
+            # case 0:     # only singular circles inside the wsp
+            #     for i in range(self.num_spots):
+            #         spot_radius = math.ceil(self.droplet_area_rosin[i])
                     
-                    count = 0
-                    while (True):
-                        center_x = np.random.randint(spot_radius, self.width - spot_radius)
-                        center_y = np.random.randint(spot_radius, self.height - spot_radius)
+            #         count = 0
+            #         while (True):
+            #             center_x = np.random.randint(spot_radius, self.width - spot_radius)
+            #             center_y = np.random.randint(spot_radius, self.height - spot_radius)
 
-                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i)
+            #             overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i)
                 
-                        if not overlap_bool:
-                            self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, i)
-                            break
+            #             if not overlap_bool:
+            #                 self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, i)
+            #                 break
                         
-                        count += 1
-                        if count > 100:
-                            break
+            #             count += 1
+            #             if count > 100:
+            #                 break
             
-                for i in range(self.num_spots):
-                    spot_radius = math.ceil(self.droplet_area_rosin[i])
+            #     for i in range(self.num_spots):
+            #         spot_radius = math.ceil(self.droplet_area_rosin[i])
                     
-                    count = 0
-                    while (True):
-                        center_x = np.random.randint(spot_radius, self.width - spot_radius)
-                        center_y = np.random.randint(spot_radius, self.height - spot_radius)
+            #         count = 0
+            #         while (True):
+            #             center_x = np.random.randint(spot_radius, self.width - spot_radius)
+            #             center_y = np.random.randint(spot_radius, self.height - spot_radius)
 
-                        overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i)
+            #             overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i)
                 
-                        if not overlap_bool:
-                            self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, i)
-                            break
+            #             if not overlap_bool:
+            #                 self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, i)
+            #                 break
                         
-                        count += 1
-                        if count > 100:
-                            break
+            #             count += 1
+            #             if count > 100:
+            #                 break
                     
             case 1:     # overlapped and singular droplets (circles and elipses)
                 sliding_window_x = 20
@@ -138,11 +139,13 @@ class CreateWSP:
                 for i in range(self.num_spots):
                 #for i in range(4):
                     # get pre generated values
-                    spot_area = math.ceil(self.droplet_area_rosin[i])
+                    spot_size = math.ceil(self.droplet_size_rosin[i])
                     center_x, center_y = self.droplet_coordinates[i]
+
+                    #spot_area = spot_size / 2 * np.pi ** 2
                     
                     # save informations for each individual droplet
-                    shape_to_save = self.save_individual_droplets(int(center_x), int(center_y), int(spot_area), i)
+                    shape_to_save = self.save_individual_droplets(int(center_x), int(center_y), int(spot_size), i)
                     
                     # accumulate the labels for each polygon for yolo training
                     self.annotation_labels.append(CreateMask.polygon_to_yolo_label(shape_to_save.points, self.width, self.height))
@@ -181,74 +184,70 @@ class CreateWSP:
                     if shape.droplet_data.overlappedIDs == []:
                         polygon = geometry.Polygon(shape.points)
 
-                        # accumulate the area of each polygon for statistics
-                        self.droplet_area += polygon.area
-
                         self.list_of_singular_shapes_in_image.append(polygon)
                         CreateDroplet.paint_polygon(self.rectangle, polygon)
  
                 # paint the overlapped droplets
                 for polygon in self.list_of_intersected_shapes_in_image:
                     # accumulate the area of each polygon for statistics
-                    self.droplet_area += polygon.area
-
+                
                     CreateDroplet.paint_polygon(self.rectangle, polygon)
                     
 
-            case 2:     # classes overlapped and singular are leveled
-                count_overlapping_sets = 0
-                count_single = 0
-                num_overlapping_droplets = math.ceil(self.num_spots * 1 / 3)  
-                num_overlapping_sets = math.ceil(self.num_spots * 1 / 3) 
-                overlapped_sets = self.generate_overlapping_value(num_overlapping_sets, num_overlapping_droplets)
-                sumy = sum(overlapped_sets)
-                count_total_no_droplets = 0
+            # case 2:     # classes overlapped and singular are leveled
+            #     count_overlapping_sets = 0
+            #     count_single = 0
+            #     num_overlapping_droplets = math.ceil(self.num_spots * 1 / 3)  
+            #     num_overlapping_sets = math.ceil(self.num_spots * 1 / 3) 
+            #     overlapped_sets = self.generate_overlapping_value(num_overlapping_sets, num_overlapping_droplets)
+            #     sumy = sum(overlapped_sets)
+            #     count_total_no_droplets = 0
                 
-                while(self.num_spots > count_total_no_droplets):
+            #     while(self.num_spots > count_total_no_droplets):
                 
-                    # create only overlapping circles
-                    if count_overlapping_sets < num_overlapping_sets:
-                        no_drops_in_set = overlapped_sets[count_overlapping_sets]
+            #         # create only overlapping circles
+            #         if count_overlapping_sets < num_overlapping_sets:
+            #             no_drops_in_set = overlapped_sets[count_overlapping_sets]
 
-                        # initial circle position
-                        center_x = np.random.randint(5, self.width - 5)
-                        center_y = np.random.randint(5, self.height - 5)
+            #             # initial circle position
+            #             center_x = np.random.randint(5, self.width - 5)
+            #             center_y = np.random.randint(5, self.height - 5)
 
-                        for k in range(no_drops_in_set): 
-                            spot_radius = math.ceil(self.droplet_area_rosin[count_total_no_droplets])
-                            no_rand = random.randint(0, 1)
-                            # if n_spot is even it will move to be on the right of the original circle
-                            # if n_spot is odd it will move to be under the original circle
-                            if no_rand == 0:
-                                center_x += self.droplet_area_rosin[count_total_no_droplets - 1] + self.droplet_area_rosin[count_total_no_droplets]
-                            else: 
-                                center_y += self.droplet_area_rosin[count_total_no_droplets - 1] + self.droplet_area_rosin[count_total_no_droplets]
-                            # if k % 2 == 0: center_x += self.droplet_area_rosin[count_total_no_droplets - 1 ]
-                            # else: center_y += self.droplet_area_rosin[count_total_no_droplets - 1] 
+            #             for k in range(no_drops_in_set): 
+            #                 spot_radius = math.ceil(self.droplet_area_rosin[count_total_no_droplets])
+            #                 no_rand = random.randint(0, 1)
+            #                 # if n_spot is even it will move to be on the right of the original circle
+            #                 # if n_spot is odd it will move to be under the original circle
+            #                 if no_rand == 0:
+            #                     center_x += self.droplet_area_rosin[count_total_no_droplets - 1] + self.droplet_area_rosin[count_total_no_droplets]
+            #                 else: 
+            #                     center_y += self.droplet_area_rosin[count_total_no_droplets - 1] + self.droplet_area_rosin[count_total_no_droplets]
+            #                 # if k % 2 == 0: center_x += self.droplet_area_rosin[count_total_no_droplets - 1 ]
+            #                 # else: center_y += self.droplet_area_rosin[count_total_no_droplets - 1] 
                                 
-                            count_total_no_droplets += 1
+            #                 count_total_no_droplets += 1
 
-                            self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
+            #                 self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
 
-                        count_overlapping_sets += 1
+            #             count_overlapping_sets += 1
                     
-                    # create only single droplets
-                    else:
-                        spot_radius = math.ceil(self.droplet_area_rosin[count_total_no_droplets])
-                        if spot_radius < config.DROPLET_COLOR_THRESHOLD: spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
-                        else: spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
+            #         # create only single droplets
+            #         else:
+            #             spot_radius = math.ceil(self.droplet_area_rosin[count_total_no_droplets])
+            #             if spot_radius < config.DROPLET_COLOR_THRESHOLD: spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
+            #             else: spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
 
-                        while (True):
-                            center_x = np.random.randint(spot_radius, self.width - spot_radius)
-                            center_y = np.random.randint(spot_radius, self.height - spot_radius)
+            #             while (True):
+            #                 center_x = np.random.randint(spot_radius, self.width - spot_radius)
+            #                 center_y = np.random.randint(spot_radius, self.height - spot_radius)
 
-                            overlapping = self.check_if_overlapping(center_x, center_y, spot_radius, count_total_no_droplets)
+            #                 overlapping = self.check_if_overlapping(center_x, center_y, spot_radius, count_total_no_droplets)
 
-                            if not overlapping:
-                                break
+            #                 if not overlapping:
+            #                     break
                         
-                        count_total_no_droplets += 1
-                        self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
+            #             count_total_no_droplets += 1
+            #             self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
 
 
     def generate_droplet_coordinates(self):
@@ -305,17 +304,21 @@ class CreateWSP:
         
         return components
         
-    def save_individual_droplets(self, center_x, center_y, spot_area, index_droplet):
+    def save_individual_droplets(self, center_x, center_y, spot_size, index_droplet):
         index_droplet += 1
 
         # choose shape for droplet based on the area
-        shape_id = CreateDroplet.choose_polygon(self.polygons_by_size, spot_area)
+        shape_id = CreateDroplet.choose_polygon(self.polygons_by_size, spot_size)
         curr_shape = self.shapes[shape_id]
+
+        pol = Polygon(curr_shape.roi_points)
+        spot_area = pol.area
+        self.droplet_area += spot_area
 
         # get the position of each coordinate given the center the polygon should take place
         translated_points = CreateDroplet.get_shape_translation(curr_shape, center_x, center_y)
 
-        shape_to_save = ShapeInImage(shape_id, translated_points, Droplet(center_x, center_y, spot_area, index_droplet, []))
+        shape_to_save = ShapeInImage(shape_id, translated_points, Droplet(center_x, center_y, spot_area, index_droplet, [], spot_size) )
         self.list_of_individual_shapes_in_image.append(shape_to_save)
 
         return shape_to_save
@@ -331,32 +334,32 @@ class CreateWSP:
 
         return numbers
     
-    def check_if_overlapping(self, center_x, center_y, spot_radius, i, areThereElipses):
-        overlapping = False
+    # def check_if_overlapping(self, center_x, center_y, spot_radius, i, areThereElipses):
+    #     overlapping = False
 
-        for droplet in self.droplets_data:
-            distance = math.sqrt((center_x - droplet.center_x)**2 + (center_y - droplet.center_y)**2)
+    #     for droplet in self.droplets_data:
+    #         distance = math.sqrt((center_x - droplet.center_x)**2 + (center_y - droplet.center_y)**2)
 
-            # circle and circle
-            if ((i % 10 == 1) and not droplet.isElipse):
-                # add a small value to make sure the droplets are actually overlapped and not just touching
-                if distance < spot_radius + droplet.radius + config.OVERLAPPING_THRESHOLD:
-                    overlapping = True
-                    break
+    #         # circle and circle
+    #         if ((i % 10 == 1) and not droplet.isElipse):
+    #             # add a small value to make sure the droplets are actually overlapped and not just touching
+    #             if distance < spot_radius + droplet.radius + config.OVERLAPPING_THRESHOLD:
+    #                 overlapping = True
+    #                 break
 
-            # circle and elipse or elipse and circle
-            elif (((i % 10 == 1) and droplet.isElipse) or ((i % 10 == 0) and not droplet.isElipse)) and areThereElipses:
-                if distance < spot_radius + droplet.radius + config.ELIPSE_MAJOR_AXE_VALUE + config.OVERLAPPING_THRESHOLD:
-                    overlapping = True
-                    break
+    #         # circle and elipse or elipse and circle
+    #         elif (((i % 10 == 1) and droplet.isElipse) or ((i % 10 == 0) and not droplet.isElipse)) and areThereElipses:
+    #             if distance < spot_radius + droplet.radius + config.ELIPSE_MAJOR_AXE_VALUE + config.OVERLAPPING_THRESHOLD:
+    #                 overlapping = True
+    #                 break
 
-            # elipse and elipse
-            elif ((i % 10 == 0) and droplet.isElipse) and areThereElipses:
-                if distance < spot_radius + droplet.radius + config.ELIPSE_MAJOR_AXE_VALUE * 2 + config.OVERLAPPING_THRESHOLD:
-                    overlapping = True
-                    break
+    #         # elipse and elipse
+    #         elif ((i % 10 == 0) and droplet.isElipse) and areThereElipses:
+    #             if distance < spot_radius + droplet.radius + config.ELIPSE_MAJOR_AXE_VALUE * 2 + config.OVERLAPPING_THRESHOLD:
+    #                 overlapping = True
+    #                 break
 
-        return overlapping
+    #     return overlapping
     
     def add_shadow(self):
         # create shadow shape
@@ -370,7 +373,7 @@ class CreateWSP:
         return cv2.addWeighted(self.rectangle, 1, shadow_mask_3channel, -0.2, -0.5)
 
     def save_image(self):
-        path = os.path.join(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR, str(self.filename) + '.png')
+        path = os.path.join(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR, str(self.filename) + '.png')
 
         self.blur_image = cv2.GaussianBlur(self.rectangle, (3, 3), 0)
         rgb_image = cv2.cvtColor(self.blur_image, cv2.COLOR_BGR2RGB)

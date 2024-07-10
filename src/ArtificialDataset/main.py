@@ -27,21 +27,21 @@ if deleteDataset == "y":
     deleteDataset = input("Sure? (y)es or (n)o: ")
     
     # manage folders
-    create_folders(config.DATA_ARTIFICIAL_RAW_DIR)
-    create_folders(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR)
-    create_folders(config.DATA_ARTIFICIAL_RAW_STATISTICS_DIR)
-    create_folders(config.DATA_ARTIFICIAL_RAW_INFO_DIR)
-    create_folders(config.DATA_ARTIFICIAL_RAW_MASK_SIN_DIR)
-    create_folders(config.DATA_ARTIFICIAL_RAW_MASK_OV_DIR)
-    create_folders(config.DATA_ARTIFICIAL_RAW_LABEL_DIR)
+    create_folders(config.DATA_ARTIFICIAL_WSP_DIR)
+    create_folders(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR)
+    create_folders(config.DATA_ARTIFICIAL_WSP_STATISTICS_DIR)
+    create_folders(config.DATA_ARTIFICIAL_WSP_INFO_DIR)
+    create_folders(config.DATA_ARTIFICIAL_WSP_MASK_SIN_DIR)
+    create_folders(config.DATA_ARTIFICIAL_WSP_MASK_OV_DIR)
+    create_folders(config.DATA_ARTIFICIAL_WSP_LABEL_DIR)
 
     # manage folders
-    delete_folder_contents(config.DATA_ARTIFICIAL_RAW_IMAGE_DIR)
-    delete_folder_contents(config.DATA_ARTIFICIAL_RAW_STATISTICS_DIR)
-    delete_folder_contents(config.DATA_ARTIFICIAL_RAW_INFO_DIR)
-    delete_folder_contents(config.DATA_ARTIFICIAL_RAW_MASK_SIN_DIR)
-    delete_folder_contents(config.DATA_ARTIFICIAL_RAW_MASK_OV_DIR)
-    delete_folder_contents(config.DATA_ARTIFICIAL_RAW_LABEL_DIR)
+    delete_folder_contents(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR)
+    delete_folder_contents(config.DATA_ARTIFICIAL_WSP_STATISTICS_DIR)
+    delete_folder_contents(config.DATA_ARTIFICIAL_WSP_INFO_DIR)
+    delete_folder_contents(config.DATA_ARTIFICIAL_WSP_MASK_SIN_DIR)
+    delete_folder_contents(config.DATA_ARTIFICIAL_WSP_MASK_OV_DIR)
+    delete_folder_contents(config.DATA_ARTIFICIAL_WSP_LABEL_DIR)
 
     index = 0
 
@@ -55,15 +55,31 @@ shapes, polygons_by_size = ShapeList.save_all_shapes()
 
 num_droplets_list = generate_normal_distribution_num_droplets()
 
+total_time = 0
+
 # generate images
 for i in range(config.NUM_WSP):
+    reso = 32
+    charac_particle_size = 25
+    # if i < 300:
+    #     reso = int(465*0.039)
+    #     charac_particle_size = 15
+    # elif i < 600:
+    #     #reso = int(465 * 0.039 * 1.54398)
+    #     reso = 25
+    #     charac_particle_size = 21
+    # else:
+    #     reso = 32
+    #     charac_particle_size = 25
+    #     #reso = int(465 * 0.039 * 1.54398 )
+
     start_time = time.time()
     filename = i + index
 
     print("Creating image number ", i + index)
 
     no_droplets = num_droplets_list[i]
-    wsp_image = CreateWSP(filename, colors, shapes, polygons_by_size, no_droplets, 1)
+    wsp_image = CreateWSP(filename, colors, shapes, polygons_by_size, no_droplets, 1, reso, charac_particle_size)
 
     print("Image created. Calculating statistics...")
     DatasetResults(wsp_image, colors)
@@ -71,5 +87,10 @@ for i in range(config.NUM_WSP):
     end_time = time.time()
     elapsed_time = end_time - start_time
     print("Time taken:", elapsed_time, "seconds")
+
+    total_time += elapsed_time
+
+print("Overall time taken:", total_time, "seconds")
+print("Average time taken:", total_time / config.NUM_WSP)
 
     
