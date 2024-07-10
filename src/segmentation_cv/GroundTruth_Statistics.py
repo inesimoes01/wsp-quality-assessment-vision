@@ -42,5 +42,5 @@ class GroundTruth_Statistics:
                     if (row[4] != []):
                         overlapped = ast.literal_eval(overlapped)
                     
-                    self.droplets.append(Droplet(int(row[1]), int(row[2]), int(row[3]), int(row[0]), overlapped))
+                    self.droplets.append(Droplet(int(row[1]), int(row[2]), float(row[3]), int(row[0]), overlapped))
         

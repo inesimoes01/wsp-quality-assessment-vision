@@ -33,7 +33,7 @@ class Accuracy:
         
         # calculate accuracy
         self.iou_overall, self.iou_single, self.iou_overlapped = self.calculate_iou(pred_overlapped_mask, gt_overlapped_mask, pred_single_mask, gt_single_mask)
-        self.dice_coefficient = self.calculate_dice(pred_single_mask, gt_single_mask, pred_single_mask, gt_single_mask) 
+        #self.dice_coefficient = self.calculate_dice(pred_single_mask, gt_single_mask, pred_single_mask, gt_single_mask) 
 
 
     def find_pairs(self):
@@ -48,7 +48,8 @@ class Accuracy:
             for gt_stat in self.groundtruth_droplets.values():
                 distance = np.sqrt((pred_stat.center_x - gt_stat.center_x)**2 + (pred_stat.center_y - gt_stat.center_y)**2 )
                 
-                if distance < config.ACCURACY_DISTANCE_THRESHOLD and abs(pred_stat.area - gt_stat.area) < config.ACCURACY_DIAMETER_THRESHOLD:
+                if distance < config.ACCURACY_DISTANCE_THRESHOLD and abs(pred_stat.area - gt_stat.area) < config.ACCURACY_AREA_THRESHOLD:
+                    
                     self.save_pairs_id.append((gt_stat.id, pred_stat.id))
                     
                     new_row = {'DropletID': pred_stat.id, 'CenterX': pred_stat.center_x, 'CenterY': pred_stat.center_y, 'Area': pred_stat.area, 'OverlappedDropletsID': pred_stat.overlappedIDs, 
@@ -106,7 +107,7 @@ class Accuracy:
             f.write(f"IOU overall: {self.iou_overall:.2f}\n\n")
             f.write(f"IOU single: {self.iou_single:.2f}\n\n")
             f.write(f"IOU overlapped: {self.iou_overlapped:.2f}\n\n")
-            f.write(f"Dice: {self.dice_coefficient:.2f}\n\n")
+            #f.write(f"Dice: {self.dice_coefficient:.2f}\n\n")
 
     def write_final_accuracy_file(precision_o, recall_o, f1_score_o, iou, dice):
         statistics_file_path = os.path.join(config.RESULTS_CV_ACCURACY_DIR, 'OVERALL_ACCURACY' + '.txt')
@@ -117,7 +118,7 @@ class Accuracy:
             f.write(f"F1-score: {f1_score_o:.5f}\n\n")
 
             f.write(f"IOU: {iou:.2f}\n\n")
-            f.write(f"Dice: {dice:.2f}\n\n")
+            #f.write(f"Dice: {dice:.2f}\n\n")
 
     def calculate_iou(self, gt_ov_mask, pred_ov_mask, gt_s_mask, pred_s_mask):
         intersection_ov = np.logical_and(gt_ov_mask, pred_ov_mask) 
@@ -133,12 +134,12 @@ class Accuracy:
         iou_overall = (np.sum(intersection_ov) + np.sum(intersection_s)) / (np.sum(union_ov) + np.sum(union_s))*100
         return iou_overall, iou_single, iou_overlapped
 
-    def calculate_dice(self, gt_ov_mask, pred_ov_mask, gt_s_mask, pred_s_mask):
-        intersection_ov = np.logical_and(gt_ov_mask, pred_ov_mask) 
-        intersection_s = np.logical_and(gt_s_mask, pred_s_mask)
+    # def calculate_dice(self, gt_ov_mask, pred_ov_mask, gt_s_mask, pred_s_mask):
+    #     intersection_ov = np.logical_and(gt_ov_mask, pred_ov_mask) 
+    #     intersection_s = np.logical_and(gt_s_mask, pred_s_mask)
 
-        dice = 2 * (np.sum(intersection_ov) + np.sum(intersection_s)) / ((np.sum(gt_s_mask) + np.sum(gt_ov_mask)) + (np.sum(pred_s_mask) + np.sum(pred_ov_mask)))
-        return dice
+    #     dice = 2 * (np.sum(intersection_ov) + np.sum(intersection_s)) / ((np.sum(gt_s_mask) + np.sum(gt_ov_mask)) + (np.sum(pred_s_mask) + np.sum(pred_ov_mask)))
+    #     return dice
 
     def calculate_parameters(self, true_positives:int, true_negatives:int, false_positives:int, false_negatives:int):
         if ((true_positives + false_positives) == 0) or true_positives == 0:  

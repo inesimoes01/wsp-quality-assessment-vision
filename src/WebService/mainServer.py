@@ -9,33 +9,36 @@ import io
 import numpy as np
 
 sys.path.insert(0, 'src/Segmentation_CV')
-from Distortion import Distortion
-from Segmentation_CV import Segmentation
+#from Distortion import Distortion
+#from Segmentation_CV import Segmentation
 # from Distortion import Distortion
 # from Segmentation import Segmentation
+import CreateGraph
 
 app = Flask(__name__)
 
-def create_json_answer(imgdata, vmd_value, rsf_value, coverage_percentage, no_droplets, overlapped_percentage, droplet_sizes_list):    
-    data = {
-        "image_bitmap": imgdata,
-        "vmd": vmd_value,
-        "rsf": rsf_value,
-        "coverage_percentage": int(coverage_percentage),
-        "number_droplets": int(no_droplets),
-        "overlapped_percentage": 15.8,
-        "values_of_radius": droplet_sizes_list  
-    }
-
+def create_json_answer(imgdata, vmd_value, rsf_value, coverage_percentage, no_droplets, overlapped_percentage, droplet_sizes_list=None):    
+    
+    data_graph = CreateGraph.create_graph_values(droplet_sizes_list)
     # data = {
-    #     "image_bitmap": img_str,
-    #     "vmd": 0.0,
-    #     "rsf": 0.0,
-    #     "coverage_percentage": 12,
-    #     "number_droplets": 222,
+    #     "image_bitmap": imgdata,
+    #     "vmd": vmd_value,
+    #     "rsf": rsf_value,
+    #     "coverage_percentage": int(coverage_percentage),
+    #     "number_droplets": int(no_droplets),
     #     "overlapped_percentage": 15.8,
-    #     "values_of_radius": [1, 2, 3]
+    #     "values_of_radius": data_graph  
     # }
+
+    data = {
+        #"image_bitmap": imgdata,
+        "vmd": 0.0,
+        "rsf": 0.0,
+        "coverage_percentage": 12,
+        "number_droplets": 222,
+        "overlapped_percentage": 15.8,
+        "values_of_size": data_graph
+    }
 
     return data
         
@@ -55,18 +58,19 @@ def compute_function(image_uri, paper_width, paper_height, model):
         case 1: # CV original segmentation
 
                 #find paper in image
-            dist:Distortion = Distortion(image_gray, image_color, "", False)
-            no_paper = dist.noPaper
-            if no_paper: return
+            # dist:Distortion = Distortion(image_gray, image_color, "", False)
+            # no_paper = dist.noPaper
+            # if no_paper: return
     
-            segmentation:Segmentation = Segmentation(dist.undistorted_image, "0", save_images=False, create_masks= False)
+            # segmentation:Segmentation = Segmentation(dist.undistorted_image, "0", save_images=False, create_masks= False)
         
             _, buffer = cv2.imencode('.png', image_color)
             img_str = base64.b64encode(buffer).decode('utf-8')
+            return create_json_answer(img_str, 0, 0, 0, 0, 0, 0)
 
-            return create_json_answer(img_str, segmentation.stats.vmd_value, segmentation.stats.rsf_value, 
-                               segmentation.stats.coverage_percentage, segmentation.stats.final_no_droplets, 
-                               segmentation.stats.overlaped_percentage, segmentation.droplet_area)
+            # return create_json_answer(img_str, segmentation.stats.vmd_value, segmentation.stats.rsf_value, 
+            #                    segmentation.stats.coverage_percentage, segmentation.stats.final_no_droplets, 
+            #                    segmentation.stats.overlaped_percentage, segmentation.droplet_area)
 
         
             
@@ -74,8 +78,6 @@ def compute_function(image_uri, paper_width, paper_height, model):
             return
         
     
-    
-
 
 @app.route('/perform_segmentation', methods=['POST'])
 def compute():
@@ -94,7 +96,7 @@ def compute():
     
         # perform segmentation
         result = compute_function(image_uri, paper_width, paper_height, model)
-        print("AHHHH4")
+      
         return jsonify(result)
     
     except Exception as e:
