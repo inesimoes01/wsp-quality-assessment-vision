@@ -1,7 +1,0 @@
-path: 'C:/Users/mines/Desktop/github/vision-quality-assessment-opencv/data/artificial_dataset/processed'
-train: image/train 
-val: image/val
-test: image/test  
-
-nc: 1
-names: ['droplet']
