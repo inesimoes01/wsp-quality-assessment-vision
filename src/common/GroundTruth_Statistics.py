@@ -11,13 +11,15 @@ from Statistics import Statistics
 #TODO read the ellipse bool
 
 class GroundTruth_Statistics:
-    def __init__(self, filename):
+    def __init__(self, filename, basefile):
         self.filename = filename
-        self.read_stats_file()
+
+        self.read_stats_file(basefile)
+        
         self.stats = Statistics(self.vmd_value, self.rsf_value, self.coverage_percentage, self.no_total_droplets, self.droplets)
 
-    def read_stats_file(self):
-        stats_file_path = (os.path.join(config.DATA_ARTIFICIAL_WSP_STATISTICS_DIR, self.filename + ".csv"))
+    def read_stats_file(self, basefile):
+        stats_file_path = (os.path.join(basefile, config.DATA_GENERAL_STATS_FOLDER_NAME, self.filename + ".csv"))
         data = pd.read_csv(stats_file_path)
 
         # Assign each value to a variable
@@ -30,7 +32,7 @@ class GroundTruth_Statistics:
                   
 
         self.droplets:list[Droplet] = []
-        dropletinfo_file_path = (os.path.join(config.DATA_ARTIFICIAL_WSP_INFO_DIR, self.filename + ".csv"))
+        dropletinfo_file_path = (os.path.join(basefile, config.DATA_GENERAL_INFO_FOLDER_NAME, self.filename + ".csv"))
         
         with open(dropletinfo_file_path, 'r') as f:
             csv_reader = csv.reader(f)

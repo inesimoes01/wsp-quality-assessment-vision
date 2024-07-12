@@ -34,29 +34,12 @@ def save_dropletinfo_csv(file_path, droplet_info:list[Droplet]):
             row = [drop.id, drop.center_x, drop.center_y, drop.area, str(drop.overlappedIDs)]
             writer.writerow(row)
 
-def mask_to_label(path_mask, path_labels, classid):
-    # load the binary mask and get its contours
-    mask = cv2.imread(path_mask, cv2.IMREAD_GRAYSCALE)
-    _, mask = cv2.threshold(mask, 1, 255, cv2.THRESH_BINARY)
+def manage_folders(list_file_path):
+    for file in list_file_path:
+        create_folders(file)
+        delete_folder_contents(file)
 
-    H, W = mask.shape
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # convert the contours to polygons
-    polygons = []
-    for cnt in contours:
-        if cv2.contourArea(cnt) > 5:
-            polygon = []
-            for point in cnt:
-                x, y = point[0]
-                polygon.append(x / W)
-                polygon.append(y / H)
-            polygons.append(polygon)
-    
-    # print the polygons
-    with open('{}.txt'.format(path_labels[:-4]), 'a') as f:
-        for polygon in polygons:
-            f.write(f"{classid} {' '.join(map(str, polygon))}\n")
 
 def plotThreeImages(image1, image2, image3):
     plt.close('all')

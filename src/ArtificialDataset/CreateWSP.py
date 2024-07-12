@@ -1,50 +1,42 @@
 import numpy as np
 import cv2
-from datetime import datetime
 import sys
-import matplotlib.pyplot as plt
+import os
 import numpy as np
-from PIL import Image, ImageDraw
 import copy
 import math
-from PIL.PngImagePlugin import PngInfo
 import random
-import CreateDroplet
-import CreateBackground
-from DropletShape import DropletShape
-from shapely import union
-from shapely import Polygon
-import ShapeList
+import matplotlib.pyplot as plt
+
 from shapely import geometry
+from shapely import Polygon
 from shapely.ops import unary_union
-import RosinRammlerDistribution
-import CreateMask
 
 
 sys.path.insert(0, 'src/common')
 import config as config
-from Util import *
+import RosinRammlerDistribution
+import CreateMask
+import CreateDroplet
+import CreateBackground
+from CreateColors import Colors
+from DropletShape import DropletShape
+from Droplet import Droplet 
 
-sys.path.insert(0, 'src')
-from Droplet import *
-from CreateColors import *
-from shapely.geometry import MultiPolygon, Polygon
 
 class ShapeInImage:
     def __init__(self, shape_index:int, points, droplet_data:Droplet):
         self.shape_index = shape_index
         self.points = points
         self.droplet_data = droplet_data
-  
-
 
 class CreateWSP:
-    def __init__(self, index:int, colors:Colors, shapes:list[DropletShape], polygons_by_size, num_spots, type_of_dataset, reso, charac):
+    def __init__(self, index:int, colors:Colors, shapes:list[DropletShape], polygons_by_size, num_spots, type_of_dataset, image_resolution, characteristic_particle_size):
         self.filename = index
         self.max_num_spots:int = config.MAX_NUM_SPOTS
         self.min_num_spots:int = config.MIN_NUM_SPOTS
-        self.width:float = config.WIDTH_MM * reso
-        self.height:float = config.HEIGHT_MM * reso 
+        self.width:float = config.WIDTH_MM * image_resolution
+        self.height:float = config.HEIGHT_MM * image_resolution 
         self.num_spots = num_spots
         self.colors = colors
         self.polygons_by_size = polygons_by_size
@@ -52,79 +44,75 @@ class CreateWSP:
         self.droplet_area = 0
         self.type_of_dataset = type_of_dataset
 
-
         # generate the droplet sizes, which is assumed to be the area, given a rosin rammler distribution and the centers
-        self.droplet_size_rosin = RosinRammlerDistribution.generate_droplet_sizes_rosin_rammler(self.num_spots, charac)
+        self.droplet_size_rosin = RosinRammlerDistribution.generate_droplet_sizes_rosin_rammler(self.num_spots, characteristic_particle_size)
 
         # save latex files
-        # if index == 0:
-        #     RosinRammlerDistribution.fit_droplet_size_graph(self.droplet_size_rosin)
-        
-        # generate the center coordinates for each one of the droplets
-        self.droplet_coordinates = self.generate_droplet_coordinates()
+        if index == 0:
+            RosinRammlerDistribution.fit_droplet_size_graph(self.droplet_size_rosin)
 
         # create the wsp background
         # background colors change to create a more diverse dataset
-       
         CreateBackground.create_background(self.colors.background_colors, self.width, self.height)
         self.rectangle = cv2.imread(config.DATA_ARTIFICIAL_WSP_BACKGROUND_IMG, cv2.IMREAD_COLOR)
         self.rectangle = cv2.cvtColor(self.rectangle, cv2.COLOR_BGR2RGB)
-        
 
         # draw and color the droplets on the background given the stats created before
         self.generate_one_wsp()
+
+        # save the 
         self.save_image()
 
 
     def generate_one_wsp(self):
+        # individual are all the shapes that were placed in the image with the center identified
         self.list_of_individual_shapes_in_image:list[ShapeInImage]  = []
+
+        # intersected is all the joint polygons points and singular the polygons that did not intersect
+        # these two lists have all the polygon shapes that are represented in the wsp
         self.list_of_intersected_shapes_in_image = []
         self.list_of_singular_shapes_in_image = []
-        self.annotation_labels = []
 
-       
+        self.annotation_labels = []       
         self.droplets_data:list[Droplet] = []
 
         match self.type_of_dataset:
 
-            # case 0:     # only singular circles inside the wsp
-            #     for i in range(self.num_spots):
-            #         spot_radius = math.ceil(self.droplet_area_rosin[i])
-                    
-            #         count = 0
-            #         while (True):
-            #             center_x = np.random.randint(spot_radius, self.width - spot_radius)
-            #             center_y = np.random.randint(spot_radius, self.height - spot_radius)
+            case 0:     # only singular shapes inside the wsp
 
-            #             overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i)
-                
-            #             if not overlap_bool:
-            #                 self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, i)
-            #                 break
-                        
-            #             count += 1
-            #             if count > 100:
-            #                 break
-            
-            #     for i in range(self.num_spots):
-            #         spot_radius = math.ceil(self.droplet_area_rosin[i])
-                    
-            #         count = 0
-            #         while (True):
-            #             center_x = np.random.randint(spot_radius, self.width - spot_radius)
-            #             center_y = np.random.randint(spot_radius, self.height - spot_radius)
+                self.overlapped_dictionary = {}
+                self.polygon_dictionary = {}
 
-            #             overlap_bool = self.check_if_overlapping(center_x, center_y, spot_radius, i)
-                
-            #             if not overlap_bool:
-            #                 self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, i)
-            #                 break
-                        
-            #             count += 1
-            #             if count > 100:
-            #                 break
+                # draw the outline of all the droplets with the generated radius and center
+                # using a sliding window to be less computationally heavy when searching for overlappig droplets
+                for i in range(self.num_spots):
+              
+                    # get pre generated values for the radius
+                    spot_size = math.ceil(self.droplet_size_rosin[i])
                     
-            case 1:     # overlapped and singular droplets (circles and elipses)
+                    # choose the shape to put in the image
+                    shape_id, shape_to_save = self.choose_shape(spot_size)
+
+                    # based on the size of the shape, find a coordinate for the center where the shape does not meet any of the other already placed shapes
+                    center_x, center_y, translated_points = self.generate_droplet_coordinates_singular(shape_to_save, spot_size)
+                    shape_to_draw = self.save_individual_droplets(shape_to_save, shape_id, translated_points, int(center_x), int(center_y), int(spot_size), i)
+                    
+                    # accumulate the labels for each polygon for yolo training
+                    self.annotation_labels.append(CreateMask.polygon_to_yolo_label(shape_to_draw.points, self.width, self.height))
+
+                # paint the individual shapes in the image
+                for shape in self.list_of_individual_shapes_in_image:
+                    if shape.droplet_data.overlappedIDs == []:
+                        polygon = geometry.Polygon(shape.points)
+
+                        self.list_of_singular_shapes_in_image.append(polygon)
+                        CreateDroplet.paint_polygon(self.rectangle, polygon, self.colors.light_color, self.colors.dark_rgb, self.colors.outside_color)
+ 
+
+            case 1:     # overlapped and singular droplets
+                # generate the center coordinates for each one of the droplets
+                self.droplet_coordinates = self.generate_droplet_coordinates(self.type_of_dataset)
+
                 sliding_window_x = 20
                 sliding_window_threshold = 10
                 shapes_in_window = []
@@ -137,24 +125,23 @@ class CreateWSP:
                 # draw the outline of all the droplets with the generated radius and center
                 # using a sliding window to be less computationally heavy when searching for overlappig droplets
                 for i in range(self.num_spots):
-                #for i in range(4):
+              
                     # get pre generated values
                     spot_size = math.ceil(self.droplet_size_rosin[i])
                     center_x, center_y = self.droplet_coordinates[i]
 
-                    #spot_area = spot_size / 2 * np.pi ** 2
-                    
                     # save informations for each individual droplet
-                    shape_to_save = self.save_individual_droplets(int(center_x), int(center_y), int(spot_size), i)
+                    shape_id, shape_to_save = self.choose_shape(spot_size)
+                    shape_to_draw = self.save_individual_droplets(shape_id, shape_to_save, int(center_x), int(center_y), int(spot_size), i)
                     
                     # accumulate the labels for each polygon for yolo training
-                    self.annotation_labels.append(CreateMask.polygon_to_yolo_label(shape_to_save.points, self.width, self.height))
+                    self.annotation_labels.append(CreateMask.polygon_to_yolo_label(shape_to_draw.points, self.width, self.height))
 
                     # save information of sliding window from before and after
                     if sliding_window_x < center_x < sliding_window_x + sliding_window_threshold:
-                        shapes_in_window_threshold_after.append(shape_to_save)
+                        shapes_in_window_threshold_after.append(shape_to_draw)
                     else:
-                        shapes_in_window.append(shape_to_save)
+                        shapes_in_window.append(shape_to_draw)
 
                     # when window is over, check intersections of the shapes in that area with the before and after sliding window
                     if center_x > sliding_window_x + sliding_window_threshold:
@@ -183,78 +170,44 @@ class CreateWSP:
                 for shape in self.list_of_individual_shapes_in_image:
                     if shape.droplet_data.overlappedIDs == []:
                         polygon = geometry.Polygon(shape.points)
-
                         self.list_of_singular_shapes_in_image.append(polygon)
-                        CreateDroplet.paint_polygon(self.rectangle, polygon)
+                        CreateDroplet.paint_polygon(self.rectangle, polygon, self.colors.light_color, self.colors.dark_rgb, self.colors.outside_color)
  
                 # paint the overlapped droplets
                 for polygon in self.list_of_intersected_shapes_in_image:
-                    # accumulate the area of each polygon for statistics
-                
-                    CreateDroplet.paint_polygon(self.rectangle, polygon)
+                    CreateDroplet.paint_polygon(self.rectangle, polygon, self.colors.light_color, self.colors.dark_rgb, self.colors.outside_color)
+
+
+    def generate_droplet_coordinates_singular(self, shape_to_save, spot_size):
+       
+        while (True):
+            overlapping = False
+            center_x = np.random.randint(spot_size, self.width - spot_size)
+            center_y = np.random.randint(spot_size, self.height - spot_size)
+            
+            # get the position of each coordinate given the center the polygon should take place
+            translated_points = CreateDroplet.get_shape_translation(shape_to_save, center_x, center_y)
+            polygon_to_check = Polygon(translated_points)
+
+            for droplet in self.list_of_individual_shapes_in_image:
+                aux_drop_poly = geometry.Polygon(droplet.points)
+
+                if polygon_to_check.intersects(aux_drop_poly) and not polygon_to_check.touches(aux_drop_poly):
+                    overlapping = True
+                    break
+
+            if not overlapping: break
+
+        return center_x, center_y, translated_points
                     
 
-            # case 2:     # classes overlapped and singular are leveled
-            #     count_overlapping_sets = 0
-            #     count_single = 0
-            #     num_overlapping_droplets = math.ceil(self.num_spots * 1 / 3)  
-            #     num_overlapping_sets = math.ceil(self.num_spots * 1 / 3) 
-            #     overlapped_sets = self.generate_overlapping_value(num_overlapping_sets, num_overlapping_droplets)
-            #     sumy = sum(overlapped_sets)
-            #     count_total_no_droplets = 0
-                
-            #     while(self.num_spots > count_total_no_droplets):
-                
-            #         # create only overlapping circles
-            #         if count_overlapping_sets < num_overlapping_sets:
-            #             no_drops_in_set = overlapped_sets[count_overlapping_sets]
 
-            #             # initial circle position
-            #             center_x = np.random.randint(5, self.width - 5)
-            #             center_y = np.random.randint(5, self.height - 5)
-
-            #             for k in range(no_drops_in_set): 
-            #                 spot_radius = math.ceil(self.droplet_area_rosin[count_total_no_droplets])
-            #                 no_rand = random.randint(0, 1)
-            #                 # if n_spot is even it will move to be on the right of the original circle
-            #                 # if n_spot is odd it will move to be under the original circle
-            #                 if no_rand == 0:
-            #                     center_x += self.droplet_area_rosin[count_total_no_droplets - 1] + self.droplet_area_rosin[count_total_no_droplets]
-            #                 else: 
-            #                     center_y += self.droplet_area_rosin[count_total_no_droplets - 1] + self.droplet_area_rosin[count_total_no_droplets]
-            #                 # if k % 2 == 0: center_x += self.droplet_area_rosin[count_total_no_droplets - 1 ]
-            #                 # else: center_y += self.droplet_area_rosin[count_total_no_droplets - 1] 
-                                
-            #                 count_total_no_droplets += 1
-
-            #                 self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
-
-            #             count_overlapping_sets += 1
-                    
-            #         # create only single droplets
-            #         else:
-            #             spot_radius = math.ceil(self.droplet_area_rosin[count_total_no_droplets])
-            #             if spot_radius < config.DROPLET_COLOR_THRESHOLD: spot_color = self.droplet_color_big[np.random.randint(0, len(self.droplet_color_big))]
-            #             else: spot_color = self.droplet_color_small[np.random.randint(0, len(self.droplet_color_small))]
-
-            #             while (True):
-            #                 center_x = np.random.randint(spot_radius, self.width - spot_radius)
-            #                 center_y = np.random.randint(spot_radius, self.height - spot_radius)
-
-            #                 overlapping = self.check_if_overlapping(center_x, center_y, spot_radius, count_total_no_droplets)
-
-            #                 if not overlapping:
-            #                     break
-                        
-            #             count_total_no_droplets += 1
-            #             self.save_draw_droplet(int(center_x), int(center_y), int(spot_radius), spot_color, count_total_no_droplets)
-
-
-    def generate_droplet_coordinates(self):
+    def generate_droplet_coordinates(self, type_of_dataset):
         droplet_coordinates_x = np.random.randint(0, self.width, self.num_spots)
         droplet_coordinates_y = np.random.randint(0, self.height, self.num_spots)
         droplet_coordinates = np.column_stack((droplet_coordinates_x, droplet_coordinates_y)) 
         sorted_indices = np.lexsort((droplet_coordinates[:, 1], droplet_coordinates[:, 0]))
+        
         return droplet_coordinates[sorted_indices]
     
     def merge_intersections(self, shapes_in_window:list[ShapeInImage]):
@@ -303,25 +256,26 @@ class CreateWSP:
                 components.append(component)
         
         return components
-        
-    def save_individual_droplets(self, center_x, center_y, spot_size, index_droplet):
-        index_droplet += 1
-
+    
+    def choose_shape(self, spot_size):
         # choose shape for droplet based on the area
         shape_id = CreateDroplet.choose_polygon(self.polygons_by_size, spot_size)
         curr_shape = self.shapes[shape_id]
 
-        pol = Polygon(curr_shape.roi_points)
+        return shape_id, curr_shape
+        
+    def save_individual_droplets(self, shape_to_save, shape_id, translated_points, center_x, center_y, spot_size, index_droplet):
+        index_droplet += 1
+        
+        # calculate droplet area and tranlation points
+        pol = Polygon(shape_to_save.roi_points)
         spot_area = pol.area
         self.droplet_area += spot_area
 
-        # get the position of each coordinate given the center the polygon should take place
-        translated_points = CreateDroplet.get_shape_translation(curr_shape, center_x, center_y)
+        shape = ShapeInImage(shape_id, translated_points, Droplet(center_x, center_y, spot_area, index_droplet, [], spot_size) )
+        self.list_of_individual_shapes_in_image.append(shape)
 
-        shape_to_save = ShapeInImage(shape_id, translated_points, Droplet(center_x, center_y, spot_area, index_droplet, [], spot_size) )
-        self.list_of_individual_shapes_in_image.append(shape_to_save)
-
-        return shape_to_save
+        return shape
 
     def generate_overlapping_value(self, no_overlap_sets, no_droplets):
         numbers = [2] * no_overlap_sets
@@ -373,7 +327,7 @@ class CreateWSP:
         return cv2.addWeighted(self.rectangle, 1, shadow_mask_3channel, -0.2, -0.5)
 
     def save_image(self):
-        path = os.path.join(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR, str(self.filename) + '.png')
+        path = os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME, str(self.filename) + '.png')
 
         self.blur_image = cv2.GaussianBlur(self.rectangle, (3, 3), 0)
         rgb_image = cv2.cvtColor(self.blur_image, cv2.COLOR_BGR2RGB)

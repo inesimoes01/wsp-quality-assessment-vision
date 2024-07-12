@@ -38,14 +38,6 @@ def create_concentric_polygons(coords, scale_factors, min_corner, center):
         polygons.append(new_polygon)
     return polygons
 
-def hex_to_rgb(hex_code):
-    hex_code = hex_code.lstrip('#')
-    rgb = tuple(int(hex_code[i:i+2], 16) for i in (0, 2, 4))
-    return rgb
-
-brown_rgb = [hex_to_rgb(color) for color in brown_colors]
-light_blue_rgb = [hex_to_rgb(color) for color in light_blue_color]
-dark_blue_rgb = [hex_to_rgb(color) for color in dark_blue_colors]
 
 def interpolate_color(color1, color2, t):
     r = int(color1[0] * (1 - t) + color2[0] * t)
@@ -53,7 +45,7 @@ def interpolate_color(color1, color2, t):
     b = int(color1[2] * (1 - t) + color2[2] * t)
     return [r, g, b]
 
-def paint_polygon(img, polygon):
+def paint_polygon(img, polygon, light_blue_rgb, dark_blue_rgb, brown_rgb):
     min_x, min_y, max_x, max_y = polygon.bounds
     size = int(np.sqrt((max_y - min_y) ** 2 + (max_x - min_x) ** 2))
 
