@@ -2,14 +2,14 @@ import numpy as np
 import cv2
 import os 
 import pandas as pd
+import matplotlib.pyplot as plt
 
-import Util
 import config
 from Statistics import Statistics
 from Droplet import Droplet
 
 class Accuracy:
-    def __init__(self, calculated_droplets:dict[int, Droplet], groundtruth_droplets:dict[int, Droplet], filename, calculated_stats:Statistics, groundtruth_stats:Statistics):
+    def __init__(self, calculated_droplets, groundtruth_droplets, filename, calculated_stats:Statistics, groundtruth_stats:Statistics, basefile):
         self.calculated_droplets = calculated_droplets
         self.groundtruth_droplets = groundtruth_droplets
         self.calculated_stats = calculated_stats
@@ -17,26 +17,30 @@ class Accuracy:
 
         self.filename = filename
         
-        self.calculate_accuracy_detected()
-        self.find_pairs()
+        self.iou_overall, self.iou_single, self.iou_overlapped = 0, 0, 0
+        
+        #self.calculate_accuracy_detected()
+        self.find_pairs(basefile)
         self.calculate_accuracy_overlapped()
 
-        self.write_accuracy_file()
-        self.write_statistics_file()
+        self.write_accuracy_file(basefile)
+        self.write_statistics_file(basefile)
     
-    def calculate_accuracy_detected(self):
-        # read the predicted and ground truth masks
-        pred_overlapped_mask = cv2.imread(os.path.join(config.RESULTS_CV_MASK_OV_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
-        pred_single_mask = cv2.imread(os.path.join(config.RESULTS_CV_MASK_SIN_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
-        gt_overlapped_mask = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_MASK_OV_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
-        gt_single_mask = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_MASK_SIN_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
+    # def calculate_accuracy_detected(self, basefile):
+
+    #     # read the predicted and ground truth masks
+    #     pred_overlapped_mask = cv2.imread(os.path.join(basefile, config.RESULTS_CV_MASK_OV_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
+    #     pred_single_mask = cv2.imread(os.path.join(config.RESULTS_CV_MASK_SIN_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
+    #     gt_overlapped_mask = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_MASK_OV_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
+    #     gt_single_mask = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_MASK_SIN_DIR, self.filename + ".png"), cv2.IMREAD_GRAYSCALE)
         
-        # calculate accuracy
-        self.iou_overall, self.iou_single, self.iou_overlapped = self.calculate_iou(pred_overlapped_mask, gt_overlapped_mask, pred_single_mask, gt_single_mask)
-        #self.dice_coefficient = self.calculate_dice(pred_single_mask, gt_single_mask, pred_single_mask, gt_single_mask) 
+    #     # calculate accuracy
+    #     self.iou_overall, self.iou_single, self.iou_overlapped = self.calculate_iou(pred_overlapped_mask, gt_overlapped_mask, pred_single_mask, gt_single_mask)
 
 
-    def find_pairs(self):
+    def find_pairs(self, basefile):
+        img = cv2.imread("data\\artificial_dataset_2\\wsp\\image\\0.png")
+        img2 =  cv2.imread("data\\artificial_dataset_2\\wsp\\image\\0.png")
         data = {
             'DropletID': ['CenterX', 'CenterY', 'Area', 'OverlappedDropletsID', '', 'DropletID_GT', 'CenterX_GT', 'CenterY_GT', 'Area_GT', 'OverlappedDropletsID_GT'],
         }
@@ -44,13 +48,18 @@ class Accuracy:
         df = pd.DataFrame(columns=data)
 
         self.save_pairs_id = []
+
         for pred_stat in self.calculated_droplets.values():
             for gt_stat in self.groundtruth_droplets.values():
                 distance = np.sqrt((pred_stat.center_x - gt_stat.center_x)**2 + (pred_stat.center_y - gt_stat.center_y)**2 )
-                
+                cv2.circle(img2, (int(gt_stat.center_x), int(gt_stat.center_y)), int(np.sqrt(gt_stat.area / np.pi)), (255, 255, 0), 1)
+                    
                 if distance < config.ACCURACY_DISTANCE_THRESHOLD and abs(pred_stat.area - gt_stat.area) < config.ACCURACY_AREA_THRESHOLD:
                     
                     self.save_pairs_id.append((gt_stat.id, pred_stat.id))
+
+
+                    cv2.circle(img, (int(pred_stat.center_x), int(pred_stat.center_y)), int(np.sqrt(pred_stat.area / np.pi)), (255, 255, 0), 1)
                     
                     new_row = {'DropletID': pred_stat.id, 'CenterX': pred_stat.center_x, 'CenterY': pred_stat.center_y, 'Area': pred_stat.area, 'OverlappedDropletsID': pred_stat.overlappedIDs, 
                         '': '', 
@@ -59,7 +68,13 @@ class Accuracy:
                     df = df._append(new_row, ignore_index=True)
                     break
 
-        df.to_csv(os.path.join(config.RESULTS_CV_INFO_DIR, self.filename + '.csv'), index=False)
+        # plt.imshow(img)
+        # plt.show()
+
+        cv2.imwrite("results\\cellpose\\test.png", img)
+        cv2.imwrite("results\\cellpose\\test2.png", img2)
+
+        df.to_csv(os.path.join(basefile, config.RESULTS_GENERAL_INFO_FOLDER_NAME, self.filename + '.csv'), index=False)
            
         
     def calculate_accuracy_overlapped(self):
@@ -84,8 +99,7 @@ class Accuracy:
         # calculate precision, recall, and F1-score
         self.precision_overlapped, self.recall_overlapped, self.f1_score_overlapped = self.calculate_parameters(self.true_positives_overlapped, self.true_negative_overlapped, self.false_positives_overlapped, self.false_negatives_overlapped)
 
-    def write_statistics_file(self):
-
+    def write_statistics_file(self, basefile):
         data = {
             '': ['VMD', 'RSF', 'Coverage %', 'Nº Droplets', 'Overlapped Droplets %'],
             'GroundTruth': [self.groundtruth_stats.vmd_value, self.groundtruth_stats.rsf_value, self.groundtruth_stats.coverage_percentage, self.groundtruth_stats.no_droplets, self.groundtruth_stats.overlaped_percentage],
@@ -94,10 +108,10 @@ class Accuracy:
 
         df = pd.DataFrame(data)
         df['Erro'] = abs(df['GroundTruth'] - df['Calculado']) / df['GroundTruth'] * 100
-        df.to_csv(os.path.join(config.RESULTS_CV_STATISTICS_DIR, self.filename + '.csv'), index=False)
+        df.to_csv(os.path.join(basefile, config.RESULTS_GENERAL_STATS_FOLDER_NAME, self.filename + '.csv'), index=False)
     
-    def write_accuracy_file(self):
-        statistics_file_path = os.path.join(config.RESULTS_CV_ACCURACY_DIR, self.filename + '.txt')
+    def write_accuracy_file(self, basefile):
+        statistics_file_path = os.path.join(basefile, config.RESULTS_GENERAL_ACC_FOLDER_NAME, self.filename + '.txt')
         with open(statistics_file_path, 'w') as f:
 
             f.write(f"Precision: {self.precision_overlapped:.5f}\n")
@@ -109,8 +123,8 @@ class Accuracy:
             f.write(f"IOU overlapped: {self.iou_overlapped:.2f}\n\n")
             #f.write(f"Dice: {self.dice_coefficient:.2f}\n\n")
 
-    def write_final_accuracy_file(precision_o, recall_o, f1_score_o, iou, dice):
-        statistics_file_path = os.path.join(config.RESULTS_CV_ACCURACY_DIR, 'OVERALL_ACCURACY' + '.txt')
+    def write_final_accuracy_file(precision_o, recall_o, f1_score_o, iou, basefile):
+        statistics_file_path = os.path.join(basefile, 'OVERALL_ACCURACY' + '.txt')
 
         with open(statistics_file_path, 'w') as f:
             f.write(f"Precision: {precision_o:.5f}\n")

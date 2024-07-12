@@ -5,7 +5,6 @@ import numpy as np
 from matplotlib import pyplot as plt 
 import os
 
-
 def find_unclosed_contours(contours):
     unclosed_contours = []
     for contour in contours:

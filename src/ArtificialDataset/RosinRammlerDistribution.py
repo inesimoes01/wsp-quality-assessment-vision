@@ -32,12 +32,12 @@ def fit_droplet_size_graph(droplet_sizes):
     d_fit = np.linspace(min(droplet_sizes), max(droplet_sizes), 100)
     f_fit = rosin_rammler(d_fit, d0, n)
 
-    with open(os.path.join(config.RESULTS_LATEX, 'droplet_data.csv'), 'w', newline='') as csvfile:
+    with open(os.path.join(config.RESULTS_LATEX_DIR, 'droplet_data.csv'), 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['DropletSize', 'CumulativeFraction'])
         writer.writerows(zip(sorted_sizes, cumulative_fractions))
 
-    with open(os.path.join(config.RESULTS_LATEX, 'fitted_curve.csv'), 'w', newline='') as csvfile:
+    with open(os.path.join(config.RESULTS_LATEX_DIR, 'fitted_curve.csv'), 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['DropletSize', 'FittedFraction'])
         writer.writerows(zip(d_fit, f_fit))
@@ -82,7 +82,7 @@ def fit_droplet_size_graph(droplet_sizes):
     latex_code = latex_template.format(d0, n)
 
     # Save the LaTeX code to a .tex file
-    with open(os.path.join(config.RESULTS_LATEX, 'rosin_rammler_graph.tex'), 'w') as f:
+    with open(os.path.join(config.RESULTS_LATEX_DIR, 'rosin_rammler_graph.tex'), 'w') as f:
         f.write(latex_code)
 
 

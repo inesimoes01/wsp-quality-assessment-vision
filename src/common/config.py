@@ -4,73 +4,43 @@ import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
+DATA_GENERAL_STATS_FOLDER_NAME = "statistics"
+DATA_GENERAL_LABEL_FOLDER_NAME = "label"
+DATA_GENERAL_IMAGE_FOLDER_NAME = "image"
+DATA_GENERAL_INFO_FOLDER_NAME = "info"
+DATA_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single" 
+DATA_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
 
-# DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset_versions" / "only_single_circles" / "raw" 
-# DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
-# DATA_ARTIFICIAL_RAW_INFO_DIR = DATA_ARTIFICIAL_RAW_DIR / "info"
-# DATA_ARTIFICIAL_RAW_LABEL_DIR = DATA_ARTIFICIAL_RAW_DIR / "label"
-# DATA_ARTIFICIAL_RAW_MASK_SIN_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "single"
-# DATA_ARTIFICIAL_RAW_MASK_OV_DIR = DATA_ARTIFICIAL_RAW_DIR / "mask" / "overlapped"
-# DATA_ARTIFICIAL_RAW_STATISTICS_DIR = DATA_ARTIFICIAL_RAW_DIR / "statistics"
-# DATA_ARTIFICIAL_RAW_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_versions", "only_single_circles", "raw" , "background.png")
 
 DATA_ARTIFICIAL_WSP_DIR = Path("data") / "artificial_dataset_3" / "wsp" 
-DATA_ARTIFICIAL_WSP_IMAGE_DIR = DATA_ARTIFICIAL_WSP_DIR / "image"
-DATA_ARTIFICIAL_WSP_INFO_DIR = DATA_ARTIFICIAL_WSP_DIR / "info"
-DATA_ARTIFICIAL_WSP_LABEL_DIR = DATA_ARTIFICIAL_WSP_DIR / "label"
-DATA_ARTIFICIAL_WSP_MASK_SIN_DIR = DATA_ARTIFICIAL_WSP_DIR / "mask" / "single"
-DATA_ARTIFICIAL_WSP_MASK_OV_DIR = DATA_ARTIFICIAL_WSP_DIR / "mask" / "overlapped"
-DATA_ARTIFICIAL_WSP_STATISTICS_DIR = DATA_ARTIFICIAL_WSP_DIR / "statistics"
+DATA_ARTIFICIAL_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
+DATA_ARTIFICIAL_BG_DIR = Path("data") / "artificial_dataset" / "background" 
+DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
+DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
+DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
 DATA_ARTIFICIAL_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_3", "wsp" , "background.png")
 
-DATA_ARTIFICIAL_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
-DATA_ARTIFICIAL_AUGMENTED_IMAGE_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "image"
-DATA_ARTIFICIAL_AUGMENTED_INFO_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "info"
-DATA_ARTIFICIAL_AUGMENTED_LABEL_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "label"
-DATA_ARTIFICIAL_AUGMENTED_MASK_SIN_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "mask" / "single"
-DATA_ARTIFICIAL_AUGMENTED_MASK_OV_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "mask" / "overlapped"
-DATA_ARTIFICIAL_AUGMENTED_STATISTICS_DIR = DATA_ARTIFICIAL_AUGMENTED_DIR / "statistics"
-DATA_ARTIFICIAL_AUGMENTED_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_main", "raw" , "background.png")
-
-DATA_ARTIFICIAL_BG_DIR = Path("data") / "artificial_dataset" / "background" 
-DATA_ARTIFICIAL_BG_IMAGE_DIR = DATA_ARTIFICIAL_BG_DIR / "image"
-DATA_ARTIFICIAL_BG_LABEL_DIR = DATA_ARTIFICIAL_BG_DIR / "label"
-
-DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
-DATA_ARTIFICIAL_RAW_IMAGE_DIR = DATA_ARTIFICIAL_RAW_DIR / "image"
-DATA_ARTIFICIAL_RAW_LABEL_DIR = DATA_ARTIFICIAL_RAW_DIR / "label"
-
-
-
-DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
-DATA_REAL_RAW_IMAGE_DIR = DATA_REAL_RAW_DIR / "image"
-DATA_REAL_RAW_INFO_DIR = DATA_REAL_RAW_DIR / "info"
-DATA_REAL_RAW_LABEL_DIR = DATA_REAL_RAW_DIR / "label"
-DATA_REAL_RAW_MASK_SIN_DIR = DATA_REAL_RAW_DIR / "mask" / "single"
-DATA_REAL_RAW_MASK_OV_DIR = DATA_REAL_RAW_DIR / "mask" / "overlapped"
-DATA_REAL_RAW_STATISTICS_DIR = DATA_REAL_RAW_DIR / "statistics"
-
-
-DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
-DATA_REAL_PROC_IMAGE_DIR = DATA_REAL_PROC_DIR / "image"
-DATA_REAL_PROC_INFO_DIR = DATA_REAL_PROC_DIR / "info"
-DATA_REAL_PROC_LABEL_DIR = DATA_REAL_PROC_DIR / "label"
-DATA_REAL_PROC_MASK_SIN_DIR = DATA_REAL_PROC_DIR / "mask" / "single"
-DATA_REAL_PROC_MASK_OV_DIR = DATA_REAL_PROC_DIR / "mask" / "overlapped"
-DATA_REAL_PROC_STATISTICS_DIR = DATA_REAL_PROC_DIR / "statistics"
 
 RESULTS_CV_DIR = Path("results") / "computer_vision_algorithm"
-RESULTS_CV_ACCURACY_DIR = RESULTS_CV_DIR / "accuracy"
-RESULTS_CV_DROPLETCLASSIFICATION_DIR = RESULTS_CV_DIR / "droplet_visual_classification"
-RESULTS_CV_INFO_DIR = RESULTS_CV_DIR / "info"
-RESULTS_CV_MASK_SIN_DIR = RESULTS_CV_DIR / "mask" / "single"
-RESULTS_CV_MASK_OV_DIR = RESULTS_CV_DIR / "mask" / "overlapped"
-RESULTS_CV_STATISTICS_DIR = RESULTS_CV_DIR / "statistics"
-RESULTS_CV_UNDISTORTED_DIR = RESULTS_CV_DIR / "undistorted"
+# RESULTS_CV_ACCURACY_DIR = RESULTS_CV_DIR / "accuracy"
+# RESULTS_CV_DROPLETCLASSIFICATION_DIR = RESULTS_CV_DIR / "droplet_visual_classification"
+# RESULTS_CV_INFO_DIR = RESULTS_CV_DIR / "info"
+# RESULTS_CV_MASK_SIN_DIR = RESULTS_CV_DIR / "mask" / "single"
+# RESULTS_CV_MASK_OV_DIR = RESULTS_CV_DIR / "mask" / "overlapped"
+# RESULTS_CV_STATISTICS_DIR = RESULTS_CV_DIR / "statistics"
+# RESULTS_CV_UNDISTORTED_DIR = RESULTS_CV_DIR / "undistorted"
 
-RESULTS_LATEX = Path("results") / "latex"
-
+RESULTS_CELLPOSE_DIR = Path("results") / "cellpose"
+RESULTS_LATEX_DIR = Path("results") / "latex"
 YOLO_MODEL_DIR = Path("models") 
+
+
+RESULTS_GENERAL_STATS_FOLDER_NAME = "statistcs"
+RESULTS_GENERAL_ACC_FOLDER_NAME = "accuracy"
+RESULTS_GENERAL_LABEL_FOLDER_NAME = "labels"
+RESULTS_GENERAL_INFO_FOLDER_NAME = "info"
+RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME = "droplet_visual_classification"
+RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME = "undistorted"
 
 
 ### CREATE ARTIFICIAL DATASET VALUES
@@ -80,14 +50,14 @@ MAX_NUM_SPOTS = 7000                            # maximum number of spots per im
 MIN_NUM_SPOTS = 300                             # minimum number of spots per image
 
 WIDTH_MM, HEIGHT_MM = 76, 26                    # width and height trying to emulate with the artificial dataset
-RESOLUTION = int(465*0.039)                     # resolution of the image based on a minimum value previously agreed with professor
+RESOLUTION = 18                                 # resolution of the image based on a minimum value previously agreed with professor
 MAX_RADIUS = 10 * math.ceil(RESOLUTION / 30)    # maximum radius for a droplet given the resolution of the image
 MIN_RADIUS = math.ceil(RESOLUTION * 0.05)       # minimum radius for a droplet given the resolution of the image
 
 CHARACTERISTIC_PARTICLE_SIZE = 15                # characteristic particle size for distribution of droplet values
 UNIFORMITY_CONSTANT = 5                         # uniformity constant for distribution of droplet values (smaller values make radius less uniform)
 
-MEAN_DROPLETS = 2000                            # mean number of droplets per image for the normal distribution
+MEAN_DROPLETS = 1000                            # mean number of droplets per image for the normal distribution
 STD_DROPLETS = 500                              # standard deviation of droplets per image for the normal distribution
 
 DROPLET_COLOR_THRESHOLD_1 = 3                     # threshold for the radius for the droplet to be brown if lower or blue if higher
@@ -99,8 +69,8 @@ OVERLAPPING_THRESHOLD = 2                       # value to add to the distance b
 
 ### COMPUTER VISION ALGORITHM ACCURACY VALUES
 
-ACCURACY_DISTANCE_THRESHOLD = 5                 # maximum distance of the centers of the droplets when trying to find the pairs
-ACCURACY_DIAMETER_THRESHOLD = 5                 # maximum diameter difference between the droplets when trying to find the pairs 
+ACCURACY_DISTANCE_THRESHOLD =  30                # maximum distance of the centers of the droplets when trying to find the pairs
+ACCURACY_AREA_THRESHOLD = 100                 # maximum diameter difference between the droplets when trying to find the pairs 
 
 ### COMPUTER VISION SEGMENTATION VALUES
 DISTANCE_THRESHOLD = 4/500                      # distance between radius for the droplets to be considered too close when eliminating
@@ -109,3 +79,17 @@ ELIPSE_THRESHOLD = 0.90                         # threshold for the aspect ratio
 ELIPSE_AREA_THRESHOLD = 30                      # difference between the total area of the contour and the area of the elipse calculated
 
 BORDER_EXPAND = 10                              # maximum value for the border when cutting the roi in hough transform
+
+
+# PURPLE_SHADE
+outside_color1 = [ '#220000', '#2a0700', '#330000', '#4a1800', '#4c2000', '#512600', '#542900', '#552809']
+dark_color1 = ['#5b1a30', '#4e0634', '#5e0b35', '#651f37', '#5e223b', '#65203f', '#65203f', '#571241']
+light_color1 = ['#63219f',  '#642aa5',  '#7f24a5',  '#812ba6',  '#6a0fa8',  '#690eab',  '#7b25ac',  '#7530ad',  '#752eb0',  '#7e22b1',  '#8b27bb',  '#732ebd',  '#8e23bf',  '#7326c0',  '#853fc3',  '#812ec6',  '#8125c6',  '#6b1ec6',  '#8727c7',  '#892ace',  '#742dd1',  '#8038e4',  '#aa52e6',  '#a248e6']
+
+# BLUE_SHADE
+outside_color2 = [ '#190e00', '#1f150c', '#0e0f13', '#131514', '#1b0f19', '#14141c', '#1b141c', '#131522', '#0c0d22', '#181123', '#141325', '#1c1527', '#181729', '#1b1a2a']
+dark_color2 =['#09082a', '#0f0c2b', '#181130', '#0a0a30', '#030430', '#160e33', '#000233', '#191935', '#0e0d35', '#0e0d35', '#140c35', '#181736', '#060838', '#060838', '#060a3a', '#060a3a', '#11143d', '#0d0b3d', '#0e1040', '#030444', '#060845', '#0d0b4a', '#0b094a', '#070654']
+light_color2 = ['#181872', '#18107f', '#221d91', '#272595', '#2c2897', '#352ea0', '#2d29a2', '#2524ac', '#2e2db5', '#2c2bb7']
+
+background_color_1 = (255, 244, 137)
+background_color_2 = (159, 127, 19)

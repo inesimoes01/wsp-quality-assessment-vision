@@ -39,7 +39,7 @@ isArtificialDataset = True
 TP_overlapped = 0
 FP_overlapped = 0
 FN_overlapped = 0
-IOU = 0
+iou = 0
 dice = 0
 
 vmd_accum_gt = 0
@@ -99,7 +99,7 @@ if isArtificialDataset:
         FP_overlapped += acc.false_positives_overlapped
         FN_overlapped += acc.false_negatives_overlapped
 
-        IOU += acc.iou_overall
+        iou += acc.iou_overall
 
         k+=1
         print(k, filename)
@@ -107,11 +107,11 @@ if isArtificialDataset:
             print("end")
             break
         
-    IOU = IOU / 10
+    iou = iou / 10
     dice = dice / 10
     precision_overlapped, recall_overlapped, f1_score_overlapped, = Accuracy.calculate_parameters(acc, TP_overlapped, 0, FP_overlapped, FN_overlapped)
 
-    Accuracy.write_final_accuracy_file(precision_overlapped, recall_overlapped, f1_score_overlapped, IOU, dice)
+    Accuracy.write_final_accuracy_file(precision_overlapped, recall_overlapped, f1_score_overlapped, iou, dice)
     Accuracy.write_final_statistics_file(stats_groundtruth, vmd_accum_gt, rsf_accum_gt, perc_accum_gt, no_accum_gt, percov_accum_gt, vmd_accum_c, rsf_accum_c, perc_accum_c, no_accum_c, percov_accum_c)
 
 else: 
