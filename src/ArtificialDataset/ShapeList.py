@@ -6,6 +6,7 @@ from shapely.geometry import Point
 from shapely import geometry
 import shapes_variables
 from itertools import combinations
+import shape_list
 
 import matplotlib.pyplot as plt
 from shapely.geometry import Polygon
@@ -61,7 +62,7 @@ def save_all_shapes():
     
     # fig, axes = plt.subplots(rows, cols, figsize=(15, 18))
     # axes = axes.flatten() 
-    for i, shape in enumerate(shapes_variables.shapes):
+    for i, shape in enumerate(shape_list.shapes):
     #for i, shape in enumerate(shapes_variables.shapes):
         # get the value of the points in a small area as to be able to easily scale the polygon
         scaled_points = np.array(convert_to_real_coordinates(shape, 512, 512))

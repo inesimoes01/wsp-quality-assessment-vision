@@ -49,22 +49,13 @@ def close_contour(contour):
 
 
 
-def contour_to_label_studio_format(contours, image_width, image_height):
+def contour_to_label_studio_format(contours, image_width, image_height, path_to_file):
     annotations = []
+
+
     
     for contour in contours:
-        # unclosed = False
-        # points_set = set()
-        # for point in contour:
-        #     point_tuple = tuple(point[0])
-        #     if point_tuple in points_set:
-        #         unclosed = True
 
-        # if unclosed:
-        #     contour = remove_duplicate_lines(contour)
-        #     contour = close_contour(contour)
-            
-        #contour = cv2.convexHull(contour)
         area = cv2.contourArea(contour)
         perimeter = cv2.arcLength(contour, True)
 
@@ -73,6 +64,7 @@ def contour_to_label_studio_format(contours, image_width, image_height):
 
         if area < 4:
             continue
+
         circularity = 4 * np.pi * (area / (perimeter * perimeter))
         if circularity > 0.8:
             class_name = 'single'
@@ -86,6 +78,15 @@ def contour_to_label_studio_format(contours, image_width, image_height):
             x_percent = (point[0][0] / image_width) * 100
             y_percent = (point[0][1] / image_height) * 100
             points.append([x_percent, y_percent])
+
+        
+        if class_name == 'single':
+            with open(path_to_file, 'a') as f:
+                f.write("np.array([\n")
+                for row in points:
+                    f.write(f"    [{row[0]}, {row[1]}],\n")
+                    
+                f.write("], dtype=np.float32),\n")
 
         result = {
             "id": str(uuid.uuid4())[0:8],
@@ -119,6 +120,9 @@ def contour_to_label_studio_format(contours, image_width, image_height):
         #     "origin": "manual"
         # }
         annotations.append(result)
+
+
+
     
     return annotations
 
@@ -165,6 +169,12 @@ def save_annotations_to_json(results, image_name, path):
 if __name__ == "__main__":
     # Example contours (list of list of points)
     path = "C:\\Users\\mines\\AppData\\Local\\label-studio\\label-studio\\media\\upload\\6"
+    
+    path_to_file = 'shape_list.py'
+    with open(path_to_file, 'w') as f:
+        f.write(f"import numpy as np\n\n")
+        f.write(f"shapes = [")
+   
     for file in os.listdir(path):
         image_path = os.path.join(path, file)
         image = cv2.imread(image_path)
@@ -189,5 +199,8 @@ if __name__ == "__main__":
 
         results_path = os.path.join("data\\real_dataset\\processed\\label", filename + ".json")
 
-        annotations = contour_to_label_studio_format(contours, W, H)
+        annotations = contour_to_label_studio_format(contours, W, H, path_to_file)
         save_annotations_to_json(annotations, image_name, results_path)
+    
+    with open(path_to_file, 'a') as f:
+        f.write("]\n")
