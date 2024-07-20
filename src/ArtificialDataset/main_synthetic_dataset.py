@@ -8,6 +8,7 @@ from CreateWSP import CreateWSP
 import sys
 from DropletShape import DropletShape
 import ShapeList
+import csv
 
 sys.path.insert(0, 'src/common')
 import config as config
@@ -19,17 +20,25 @@ def generate_normal_distribution_num_droplets():
 
     # non-negative values
     num_droplets_per_image = np.maximum(num_droplets_per_image, 1)
+
+    with open('results\\latex\\normal_distribution_no_droplets.csv', 'w', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        csvwriter.writerow(['No Droplets'])
+        for no in num_droplets_per_image:
+            no = int(no)
+            csvwriter.writerow([no])
+
     return num_droplets_per_image
 
 # hard coded for 1000 wsp
 def choose_resolution(index):
-    if index < 150 or 500 <= index < 650:
+    if index < 80 or 250 <= index < 330:
         reso = 18
         charac_particle_size = 15
-    elif 150 <= index < 300 or 650 <= index < 800:
+    elif 80 <= index < 160 or 330 <= index < 410:
         reso = 25
         charac_particle_size = 20
-    elif 300 <= index < 500 or 800 <= index < 1000:
+    elif 160 <= index < 250 or 410 <= index < 500:
         reso = 32
         charac_particle_size = 25
         
@@ -66,9 +75,6 @@ change_threshold = int(config.NUM_WSP * 0.3)
 
 # generate images
 for i in range(config.NUM_WSP):
-    reso = 32
-    charac_particle_size = 25
-
 
     start_time = time.time()
     filename = i + index
@@ -96,5 +102,12 @@ for i in range(config.NUM_WSP):
 
 print("Overall time taken:", total_time, "seconds")
 print("Average time taken:", total_time / config.NUM_WSP)
+
+with open("results\\latex\\time_statistics", 'w') as f:
+
+    f.write(f"Overall time taken: {total_time} seconds \n")
+    f.write(f"Average time taken: {total_time / config.NUM_WSP} seconds \n")
+
+
 
     
