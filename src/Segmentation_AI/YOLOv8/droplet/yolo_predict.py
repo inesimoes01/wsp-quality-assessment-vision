@@ -6,8 +6,8 @@ import os
 
 yaml_file = "data\\artificial_dataset\\yolo_data\\configuration.yaml"
 results_folder = "results\\yolo\\validation"
-train_model_name = "100epc_7iou_0001lr_0005wd_2drp"
-test_model_name = "100epc_7iou_0001lr_0005wd_2drp"
+train_model_name = "300epc_5iou_0001lr_0005wd_2drp6"
+test_model_name = "300epc_5iou_0001lr_0005wd_2drp6"
 classes = [0]
 
 if __name__ == '__main__': 

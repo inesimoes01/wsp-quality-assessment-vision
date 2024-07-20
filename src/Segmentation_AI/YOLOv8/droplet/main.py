@@ -9,13 +9,13 @@ import config
 
 import torch
 #for file in os.listdir(config.DATA_ARTIFICIAL_RAW_DIR):
-img = Image.open("C:\\Users\\mines\\Desktop\\artificial_dataset\\raw\\image\\0.png")
+img = Image.open("data\\artificial_dataset_3\\processed\\yolo_data\\images\\test\\0_0.png",)
 #img = Image.open(os.path.join(config.DATA_ARTIFICIAL_RAW_DIR, file))
-model = YOLO("C:\\Users\\mines\\Desktop\\yolo_models\\300epc_6iou_001lr_01wd_2drp\\weights\\best.pt")
+model = YOLO("results\\yolo\\300epc_5iou_0001lr_0005wd_2drp6\\weights\\best.pt")
 
-results = model.predict(source = "C:\\Users\\mines\\Desktop\\artificial_dataset\\raw\\image\\0.png", 
+results = model.predict(source = "data\\artificial_dataset_3\\processed\\yolo_data\\images\\test\\0_0.png", 
                         conf = 0.2,
-                        save=True, save_txt=False, stream=True)
+                        save=True, save_txt=True, stream=True)
 
 for result in results:
 
