@@ -12,7 +12,8 @@ DATA_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single"
 DATA_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
 
 
-DATA_ARTIFICIAL_WSP_DIR = Path("data") / "artificial_dataset_3" / "wsp" 
+DATA_ARTIFICIAL_WSP_DIR = Path("data") / "artificial_dataset2" / "wsp" 
+
 DATA_ARTIFICIAL_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
 DATA_ARTIFICIAL_BG_DIR = Path("data") / "artificial_dataset" / "background" 
 DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
@@ -32,6 +33,8 @@ RESULTS_CV_DIR = Path("results") / "computer_vision_algorithm"
 
 RESULTS_CELLPOSE_DIR = Path("results") / "cellpose"
 RESULTS_LATEX_DIR = Path("results") / "latex"
+RESULTS_LATEX_PIP_DIR = Path("results") / "latex" / "pipeline"
+RESULTS_LATEX_PIP_ROI_DIR = Path("results") / "latex" / "pipeline" / "rois"
 YOLO_MODEL_DIR = Path("models") 
 
 
@@ -41,6 +44,8 @@ RESULTS_GENERAL_LABEL_FOLDER_NAME = "labels"
 RESULTS_GENERAL_INFO_FOLDER_NAME = "info"
 RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME = "droplet_visual_classification"
 RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME = "undistorted"
+RESULTS_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single" 
+RESULTS_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
 
 
 ### CREATE ARTIFICIAL DATASET VALUES
@@ -74,7 +79,7 @@ ACCURACY_AREA_THRESHOLD = 100                 # maximum diameter difference betw
 
 ### COMPUTER VISION SEGMENTATION VALUES
 DISTANCE_THRESHOLD = 4/500                      # distance between radius for the droplets to be considered too close when eliminating
-CIRCULARITY_THRESHOLD = 0.8                     # threshold for the circularity of a contour that separates singular circular droplets from elipse and overlapped droplets
+CIRCULARITY_THRESHOLD = 0.75                     # threshold for the circularity of a contour that separates singular circular droplets from elipse and overlapped droplets
 ELIPSE_THRESHOLD = 0.90                         # threshold for the aspect ratio of the contour that indicates if the droplet is an elipse
 ELIPSE_AREA_THRESHOLD = 30                      # difference between the total area of the contour and the area of the elipse calculated
 

@@ -47,12 +47,8 @@ def close_contour(contour):
     return contour
 
 
-
 def contour_to_label_studio_format(contours, image_width, image_height, path_to_file):
-    annotations = []
-
-
-    
+    annotations = []    
     for contour in contours:
 
         area = cv2.contourArea(contour)
@@ -102,22 +98,7 @@ def contour_to_label_studio_format(contours, image_width, image_height, path_to_
             "original_height": image_height,
         }
            
-        
-        # result = {
-        #     "original_width": image_width,
-        #     "original_height": image_height,
-        #     "image_rotation": 0,
-        #     "value": {
-        #         "points": points,
-        #         "closed": True,
-        #         "polygonlabels": [class_name]
-        #     },
-        #     "id": str(uuid.uuid4()),  # Unique ID for each annotation
-        #     "from_name": "label",
-        #     "to_name": "image",
-        #     "type": "polygonlabels",
-        #     "origin": "manual"
-        # }
+    
         annotations.append(result)
 
 
@@ -138,27 +119,6 @@ def save_annotations_to_json(results, image_name, path):
             "project": 8
         }],
     }
-
-    # task = {
-    #     'data': {'image': image_name},
-    #     'annotations': [{
-    #         'created_username': ' up201904665@up.pt, 1',
-    #         'completed_by': 1,
-    #         'result': results,
-    #         'was_cancelled': False,
-    #         'ground_truth': False,
-    #         'created_at': '2024-06-20T13:30:47.192675Z',
-    #         'updated_at': '2024-06-20T13:38:11.981557Z',
-    #         'draft_created_at': '2024-06-20T13:30:25.149324Z',
-    #         'lead_time': 448.987,
-    #         'task': 33,
-    #         'project': 1,
-    #         'updated_by': 1,
-    #         'parent_prediction': 3,
-    #     }],
-    #     'predictions': []
-    #     }
-
 
     with open(path, 'w') as f:
         json.dump(task, f)
@@ -183,15 +143,11 @@ if __name__ == "__main__":
         
         # binary threshold
         _, threshold = cv2.threshold(gray, 110, 255, cv2.THRESH_BINARY_INV)
-        #_, threshold = cv2.threshold(gray, 0, 50, cv2.THRESH_BINARY)
-        #threshold = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 15, 3)   
-        #edges = cv2.Canny(threshold, 170, 200)
-        #_, binary = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
+
         contours, _ = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        #cv2.drawContours(image, contours, -1, (255, 255, 0), cv2.FILLED)
+       
         H, W = threshold.shape
-        # plt.imshow(image)
-        # plt.show()
+
 
         parts = file.split(".")
         filename = parts[0]

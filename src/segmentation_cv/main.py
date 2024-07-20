@@ -16,23 +16,18 @@ from Accuracy import Accuracy
 from Statistics import Statistics
 from Distortion import Distortion
 
-# make sure all folders exist
-Util.create_folders(config.RESULTS_CV_ACCURACY_DIR)
-Util.create_folders(config.RESULTS_CV_DROPLETCLASSIFICATION_DIR)
-Util.create_folders(config.RESULTS_CV_INFO_DIR)
-Util.create_folders(config.RESULTS_CV_MASK_OV_DIR)
-Util.create_folders(config.RESULTS_CV_MASK_SIN_DIR)
-Util.create_folders(config.RESULTS_CV_STATISTICS_DIR)
-Util.create_folders(config.RESULTS_CV_UNDISTORTED_DIR)
+# manage folder
+list_folders = []
+list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_STATS_FOLDER_NAME))
+list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_ACC_FOLDER_NAME))
+list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_LABEL_FOLDER_NAME))
+list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_INFO_FOLDER_NAME))
+list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME))
+list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME))
+list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_MASK_SIN_FOLDER_NAME))
+list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_MASK_OV_FOLDER_NAME))
 
-# delete folder contents
-Util.delete_folder_contents(config.RESULTS_CV_ACCURACY_DIR)
-Util.delete_folder_contents(config.RESULTS_CV_DROPLETCLASSIFICATION_DIR)
-Util.delete_folder_contents(config.RESULTS_CV_INFO_DIR)
-Util.delete_folder_contents(config.RESULTS_CV_MASK_OV_DIR)
-Util.delete_folder_contents(config.RESULTS_CV_MASK_SIN_DIR)
-Util.delete_folder_contents(config.RESULTS_CV_STATISTICS_DIR)
-Util.delete_folder_contents(config.RESULTS_CV_UNDISTORTED_DIR)
+Util.manage_folders(list_folders)
 
 isArtificialDataset = True
 
@@ -59,19 +54,19 @@ k = 0
 
 # for each one of the images of the artificial dataset
 if isArtificialDataset:
-    for file in os.listdir(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR):
+    for file in os.listdir(os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME)):
         # get name of the file
         parts = file.split(".")
         filename = parts[0]
         
         # read image
-        image_gray = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR, filename + ".png"), cv2.IMREAD_GRAYSCALE)
-        image_colors = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_IMAGE_DIR, filename + ".png"))  
+        image_gray = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME, filename + ".png"), cv2.IMREAD_GRAYSCALE)
+        image_colors = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME, filename + ".png"))  
 
         image_colors = cv2.cvtColor(image_colors, cv2.COLOR_BGR2RGB)
         
         # calculate statistics
-        calculated:Segmentation = Segmentation(image_colors, image_gray, filename, False, True, 1)
+        calculated:Segmentation = Segmentation(image_colors, image_gray, filename, True, True, 1, config.WIDTH_MM, config.HEIGHT_MM)
         droplets_calculated_dict = {droplet.id: droplet for droplet in calculated.droplets_data}
         stats_calculated:Statistics = calculated.stats
 
@@ -82,7 +77,7 @@ if isArtificialDataset:
         percov_accum_c += stats_calculated.overlaped_percentage
 
         # save ground truth
-        groundtruth:GroundTruth_Statistics = GroundTruth_Statistics(filename)
+        groundtruth:GroundTruth_Statistics = GroundTruth_Statistics(filename, config.DATA_ARTIFICIAL_WSP_DIR)
         droplets_groundtruth_dict = {droplet.id: droplet for droplet in groundtruth.droplets}
         stats_groundtruth:Statistics = groundtruth.stats
 
@@ -93,7 +88,7 @@ if isArtificialDataset:
         percov_accum_gt += stats_groundtruth.overlaped_percentage
 
         # calculate accuracy values
-        acc:Accuracy = Accuracy(droplets_calculated_dict, droplets_groundtruth_dict, filename, stats_calculated, stats_groundtruth)
+        acc:Accuracy = Accuracy(droplets_calculated_dict, droplets_groundtruth_dict, filename, stats_calculated, stats_groundtruth, config.DATA_ARTIFICIAL_WSP_DIR)
 
         TP_overlapped += acc.true_positives_overlapped
         FP_overlapped += acc.false_positives_overlapped
