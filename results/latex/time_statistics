@@ -1,0 +1,6 @@
+Overall time taken: 33606.24560856819 seconds 
+Average time taken: 67.21249121713639 seconds 
+
+13000 seconds in one of the times because hibernation
+33606-13000 = 20 606
+average = 41.212 sec per image

@@ -155,5 +155,4 @@ cython_debug/
 #artificial dataset
 images/
 inputs/
-results/
 data/
