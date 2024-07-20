@@ -1,0 +1,12 @@
+Precision: 0.96604
+Recall: 0.82848
+F1-score: 0.89199
+
+IOU overall: 72.30
+
+IOU single: 78.58
+
+IOU overlapped: 44.25
+
+Dice: 0.01
+
