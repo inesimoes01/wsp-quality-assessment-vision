@@ -9,7 +9,7 @@ from skimage.transform import hough_circle, hough_circle_peaks
 from skimage.feature import canny
 from skimage.morphology import skeletonize
 from skimage.draw import disk
-
+import os
 
 sys.path.insert(0, 'src/common')
 import config
@@ -43,16 +43,21 @@ def apply_hough_circles_with_kmeans(roi, roi_filled, no_convex_points, contour, 
             y = int(circle[1])
             cv2.circle(roi_initial_list, (x, y), r, 255, thickness=1)
 
+
         if len(circles) > 1:
             circles = remove_circles_based_on_size(circles, w_roi, h_roi)
-        
+
+        if len(circles) > 1:
+            circles = remove_circles_outside_mask(circles, roi_filled)
+
         # kmeans approximation with the final number of circles
         circles = k_means_approximation(circles, no_convex_points, roi_kmeans)
 
         if len(circles) > 1:
             circles = remove_circles_based_on_iou_contribution(roi_filled, roi_iou_check, circles)
+
     
-    return circles
+    return circles, roi_initial_list, roi_kmeans, roi_iou_check
 
 def apply_hough_circles_with_skeletonization(roi_filled, area, w_roi, h_roi, roi_img):
 
@@ -174,6 +179,22 @@ def remove_circles_based_on_size(circles, width, height):
     return final_list
 
 
+def remove_circles_outside_mask(circles, roi_mask):
+    final_list_circles = []
+
+    for circle in circles:
+        circle_mask = np.zeros_like(roi_mask)
+
+        cv2.circle(circle_mask, (int(circle[0]), int(circle[1])), int(circle[2]), 255, cv2.FILLED)
+
+        intersection = cv2.bitwise_and(roi_mask, circle_mask)
+        intersection_exists = np.any(intersection)
+
+        if intersection_exists:
+            final_list_circles.append(circle)
+
+    return final_list_circles
+
 def remove_circles_based_on_iou_contribution(roi_filled, roi_final, circles):
     # check iou values with and without some circles to make sure that we have the best result
     # this avoids to have big circles that do not actually detect any circle
@@ -238,10 +259,10 @@ def k_means_approximation(circles, no_convex_points, roi):
 
     circles = np.unique(circles, axis=0)
 
-    if (len(circles) < no_convex_points): 
+    if (len(circles) < no_convex_points + 2): 
         return circles
     
-    model = KMeans(n_clusters=no_convex_points, random_state=0, n_init='auto').fit(circles)
+    model = KMeans(n_clusters=no_convex_points + 2, random_state=0, n_init='auto').fit(circles)
     
     for circle in model.cluster_centers_:
         results.append(circle)
