@@ -1,6 +1,0 @@
-path: '/content/gdrive/MyDrive/YOLO tese/data'
-train: images/train 
-val: images/val  
-
-nc: 2
-names: ['overlapped', 'single']

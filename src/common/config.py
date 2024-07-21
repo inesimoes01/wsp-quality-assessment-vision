@@ -4,32 +4,19 @@ import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
-DATA_GENERAL_STATS_FOLDER_NAME = "statistics"
-DATA_GENERAL_LABEL_FOLDER_NAME = "label"
-DATA_GENERAL_IMAGE_FOLDER_NAME = "image"
-DATA_GENERAL_INFO_FOLDER_NAME = "info"
-DATA_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single" 
-DATA_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
-
-
-DATA_ARTIFICIAL_WSP_DIR = Path("data") / "artificial_dataset2" / "wsp" 
+DATA_ARTIFICIAL_WSP_DIR = Path("data") / "artificial_dataset" / "wsp" 
 
 DATA_ARTIFICIAL_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
 DATA_ARTIFICIAL_BG_DIR = Path("data") / "artificial_dataset" / "background" 
 DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
-DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
-DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
 DATA_ARTIFICIAL_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_3", "wsp" , "background.png")
 
+DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
+DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
+
+DATA_REAL_PAPER_DIR = Path("data") / "real_dataset" / "paper" /"raw" 
 
 RESULTS_CV_DIR = Path("results") / "computer_vision_algorithm"
-# RESULTS_CV_ACCURACY_DIR = RESULTS_CV_DIR / "accuracy"
-# RESULTS_CV_DROPLETCLASSIFICATION_DIR = RESULTS_CV_DIR / "droplet_visual_classification"
-# RESULTS_CV_INFO_DIR = RESULTS_CV_DIR / "info"
-# RESULTS_CV_MASK_SIN_DIR = RESULTS_CV_DIR / "mask" / "single"
-# RESULTS_CV_MASK_OV_DIR = RESULTS_CV_DIR / "mask" / "overlapped"
-# RESULTS_CV_STATISTICS_DIR = RESULTS_CV_DIR / "statistics"
-# RESULTS_CV_UNDISTORTED_DIR = RESULTS_CV_DIR / "undistorted"
 
 RESULTS_CELLPOSE_DIR = Path("results") / "cellpose"
 RESULTS_LATEX_DIR = Path("results") / "latex"
@@ -37,6 +24,14 @@ RESULTS_LATEX_PIP_DIR = Path("results") / "latex" / "pipeline"
 RESULTS_LATEX_PIP_ROI_DIR = Path("results") / "latex" / "pipeline" / "rois"
 YOLO_MODEL_DIR = Path("models") 
 
+
+DATA_GENERAL_STATS_FOLDER_NAME = "statistics"
+DATA_GENERAL_LABEL_FOLDER_NAME = "label"
+DATA_GENERAL_IMAGE_FOLDER_NAME = "image"
+DATA_GENERAL_INFO_FOLDER_NAME = "info"
+DATA_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single" 
+DATA_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
+DATA_GENERAL_MASK_FOLDER_NAME = "mask"
 
 RESULTS_GENERAL_STATS_FOLDER_NAME = "statistcs"
 RESULTS_GENERAL_ACC_FOLDER_NAME = "accuracy"
