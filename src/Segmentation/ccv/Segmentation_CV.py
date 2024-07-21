@@ -81,8 +81,7 @@ class Segmentation_CV:
                         roi_mask_list, roi_mask_filled_list, roi_img, roi_img_color, x_roi, y_roi, h_roi, w_roi, final_contours = self.crop_roi(contour, x_rect, y_rect, w_rect, h_rect)
                         
                         for j, (contour, roi_mask, roi_mask_filled) in enumerate(zip(final_contours, roi_mask_list, roi_mask_filled_list)):
-     
-
+    
                             circles, img1, img2, img3 = HoughTransform.apply_hough_circles_with_kmeans(roi_mask, roi_mask_filled, no_droplets, contour, contour_area, roi_img_color, isOnEdge, w_roi, h_roi)
                             
         

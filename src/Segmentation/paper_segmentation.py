@@ -4,8 +4,7 @@ import cv2
 import numpy as np
 sys.path.insert(0, 'src/common')
 import config
-
-import Distortion
+import ccv.Distortion as dist
 
 def calculate_iou(mask1, mask2):
     intersection = np.logical_and(mask1, mask2).sum()
@@ -46,7 +45,7 @@ def evaluate_paper_segmentation():
         # apply cv algorithm
         im = cv2.imread(file)
         width, height = im.shape[:2]
-        contour = Distortion.detect_rectangle_alternative(im)
+        contour = dist.detect_rectangle_alternative(im)
 
         mask_predicted = np.zeros_like(im)
         cv2.drawContours(mask_predicted, [contour], -1, 255, cv2.FILLED)

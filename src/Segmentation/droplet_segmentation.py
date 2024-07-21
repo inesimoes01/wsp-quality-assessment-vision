@@ -2,13 +2,15 @@ import os
 import sys 
 import cv2
 import numpy as np
-sys.path.insert(0, 'src\common')
+import csv
+from matplotlib import pyplot as plt 
+sys.path.insert(0, 'src\\common')
 
 import config
-#sys.path.insert(0, 'src\Segmentation\ccv')
-import Segmentation.ccv.Segmentation_CV as seg
+import Util
+sys.path.insert(0, 'src\\Segmentation\\ccv')
+import Segmentation_CV as seg
 
-import HoughTransform
 
 TP, FN, TN, FP = 0, 0, 0, 0
 iou_threshold = 0.5
@@ -20,9 +22,6 @@ file_count = len([entry for entry in os.listdir(directory_image) if os.path.isfi
 gt_matched = [False] * file_count
 
 def calculate_iou(im, mask1, mask2):
-    mask1 = np.zeros_like(im)
-    mask2 = np.zeros_like(im)
-
     intersection = np.logical_and(mask1, mask2).sum()
     union = np.logical_or(mask1, mask2).sum()
     
@@ -39,52 +38,59 @@ def create_yolo_mask(file_path, width, height, im):
         for line in file:
             parts = line.strip().split()            
             coordinates = list(map(float, parts[1:]))
-            polygon = [(coordinates[i] * width, coordinates[i+1] * height) for i in range(0, len(coordinates), 2)]
+            polygon = [(coordinates[i] * height, coordinates[i+1] * width) for i in range(0, len(coordinates), 2)]
             polygons.append(polygon)
+        
+    # sort the polygons
+    polygons_with_centroids = [(polygon, calculate_centroid(polygon)) for polygon in polygons]
+    sorted_polygons = sorted(polygons_with_centroids, key=lambda item: (item[1][0], item[1][1]))
+    
+    # save the masks groundtruth
+    for pol in sorted_polygons:
+        mask = np.zeros_like(im)
+        cont = np.array(pol[0])
 
-            mask = np.zeros_like(im)
-            cv2.fillPoly(mask, [np.array(polygon, dtype=np.int32)], 255)
+        cv2.fillPoly(mask, np.array([cont], dtype=np.int32), 255)
 
-            mask_list.append(mask)
+        mask_list.append((mask, pol[1]))
+
         
     return mask_list
 
-def match_predictions_to_ground_truth(im, predicted_masks, grounds_truths_masks, calculated_droplets, groundtruth_droplets):
-    save_pairs_id = []
-    
-    for pred_stat in calculated_droplets.values():
-        for gt_stat in groundtruth_droplets.values():
-            distance = np.sqrt((pred_stat.center_x - gt_stat.center_x)**2 + (pred_stat.center_y - gt_stat.center_y)**2 )
-            
-            if distance < config.ACCURACY_DISTANCE_THRESHOLD: #and abs(pred_stat.area - gt_stat.area) < config.ACCURACY_AREA_THRESHOLD:
-                
-                iou = calculate_iou(pred_stat, gt_stat)
-                
+def calculate_centroid(polygon):
+    x_coords = [point[0] for point in polygon]
+    y_coords = [point[1] for point in polygon]
+    centroid_x = sum(x_coords) / len(polygon)
+    centroid_y = sum(y_coords) / len(polygon)
+    return centroid_x, centroid_y
+
+def match_predictions_to_ground_truth(im, predicted_masks, grounds_truths_masks, distance_threshold):
+    matches = []
+   
+    for predicted_mask, pred_center in predicted_masks:
+        best_iou = 0
+        best_match = None
+        
+        for ground_truth_mask, gt_center in grounds_truths_masks:
+
+            gt_x, gt_y = gt_center
+            pr_x, pr_y = pred_center
+
+            distance = np.sqrt((pr_x - gt_x)**2 + (pr_y - gt_y)**2 )
+
+            if distance < distance_threshold:
+
+                iou = calculate_iou(im, predicted_mask, ground_truth_mask)
+
                 if iou > best_iou:
                     best_iou = iou
-                    best_match = ground_truth
+                    best_match = ground_truth_mask
+
 
                     if best_iou > 0.9:
-                        save_pairs_id.append((gt_stat.id, pred_stat.id))
                         break
-
-                break
-   
-    # for predicted in predicted_masks:
-    #     best_iou = 0
-    #     best_match = None
-        
-    #     for ground_truth in grounds_truths_masks:
-    #         iou = calculate_iou(predicted, ground_truth)
-
-    #         if iou > best_iou:
-    #             best_iou = iou
-    #             best_match = ground_truth
-
-    #             if best_iou > 0.9:
-    #                 break
-
-            # matches.append((predicted, best_match, best_iou))
+        Util.plotTwoImages(predicted_mask, best_match)
+        matches.append((predicted_mask, best_match, best_iou))
 
     return matches
 
@@ -99,7 +105,7 @@ def visualize_results(image_path, matches):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def evaluate_matches(matches, iou_threshold=0.5):
+def evaluate_matches(matches, ground_truth_masks, iou_threshold = 0.5):
     tp = 0
     fp = 0
     fn = 0
@@ -112,16 +118,28 @@ def evaluate_matches(matches, iou_threshold=0.5):
     
     matched_ground_truths = [match[1] for match in matches]
 
-    fn = len(matches) - len(matched_ground_truths)
+    fn = len(ground_truth_masks) - len(matched_ground_truths)
 
     precision = tp / (tp + fp) if tp + fp > 0 else 0
     recall = tp / (tp + fn) if tp + fn > 0 else 0
     f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
 
-    print (precision, recall, f1_score)
     return precision, recall, f1_score
 
+def write_final_csv(metrics):
+    with open(os.path.join(config.RESULTS_ACCURACY_DIR, "droplet_evaluation_cv.csv"), mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=["file", "precision", "recall", "f1_score"])
+        writer.writeheader()
+       
+        for metric in metrics:
+            new_row = {
+                "file": metric[0], "precision": metric[1], "recall": metric[2], "f1_score": metric[3]
+            }
+            writer.writerow(new_row)
+
+
 def evaluate_droplet_segmentation():
+    metrics_to_save = []
     # apply the segmentation in each one of the images and then calculate the accuracy and save it
     for i, file in enumerate(os.listdir(directory_image)):
         parts = file.split(".")
@@ -141,7 +159,8 @@ def evaluate_droplet_segmentation():
                                                   real_height = config.HEIGHT_MM)
         
         predicted_masks = []
-        for drop in predicted_seg.droplets_data:
+        sorted_droplets = sorted(predicted_seg.droplets_data, key=lambda droplet: (droplet.center_x, droplet.center_y))
+        for drop in sorted_droplets:
             mask = np.zeros_like(image_colors)
 
             if drop.overlappedIDs == []:
@@ -149,14 +168,20 @@ def evaluate_droplet_segmentation():
                 cv2.drawContours(mask, [cont], -1, 255, cv2.FILLED)
             else:
                 cv2.circle(mask, (drop.center_x, drop.center_y), drop.radius, 255, cv2.FILLED)
-            predicted_masks.append(mask)
+
+
+            predicted_masks.append((mask, (drop.center_x, drop.center_y)))
         
         # get groundtruth
         groundtruth_masks = create_yolo_mask(os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_LABEL_FOLDER_NAME, filename + ".txt"), width, height, image_colors)
 
-        matches = match_predictions_to_ground_truth(image_colors, predicted_masks, groundtruth_masks, )
+        matches = match_predictions_to_ground_truth(image_colors, predicted_masks, groundtruth_masks, 10)
         
-        evaluate_matches(matches, 0.5)
+        precision, recall, f1_score = evaluate_matches(matches, groundtruth_masks,  0.5)
 
-evaluate_droplet_segmentation()
+        metrics_to_save.append((filename, precision, recall, f1_score))
 
+    return metrics_to_save
+
+metrics = evaluate_droplet_segmentation()
+write_final_csv(metrics)

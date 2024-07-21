@@ -13,10 +13,10 @@ DATA_ARTIFICIAL_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_3"
 
 DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
 DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
-
 DATA_REAL_PAPER_DIR = Path("data") / "real_dataset" / "paper" /"raw" 
 
 RESULTS_CV_DIR = Path("results") / "computer_vision_algorithm"
+RESULTS_ACCURACY_DIR = Path("results") / "metrics" / "droplet"
 
 RESULTS_CELLPOSE_DIR = Path("results") / "cellpose"
 RESULTS_LATEX_DIR = Path("results") / "latex"
