@@ -4,15 +4,13 @@ import copy
 import os
 import sys
 from matplotlib import pyplot as plt 
+import droplet.ccv.HoughTransform as hough_transform
 
 sys.path.insert(0, 'src/common')
 import config
-
 from Droplet import Droplet
 from Statistics import Statistics
-import HoughTransform
 
-from shapely.geometry import Polygon
 
 circle_color = (255, 0, 0)
 elipse_color = (0, 255, 255)
@@ -27,7 +25,6 @@ class Segmentation_CV:
         self.create_masks = create_masks
         self.filename = filename
     
-
         self.initialize_variables(image_gray, image_color)
        
         self.get_contours()
@@ -62,7 +59,7 @@ class Segmentation_CV:
                 roi_mask_list, roi_mask_filled_list, roi_img, roi_img_color, x_roi, y_roi, h_roi, w_roi, _ = self.crop_roi(contour, x_rect, y_rect, w_rect, h_rect)
 
                 for roi_mask, roi_mask_filled in zip(roi_mask_list, roi_mask_filled_list):
-                    circles, _, _, _ = HoughTransform.apply_hough_circles_with_kmeans(roi_mask, roi_mask_filled, no_droplets, contour, contour_area, roi_img_color, isOnEdge,  h_roi, w_roi)
+                    circles, _, _, _ = hough_transform.apply_hough_circles_with_kmeans(roi_mask, roi_mask_filled, no_droplets, contour, contour_area, roi_img_color, isOnEdge,  h_roi, w_roi)
                     
                     if circles is not None and len(circles) > 1:
                         self.save_overlapped_droplets(i, original_contour, circles, x_roi, y_roi, isOnEdge)
@@ -82,7 +79,7 @@ class Segmentation_CV:
                         
                         for j, (contour, roi_mask, roi_mask_filled) in enumerate(zip(final_contours, roi_mask_list, roi_mask_filled_list)):
     
-                            circles, img1, img2, img3 = HoughTransform.apply_hough_circles_with_kmeans(roi_mask, roi_mask_filled, no_droplets, contour, contour_area, roi_img_color, isOnEdge, w_roi, h_roi)
+                            circles, img1, img2, img3 = hough_transform.apply_hough_circles_with_kmeans(roi_mask, roi_mask_filled, no_droplets, contour, contour_area, roi_img_color, isOnEdge, w_roi, h_roi)
                             
         
                             if self.save_image_steps:
@@ -111,7 +108,7 @@ class Segmentation_CV:
                         
                         for contour, roi_mask, roi_mask_filled in zip(final_contours, roi_mask_list, roi_mask_filled_list):
                            
-                            circles = HoughTransform.apply_hough_circles_with_skeletonization(roi_mask_filled, contour_area, w_roi, h_roi, roi_img)
+                            circles = hough_transform.apply_hough_circles_with_skeletonization(roi_mask_filled, contour_area, w_roi, h_roi, roi_img)
 
                             if circles is not None and len(circles) > 1:
                                 self.save_overlapped_droplets(i, contour, circles, x_roi, y_roi, isOnEdge)
