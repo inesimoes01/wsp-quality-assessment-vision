@@ -9,19 +9,31 @@ from skimage.transform import hough_circle, hough_circle_peaks
 from skimage.feature import canny
 from skimage.morphology import skeletonize
 from skimage.draw import disk
+sys.path.insert(0, 'src\\common')
+import Util
 
 show_plots = False
 
 
-def apply_hough_circles_with_kmeans(roi, roi_filled, no_convex_points, contour, area, roi_img, isOnEdge,  w_roi, h_roi):
+def apply_hough_circles_with_kmeans(roi_filled, roi_edges, no_convex_points, contour, area, roi_img, isOnEdge,  w_roi, h_roi):
+    
     circles = cv2.HoughCircles(roi_filled, 
                                     cv2.HOUGH_GRADIENT, 
                                     dp=1,              # Inverse ratio of accumulator resolution to image resolution. Higher values mean lower resolution/precision but potentially faster processing.
                                     minDist=1,           # Minimum distance between centers of detected circles.
-                                    param1=200,          # Higher threshold of Canny edge detector.
-                                    param2=5,           # Accumulator threshold for circle centers at the detection stage. Smaller values may lead to more false detections.
-                                    minRadius=0,         # Minimum radius of circles to be detected.
-                                    maxRadius=int(area))         # Maximum radius of circles to be detected. If negative, it defaults to the maximum image dimension.
+                                    param1=150,          # Higher threshold of Canny edge detector.
+                                    param2=10,           # Accumulator threshold for circle centers at the detection stage. Smaller values may lead to more false detections.
+                                    minRadius=1,         # Minimum radius of circles to be detected.
+                                    maxRadius=0)         # Maximum radius of circles to be detected. If negative, it defaults to the maximum image dimension.
+    if circles is None:
+        circles = cv2.HoughCircles(roi_filled, 
+                                    cv2.HOUGH_GRADIENT, 
+                                    dp=1,              # Inverse ratio of accumulator resolution to image resolution. Higher values mean lower resolution/precision but potentially faster processing.
+                                    minDist=1,           # Minimum distance between centers of detected circles.
+                                    param1=150,          # Higher threshold of Canny edge detector.
+                                    param2=6,           # Accumulator threshold for circle centers at the detection stage. Smaller values may lead to more false detections.
+                                    minRadius=1,         # Minimum radius of circles to be detected.
+                                    maxRadius=0)         # Maximum radius of circles to be detected. If negative, it defaults to the maximum image dimension.
 
     roi_initial_list = copy.copy(roi_img)
     roi_kmeans = copy.copy(roi_img)
@@ -37,7 +49,6 @@ def apply_hough_circles_with_kmeans(roi, roi_filled, no_convex_points, contour, 
             y = int(circle[1])
             cv2.circle(roi_initial_list, (x, y), r, 255, thickness=1)
 
-
         if len(circles) > 1:
             circles = remove_circles_based_on_size(circles, w_roi, h_roi)
 
@@ -50,7 +61,8 @@ def apply_hough_circles_with_kmeans(roi, roi_filled, no_convex_points, contour, 
         if len(circles) > 1:
             circles = remove_circles_based_on_iou_contribution(roi_filled, roi_iou_check, circles)
 
-    
+    #Util.plotFourImages(roi_edges, roi_initial_list, roi_kmeans, roi_iou_check)
+
     return circles, roi_initial_list, roi_kmeans, roi_iou_check
 
 def apply_hough_circles_with_skeletonization(roi_filled, area, w_roi, h_roi, roi_img):

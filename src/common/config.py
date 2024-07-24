@@ -4,12 +4,14 @@ import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
-DATA_ARTIFICIAL_WSP_DIR = Path("data") / "artificial_dataset" / "wsp" 
+DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset" / "wsp" 
+DATA_SYNTHETIC_SIMPLE_WSP_DIR = Path("data") / "synthetic_simple_dataset" / "wsp" 
+DATA_REAL_RECTANGLE_DIR = Path("data") / "real_rectangle_dataset" / "wsp" 
 
-DATA_ARTIFICIAL_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
-DATA_ARTIFICIAL_BG_DIR = Path("data") / "artificial_dataset" / "background" 
-DATA_ARTIFICIAL_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
-DATA_ARTIFICIAL_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_3", "wsp" , "background.png")
+DATA_SYNTHETIC_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
+DATA_SYNTHETIC_BG_DIR = Path("data") / "artificial_dataset" / "background" 
+DATA_SYNTHETIC_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
+DATA_SYNTHETIC_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_3", "wsp" , "background.png")
 
 DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
 DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
@@ -43,7 +45,7 @@ RESULTS_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single"
 RESULTS_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
 
 
-### CREATE ARTIFICIAL DATASET VALUES
+### CREATE SYNTHETIC DATASET VALUES
 
 NUM_WSP = 1000                                    # how many images to create
 MAX_NUM_SPOTS = 7000                            # maximum number of spots per image
