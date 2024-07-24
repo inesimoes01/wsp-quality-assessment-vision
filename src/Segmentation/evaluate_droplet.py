@@ -4,12 +4,13 @@ import cv2
 import numpy as np
 import csv
 from matplotlib import pyplot as plt 
-sys.path.insert(0, 'src\\common')
 
+import droplet.ccv.Segmentation_CV as seg
+
+sys.path.insert(0, 'src\\common')
 import config
 import Util
-sys.path.insert(0, 'src\\Segmentation\\ccv')
-import Segmentation_CV as seg
+
 
 
 TP, FN, TN, FP = 0, 0, 0, 0
@@ -140,6 +141,7 @@ def write_final_csv(metrics):
 
 def evaluate_droplet_segmentation():
     metrics_to_save = []
+    
     # apply the segmentation in each one of the images and then calculate the accuracy and save it
     for i, file in enumerate(os.listdir(directory_image)):
         parts = file.split(".")
