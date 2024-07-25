@@ -103,7 +103,6 @@ def draw_grouped_lines( image, grouped_lines, axis=0):
         cv2.line(image, start_point, end_point, (0, 255, 0), 2)
 
 def detect_rectangle_alternative(image):
-
     edges = cv2.GaussianBlur(image, (5, 5), 3, 3)
 
     # find the most present color
@@ -130,28 +129,25 @@ def detect_rectangle_alternative(image):
     cv2.drawContours(image, contours, -1, (0, 0, 0), 5)
 
     hull = []
-    #contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+   
     for contour in contours:
         hull.append(cv2.convexHull(contour, False))
-        cv2.drawContours(image, hull, -1, (255, 0, 0), 5)
-    
-    plt.imshow(image)
-    plt.show()
+ 
     return hull[0]
 
 
-im = "data\\real_dataset\\raw\\image\\1_V1_A2.jpg"
-im = cv2.imread(im)
-contour = detect_rectangle_alternative(im)
+# im = "data\\real_dataset\\raw\\image\\1_V1_A2.jpg"
+# im = cv2.imread(im)
+# contour = detect_rectangle_alternative(im)
 
-maxHeight = 2000
-maxWidth = 300
-output_pts = np.float32([[0, 0],
-                            [0, maxHeight + 1],
-                            [maxWidth +  1, maxHeight + 1],
-                            [maxWidth + 1, 0]])
+# maxHeight = 2000
+# maxWidth = 300
+# output_pts = np.float32([[0, 0],
+#                             [0, maxHeight + 1],
+#                             [maxWidth +  1, maxHeight + 1],
+#                             [maxWidth + 1, 0]])
 
-final = remove_distortion(im, contour)
+# final = remove_distortion(im, contour)
 
-plt.imshow(final)
-plt.show()
+# plt.imshow(final)
+# plt.show()

@@ -13,12 +13,13 @@ DATA_SYNTHETIC_BG_DIR = Path("data") / "artificial_dataset" / "background"
 DATA_SYNTHETIC_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
 DATA_SYNTHETIC_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_3", "wsp" , "background.png")
 
-DATA_REAL_RAW_DIR = Path("data") / "real_dataset" / "raw" 
+DATA_REAL_RAW_DIR = Path("data") / "real_rectangle_dataset" / "test"  
 DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
 DATA_REAL_PAPER_DIR = Path("data") / "real_dataset" / "paper" /"raw" 
 
 RESULTS_CV_DIR = Path("results") / "computer_vision_algorithm"
-RESULTS_ACCURACY_DIR = Path("results") / "metrics" / "droplet"
+RESULTS_ACCURACY_DIR = Path("results") / "metrics" 
+
 
 RESULTS_CELLPOSE_DIR = Path("results") / "cellpose"
 RESULTS_LATEX_DIR = Path("results") / "latex"
@@ -37,7 +38,7 @@ DATA_GENERAL_MASK_FOLDER_NAME = "mask"
 
 RESULTS_GENERAL_STATS_FOLDER_NAME = "statistcs"
 RESULTS_GENERAL_ACC_FOLDER_NAME = "accuracy"
-RESULTS_GENERAL_LABEL_FOLDER_NAME = "labels"
+RESULTS_GENERAL_LABEL_FOLDER_NAME = "label"
 RESULTS_GENERAL_INFO_FOLDER_NAME = "info"
 RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME = "droplet_visual_classification"
 RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME = "undistorted"

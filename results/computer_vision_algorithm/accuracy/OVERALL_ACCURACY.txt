@@ -1,8 +1,0 @@
-Precision: 0.94756
-Recall: 0.75777
-F1-score: 0.84211
-
-IOU: 68.45
-
-Dice: 0.01
-

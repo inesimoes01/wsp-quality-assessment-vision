@@ -9,19 +9,15 @@ from Droplet import *
 #TODO adjust pixels to real word dimensions
 
 class Statistics:
-    def __init__(self, vmd_value:float, rsf_value:float, coverage_percentage:float, no_droplets:int, droplet_info:list[Droplet]):
+    def __init__(self, vmd_value:float, rsf_value:float, coverage_percentage:float, no_droplets:int, no_droplets_overlapped, overlaped_percentage, droplet_info:list[Droplet] = None):
         self.vmd_value = vmd_value
         self.rsf_value = rsf_value
         self.coverage_percentage = coverage_percentage
         self.no_droplets = no_droplets
         self.droplet_info = droplet_info
-        
-        self.no_droplets_overlapped = 0
-        for drop in self.droplet_info:
-            if len(drop.overlappedIDs) > 0:
-                self.no_droplets_overlapped += 1
-        
-        self.overlaped_percentage = self.no_droplets_overlapped / self.no_droplets * 100
+        self.no_droplets_overlapped = no_droplets_overlapped
+        self.overlaped_percentage = overlaped_percentage
+    
     
     def calculate_statistics(volumes_sorted, image_area, contour_area):
         cumulative_fraction = Statistics.calculate_cumulative_fraction(volumes_sorted)

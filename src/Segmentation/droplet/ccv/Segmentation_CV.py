@@ -52,20 +52,6 @@ class Segmentation_CV:
                 self.save_single_droplet(contour, i, center_x, center_y, contour_area, overlapped_ids, shape)
                 continue
             
-            # elif isOnEdge:    # single circle or single elipse on the edge of the frame
-
-            #     original_contour = copy.copy(contour)
-            #     roi_mask_list, roi_mask_filled_list, roi_img, roi_img_color, x_roi, y_roi, h_roi, w_roi, _ = self.crop_roi(contour, x_rect, y_rect, w_rect, h_rect)
-
-            #     for roi_mask, roi_mask_filled in zip(roi_mask_list, roi_mask_filled_list):
-            #         circles, _, _, _ = hough_transform.apply_hough_circles_with_kmeans(roi_mask, roi_mask_filled, no_droplets, contour, contour_area, roi_img_color, isOnEdge,  h_roi, w_roi)
-                    
-            #         if circles is not None and len(circles) > 1:
-            #             self.save_overlapped_droplets(i, original_contour, circles, x_roi, y_roi, isOnEdge)
-            #         else:
-            #             # if no circles are found, it is assumed the contour is an elipse
-            #             self.save_single_droplet(contour, i, center_x, center_y, contour_area, overlapped_ids, 3)
-
             else:  # overlapping droplets and on the edge
 
                 match segmentation_method:
@@ -74,11 +60,8 @@ class Segmentation_CV:
 
                         # for hough, create a roi mask with only the shape contour we are trying to identify
                         # careful with the changes in coordinates of the roi
-                        #roi_mask_list, roi_mask_filled_list, roi_img, roi_img_color, x_roi, y_roi, h_roi, w_roi, final_contours = self.crop_roi(contour, x_rect, y_rect, w_rect, h_rect)
                         object_roi_mask_filled, object_roi_mask_edges, object_roi_color, object_roi_gray, x_roi, y_roi, h_roi, w_roi = self.crop_roi(contour, x_rect, y_rect, w_rect, h_rect)
-
-                        # for j, (contour, roi_mask, roi_mask_filled) in enumerate(zip(final_contours, roi_mask_list, roi_mask_filled_list)):
-    
+                     
                         circles, img1, img2, img3 = hough_transform.apply_hough_circles_with_kmeans(object_roi_mask_filled, object_roi_mask_edges, no_droplets, contour, contour_area, object_roi_color, isOnEdge, w_roi, h_roi)
             
     
@@ -158,42 +141,6 @@ class Segmentation_CV:
         object_roi_color = self.image_color[y_border:y_border + h_border, x_border:x_border + w_border]
         object_roi_gray = self.image_gray[y_border:y_border + h_border, x_border:x_border + w_border]
 
-        
-        # # create an roi with only the shape we are interested in to apply a harsher threshold
-        # object_roi_img_new_contours_color = self.image_color[y_border:y_border + h_border, x_border:x_border + w_border]
-        # object_roi_img_new_contours = self.image_gray[y_border:y_border + h_border, x_border:x_border + w_border]
-        # _, threshold = cv2.threshold(object_roi_img_new_contours, 150, 255, cv2.THRESH_BINARY)
-        # inverted_threshold = cv2.bitwise_not(threshold)
-        # overlapped_contours, _ = cv2.findContours(inverted_threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        # object_roi_mask_new_contours = np.zeros_like(object_roi_img_new_contours)
-        # cv2.drawContours(object_roi_mask_new_contours, overlapped_contours, -1, 255, 1)
-        # object_roi_mask_new_contours = (cv2.bitwise_and(object_roi_mask_new_contours, object_roi_mask_new_contours, mask = object_roi_mask))
-
-        # object_roi_mask_new_contour_filled = np.zeros_like(object_roi_img_new_contours)
-        # cv2.drawContours(object_roi_mask_new_contour_filled, overlapped_contours, -1, 255, cv2.FILLED)
-        # object_roi_mask_new_contour_filled = (cv2.bitwise_and(object_roi_mask_new_contour_filled, object_roi_mask_new_contour_filled, mask = object_roi_mask))
-        
-        # # get the final list of contours in case some of the droplets were separated during this process
-        # #inverted_object_roi = cv2.bitwise_not(object_roi_mask_new_contours_filled)
-        # final_contours, _ = cv2.findContours(object_roi_mask_new_contours, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # list_of_masks_filled = []
-        # list_of_masks_contour = []
-    
-        # for contour in final_contours:
-        #     aux_max1 = np.zeros_like(object_roi_img_new_contours)
-        #     aux_max2 = np.zeros_like(object_roi_img_new_contours)
-
-        #     cv2.drawContours(aux_max1, [contour], -1, 255, cv2.FILLED)
-        #     cv2.drawContours(aux_max2, [contour], -1, 255, 1)
-            
-        #     list_of_masks_filled.append(aux_max1)
-        #     list_of_masks_contour.append(aux_max2)
-
-          
-        #Util.plotTwoImages(object_roi_mask, object_roi_mask_new_contours)
-        #return list_of_masks_contour, list_of_masks_filled, object_roi_img_new_contours, object_roi_img_new_contours_color,  final_contours
         return object_roi_mask_filled, object_roi_mask_edges, object_roi_color, object_roi_gray, x_border, y_border, h_border, w_border
 
     def save_overlapped_droplets(self, index, contour, circles, x_roi, y_roi, isOnEdge):   
