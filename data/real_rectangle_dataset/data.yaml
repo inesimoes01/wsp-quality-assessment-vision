@@ -1,4 +1,4 @@
-path: C:/Users/mines/Desktop/github/vision-quality-assessment-opencv/data/rectangle_dataset_full
+path: C:/Users/mines/Desktop/github/vision-quality-assessment-opencv/data/real_rectangle_dataset
 
 train: ../train/images
 val: ../valid/images

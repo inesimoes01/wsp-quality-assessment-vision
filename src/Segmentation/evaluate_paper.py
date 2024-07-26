@@ -4,6 +4,8 @@ import cv2
 import numpy as np
 import csv
 import time
+import pandas as pd
+from matplotlib import pyplot as plt
 
 import paper.ccv.Distortion as dist
 
@@ -16,6 +18,8 @@ def calculate_iou(mask1, mask2):
     print(mask1_binary.shape)
     print(mask2_binary.shape)
 
+
+
     intersection = np.logical_and(mask1_binary, mask2_binary).sum()
     union = np.logical_or(mask1_binary, mask2_binary).sum()
     
@@ -25,13 +29,12 @@ def calculate_iou(mask1, mask2):
     return iou
 
 
-
 def create_yolo_mask(file_path, width, height):
     with open(file_path, 'r') as file:
         for line in file:
             parts = line.strip().split()             
             coordinates = list(map(float, parts[1:]))
-            polygon = [(coordinates[i] * width, coordinates[i+1] * height) for i in range(0, len(coordinates), 2)]
+            polygon = [(coordinates[i] * height, coordinates[i+1] * width) for i in range(0, len(coordinates), 2)]
 
         
     mask = np.zeros((width, height), dtype=np.uint8)
@@ -40,7 +43,7 @@ def create_yolo_mask(file_path, width, height):
     return mask
 
 def write_final_csv(metric):
-    with open(os.path.join(config.RESULTS_ACCURACY_DIR, "paper_evaluation_cv.csv"), mode='a', newline='') as file:
+    with open(csv_file, mode='a', newline='') as file:
         new_row = {
                 "file": metric[0], "iou": metric[1], "segmentation_time": metric[2]
             }
@@ -49,12 +52,12 @@ def write_final_csv(metric):
 
 
 def main():
-    directory_image = os.path.join(config.DATA_REAL_RAW_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME)
-    directory_label = os.path.join(config.DATA_REAL_RAW_DIR, config.DATA_GENERAL_LABEL_FOLDER_NAME)
+    directory_image = os.path.join(config.DATA_REAL_RAW_DIR, "images")
+    directory_label = os.path.join(config.DATA_REAL_RAW_DIR, "labels")
     file_count = len([entry for entry in os.listdir(directory_image) if os.path.isfile(os.path.join(directory_image, entry))])
 
     # start file
-    with open(os.path.join(config.RESULTS_ACCURACY_DIR, "paper_evaluation_cv.csv"), mode='w', newline='') as file:
+    with open(csv_file, mode='w', newline='') as file:
         writer = csv.DictWriter(file, fieldnames=["file", "iou", "segmentation_time"])
         writer.writeheader()
 
@@ -86,5 +89,25 @@ def main():
         elapsed_time = end_time - start_time
         
         print("Time taken:", elapsed_time, "seconds")
-        
+    
+    df = pd.read_csv(csv_file)
+    average_iou = df['iou'].median()
+    average_segmentation_time = df['segmentation_time'].mean()
+
+    average_df = pd.DataFrame([{
+        'method': 'paper_segmentation_cv',
+        'iou_mask': average_iou,
+        'segmentation_time': average_segmentation_time
+    }])
+
+    df_gen = pd.read_csv(general_csv_file)
+
+    df_gen = df_gen._append(average_df, ignore_index=True)
+    df_gen.to_csv(general_csv_file, index=False)
+    
+
+general_csv_file = 'results\\metrics\\general_avg_values.csv'
+
+
+csv_file = os.path.join(config.RESULTS_ACCURACY_DIR, "paper_evaluation_cv.csv")
 main()
