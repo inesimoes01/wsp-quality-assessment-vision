@@ -5,16 +5,17 @@ from matplotlib import pyplot as plt
 import copy
 import csv
 import pandas as pd
-import SyntheticDataset.create_masks as create_masks
+import create_masks as create_masks
 
-from SyntheticDataset.create_colors import *
+from create_colors import *
+from create_wsp import CreateWSP
 
 sys.path.insert(0, 'src/common')
 from Util import *
 import config as config
 from Statistics import *
 
-from SyntheticDataset.create_wsp import CreateWSP
+
 
 class DatasetResults:
     def __init__(self, wsp_image:CreateWSP, colors):
@@ -25,30 +26,36 @@ class DatasetResults:
         area_list = [drop.droplet_data.area for drop in wsp_image.list_of_individual_shapes_in_image]
 
         # calculate statistics
-        self.volume_list = sorted(Statistics.area_to_volume(area_list, wsp_image.width, config.WIDTH_MM))
+        self.volume_list = sorted(Statistics.area_to_diameter_micro(area_list, wsp_image.width, config.WIDTH_MM))
         vmd_value, coverage_percentage, rsf_value, cumulative_fraction = Statistics.calculate_statistics(self.volume_list, (self.wsp_image.width * self.wsp_image.height), self.wsp_image.droplet_area)
 
         # create info and statistics files
         droplet_data = [r.droplet_data for r in wsp_image.list_of_individual_shapes_in_image]
-        self.stats:Statistics = Statistics(vmd_value, rsf_value, coverage_percentage, wsp_image.num_spots, droplet_data)
+        no_droplets_overlapped = 0
+        for drop in droplet_data:
+            if len(drop.overlappedIDs) > 0:
+                no_droplets_overlapped += 1
+        
+        overlaped_percentage = no_droplets_overlapped / wsp_image.num_spots * 100
+        self.stats:Statistics = Statistics(vmd_value, rsf_value, coverage_percentage, wsp_image.num_spots, overlaped_percentage, no_droplets_overlapped, droplet_data)
         self.save_dropletinfo_csv(droplet_data)
         self.save_statistics_to_folder()
 
         self.save_cumulative_fraction(self.volume_list, cumulative_fraction, str(self.wsp_image.filename))
 
         # create masks
-        path_mask_overlapped = os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_MASK_OV_FOLDER_NAME, str(self.wsp_image.filename) + '.png')
-        path_mask_single = os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_MASK_SIN_FOLDER_NAME, str(self.wsp_image.filename) + '.png')
+        path_mask_overlapped = os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_MASK_OV_FOLDER_NAME, str(self.wsp_image.filename) + '.png')
+        path_mask_single = os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_MASK_SIN_FOLDER_NAME, str(self.wsp_image.filename) + '.png')
         self.create_masks(path_mask_overlapped, path_mask_single)
 
         # create the labels
-        path_labels = os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_LABEL_FOLDER_NAME, str(self.wsp_image.filename) + '.txt')
+        path_labels = os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_LABEL_FOLDER_NAME, str(self.wsp_image.filename) + '.txt')
         create_masks.write_label_file(path_labels, self.wsp_image.annotation_labels)
         # self.mask_to_label(path_mask_single, path_labels, 0)
         # self.mask_to_label(path_mask_overlapped, path_labels, 1)
 
     def save_cumulative_fraction(self, volumes_sorted, cumulative_fraction, filename):
-        csv_file = os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_INFO_FOLDER_NAME, filename + 'cumulative_fraction.csv')
+        csv_file = os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_INFO_FOLDER_NAME, filename + 'cumulative_fraction.csv')
         
         with open(csv_file, 'w', newline='') as csvfile:
             csvwriter = csv.writer(csvfile)
@@ -78,10 +85,10 @@ class DatasetResults:
         }
 
         df = pd.DataFrame(data)
-        df.to_csv(os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_STATS_FOLDER_NAME, str(self.wsp_image.filename) + '.csv'), index=False, float_format='%.2f')
+        df.to_csv(os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_STATS_FOLDER_NAME, str(self.wsp_image.filename) + '.csv'), index=False, float_format='%.2f')
 
     def save_dropletinfo_csv(self, droplet_data:list[Droplet]):
-        csv_file = os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_INFO_FOLDER_NAME, str(self.wsp_image.filename) + '.csv')
+        csv_file = os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_INFO_FOLDER_NAME, str(self.wsp_image.filename) + '.csv')
         
         with open(csv_file, mode='w', newline='') as file:
             writer = csv.writer(file)

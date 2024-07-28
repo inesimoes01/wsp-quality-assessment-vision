@@ -13,14 +13,15 @@ from shapely import Polygon
 from shapely.ops import unary_union
 
 
-sys.path.insert(0, 'src/common')
+
 import config as config
-import SyntheticDataset.rosinrammler_distribution as rosinrammler_distribution
-import SyntheticDataset.create_masks as create_masks
-import SyntheticDataset.create_droplets as create_droplets
-import SyntheticDataset.create_background as create_background
-from SyntheticDataset.create_colors import Colors
-from SyntheticDataset.droplet_shape import DropletShape
+import rosinrammler_distribution as rosinrammler_distribution
+import create_masks as create_masks
+import create_droplets as create_droplets
+import create_background as create_background
+from create_colors import Colors
+from droplet_shape import DropletShape
+sys.path.insert(0, 'src/common')
 from Droplet import Droplet 
 
 
@@ -31,12 +32,12 @@ class ShapeInImage:
         self.droplet_data = droplet_data
 
 class CreateWSP:
-    def __init__(self, index:int, colors:Colors, shapes:list[DropletShape], polygons_by_size, num_spots, type_of_dataset, image_resolution, characteristic_particle_size):
+    def __init__(self, index:int, colors:Colors, shapes:list[DropletShape], polygons_by_size, num_spots, type_of_dataset, image_resolution, characteristic_particle_size, uniform):
         self.filename = index
         self.max_num_spots:int = config.MAX_NUM_SPOTS
         self.min_num_spots:int = config.MIN_NUM_SPOTS
-        self.width:float = config.WIDTH_MM * image_resolution
-        self.height:float = config.HEIGHT_MM * image_resolution 
+        self.width:int = int(config.WIDTH_MM * image_resolution)
+        self.height:int = int(config.HEIGHT_MM * image_resolution)
         self.num_spots = num_spots
         self.colors = colors
         self.polygons_by_size = polygons_by_size
@@ -45,7 +46,7 @@ class CreateWSP:
         self.type_of_dataset = type_of_dataset
 
         # generate the droplet sizes, which is assumed to be the area, given a rosin rammler distribution and the centers
-        self.droplet_size_rosin = rosinrammler_distribution.generate_droplet_sizes_rosin_rammler(self.num_spots, characteristic_particle_size)
+        self.droplet_size_rosin = rosinrammler_distribution.generate_droplet_sizes_rosin_rammler(self.num_spots, characteristic_particle_size, uniform)
 
         # save latex files
         if index == 0:
@@ -54,7 +55,7 @@ class CreateWSP:
         # create the wsp background
         # background colors change to create a more diverse dataset
         create_background.create_background(self.colors.background_colors, self.width, self.height)
-        self.rectangle = cv2.imread(config.DATA_ARTIFICIAL_WSP_BACKGROUND_IMG, cv2.IMREAD_COLOR)
+        self.rectangle = cv2.imread(config.DATA_SYNTHETIC_WSP_BACKGROUND_IMG, cv2.IMREAD_COLOR)
         self.rectangle = cv2.cvtColor(self.rectangle, cv2.COLOR_BGR2RGB)
 
         # draw and color the droplets on the background given the stats created before
@@ -132,7 +133,8 @@ class CreateWSP:
 
                     # save informations for each individual droplet
                     shape_id, shape_to_save = self.choose_shape(spot_size)
-                    shape_to_draw = self.save_individual_droplets(shape_id, shape_to_save, int(center_x), int(center_y), int(spot_size), i)
+                    translated_points = create_droplets.get_shape_translation(shape_to_save, center_x, center_y)
+                    shape_to_draw = self.save_individual_droplets(shape_to_save, shape_id, translated_points, int(center_x), int(center_y), int(spot_size), i)
                     
                     # accumulate the labels for each polygon for yolo training
                     self.annotation_labels.append(create_masks.polygon_to_yolo_label(shape_to_draw.points, self.width, self.height))
@@ -271,11 +273,7 @@ class CreateWSP:
         pol = Polygon(shape_to_save.roi_points)
         spot_area = pol.area
         self.droplet_area += spot_area
-<<<<<<< HEAD:src/SyntheticDataset/create_wsp.py
-        
-        translated_points = create_droplets.get_shape_translation(shape_to_save, center_x, center_y)
-=======
->>>>>>> parent of ee69879a (repository revamp):src/ArtificialDataset/CreateWSP.py
+    
 
         shape = ShapeInImage(shape_id, translated_points, Droplet(center_x, center_y, spot_area, index_droplet, [], spot_size) )
         self.list_of_individual_shapes_in_image.append(shape)
@@ -332,7 +330,7 @@ class CreateWSP:
         return cv2.addWeighted(self.rectangle, 1, shadow_mask_3channel, -0.2, -0.5)
 
     def save_image(self):
-        path = os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME, str(self.filename) + '.png')
+        path = os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME, str(self.filename) + '.png')
 
         self.blur_image = cv2.GaussianBlur(self.rectangle, (3, 3), 0)
         rgb_image = cv2.cvtColor(self.blur_image, cv2.COLOR_BGR2RGB)

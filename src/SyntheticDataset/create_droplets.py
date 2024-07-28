@@ -5,14 +5,14 @@ import config
 from shapely import geometry
 from matplotlib import pyplot as plt 
 import cv2
-import SyntheticDataset.create_background as create_background
+import create_background as create_background
 from PIL import Image, ImageDraw
-import SyntheticDataset.shape_list as shape_list
+import shape_list as shape_list
 import re
 from shapely.ops import nearest_points
 from shapely.affinity import translate
 from shapely import geometry, Point
-from SyntheticDataset.droplet_shape import DropletShape
+from droplet_shape import DropletShape
 import random
 # #brown_colors = ['#1b1a2a', '#181729', '#1c1527', '#141325', '#181123', '#0c0d22', '#131522', '#1b141c', '#14141c', '#1b0f19', '#131514', '#0e0f13', '#1f150c', '#190e00']
 # # from dark to light
