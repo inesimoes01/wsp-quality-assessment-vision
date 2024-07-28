@@ -5,29 +5,27 @@ import glob
 import os
 
 
-yaml_file = "data\\artificial_dataset_3\\processed\\yolo_data\\configuration.yaml"
-results_folder = "results\\yolo"
-train_model_name = "300epc_5iou_0001lr_0005wd_2drp"
-test_model_name = "300epc_5iou_0001lr_0005wd_2drp"
+yaml_file = "data\\synthetic_normal_dataset\\yolo\\data.yaml"
+results_folder = "results\\yolo_droplet"
+train_model_name = "50epc_droplet"
+test_model_name = "50epc_droplet_test"
 classes = [0]
 
 if __name__ == '__main__': 
   
-    model = YOLO('src\\Segmentation_AI\\yolo_models\\yolov8s-seg.pt')
+    model = YOLO("models\\yolov8s-seg.pt")
     
     test_metrics = model.train( data=yaml_file,
                                 project=results_folder,
                                 name=train_model_name,
                                 save_period = 50,
-                                epochs=100,
-                                batch=4,
-                                imgsz=512,
-                                workers=4, 
-                                iou=0.5,  
+                                epochs=50,
+                                batch=8,
+                                imgsz=320,
+                                workers=4,  
                                 lr0=0.0001,
-                                weight_decay = 0.05,
-                                patience = 50,
-                                dropout = 0.3,  
+                                weight_decay = 0.1,
+                                dropout = 0.2,  
                                 plots=True)
    
     model = YOLO(os.path.join("yolo_models", train_model_name, "weights", "best.pt"))

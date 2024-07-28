@@ -3,11 +3,9 @@ import sys
 from ultralytics import YOLO
 from PIL import ImageDraw, Image
 from matplotlib import pyplot as plt
-
 sys.path.insert(0, 'src/common')
 import config
 
-import torch
 #for file in os.listdir(config.DATA_ARTIFICIAL_RAW_DIR):
 img = Image.open("C:\\Users\\mines\\Desktop\\artificial_dataset\\raw\\image\\0.png")
 #img = Image.open(os.path.join(config.DATA_ARTIFICIAL_RAW_DIR, file))

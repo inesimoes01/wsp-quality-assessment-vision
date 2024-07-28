@@ -157,5 +157,6 @@ images/
 inputs/
 data/artificial_dataset
 data/synthetic_simple_dataset
+data/synthetic_normal_dataset
 data/real_dataset
 results/yolo

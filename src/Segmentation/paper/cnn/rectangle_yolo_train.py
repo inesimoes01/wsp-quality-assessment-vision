@@ -11,27 +11,28 @@ def save_final_model(train_model_path):
     model.export(format='tflite')
 
 
-yaml_file = "data\\rectangle_dataset\\yolo\\configuration.yaml"
+yaml_file = "data\\real_rectangle_dataset\\data.yaml"
 results_folder = "results\\yolo_rectangle"
 val_folder = "results\\yolo_rectangle\\val"
-train_model_name = "200epc_rectangle"
-test_model_name = "200epc_rectangle"
+train_model_name = "30epc_rectangle"
+test_model_name = "30epc_rectangle_test"
 classes = [0]
 
 if __name__ == '__main__': 
     # Load a COCO-pretrained YOLOv8n model
-    model = YOLO('src\\Segmentation_AI\\yolo_models\\yolov8n-seg.pt')
+    model = YOLO('models\\yolov8s-seg.pt')
     
-    test_metrics = model.train( data=yaml_file,
-                                project=results_folder,
-                                name=train_model_name,
-                                epochs=200,
-                                batch=4,
-                                imgsz=512,
-                                workers=4, 
-                                plots=True)
+    # test_metrics = model.train(data=yaml_file,
+    #                             project=results_folder,
+    #                             name=train_model_name,
+    #                             epochs=50,
+    #                             batch=8,
+    #                             imgsz=640,
+    #                             weight_decay = 0.1,
+    #                             dropout = 0.8,
+    #                             plots=True)
    
-    model = YOLO(os.path.join("yolo_models_rectangle", train_model_name, "weights", "best.pt"))
+    model = YOLO(os.path.join("results\\yolo_rectangle\\30epc_rectangle7", "weights", "best.pt"))
 
     model.predict()
 
