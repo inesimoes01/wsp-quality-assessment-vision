@@ -19,37 +19,36 @@ class Statistics:
         self.overlaped_percentage = overlaped_percentage
     
     
-    def calculate_statistics(volumes_sorted, image_area, contour_area):
-        cumulative_fraction = Statistics.calculate_cumulative_fraction(volumes_sorted)
-        vmd_value = Statistics.calculate_vmd(cumulative_fraction, volumes_sorted)
+    def calculate_statistics(diameters_sorted, image_area, contour_area):
+        cumulative_fraction = Statistics.calculate_cumulative_fraction(diameters_sorted)
+        vmd_value = Statistics.calculate_vmd(cumulative_fraction, diameters_sorted)
         coverage_percentage = Statistics.calculate_coverage_percentage(image_area, contour_area)
-        rsf_value = Statistics.calculate_rsf(cumulative_fraction, volumes_sorted, vmd_value)
+        rsf_value = Statistics.calculate_rsf(cumulative_fraction, diameters_sorted, vmd_value)
         return vmd_value, coverage_percentage, rsf_value, cumulative_fraction
 
 
-    def calculate_cumulative_fraction(volumes_sorted):
-        total_volume = sum(volumes_sorted)
-        return np.cumsum(volumes_sorted) / total_volume
+    def calculate_cumulative_fraction(diameters_sorted):
+        total_diameter = sum(diameters_sorted)
+        return np.cumsum(diameters_sorted) / total_diameter
 
-    def calculate_vmd(cumulative_fraction, volumes_sorted):
+    def calculate_vmd(cumulative_fraction, diameters_sorted):
         vmd_index = np.argmax(cumulative_fraction >= 0.5)
-        return volumes_sorted[vmd_index]
+        return diameters_sorted[vmd_index]
 
     def calculate_coverage_percentage(image_area, contour_area):
         return contour_area / image_area * 100
 
-    def calculate_rsf(cumulative_fraction, volumes_sorted, vmd_value):
+    def calculate_rsf(cumulative_fraction, diameters_sorted, vmd_value):
         dv_one = np.argmax(cumulative_fraction >= 0.1)
         dv_nine = np.argmax(cumulative_fraction >= 0.9)
-        rsf = (volumes_sorted[dv_nine] - volumes_sorted[dv_one]) / vmd_value
+        rsf = (diameters_sorted[dv_nine] - diameters_sorted[dv_one]) / vmd_value
         return rsf
-
-    def area_to_volume(droplet_area, width_px, width_mm):
-        ratio_pxTOcm = width_mm / width_px
+    def area_to_diameter_micro(droplet_area, width_px, width_mm):
+        ratio_pxTOcm = width_mm * 1000 / width_px
         
-        volume_list = []
+        diameter_list = []
         for area_px in droplet_area:
-            area_mm = area_px * ratio_pxTOcm        
-            volume_list.append((area_mm * 4 * np.pi) / 6)
-        return volume_list
+            diameter = 2 * np.sqrt(area_px / np.pi) * ratio_pxTOcm        
+            diameter_list.append(diameter)
+        return diameter_list
     

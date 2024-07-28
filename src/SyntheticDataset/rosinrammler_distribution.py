@@ -7,9 +7,9 @@ from scipy.optimize import curve_fit
 import os
 import csv
 
-def generate_droplet_sizes_rosin_rammler(num_spots, charac):
+def generate_droplet_sizes_rosin_rammler(num_spots, charac, uniform):
     x_o = charac
-    n = config.UNIFORMITY_CONSTANT
+    n = uniform
 
     # list of size no_droplets with random numbers from 0 to 1
     random_numbers = np.random.rand(num_spots)

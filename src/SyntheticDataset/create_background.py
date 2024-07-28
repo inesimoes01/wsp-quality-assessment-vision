@@ -16,7 +16,7 @@ def choose_background_color(background_colors):
 def create_background(colors, width, height):
     color1, color2 = choose_background_color(colors)
 
-    rectangle = Image.new('RGBA', (width, height), (0, 0, 0, 0))
+    rectangle = Image.new('RGBA', (int(width), int(height)), (0, 0, 0, 0))
 
     # draw first polygon with radial gradient
     polygon = [(0, 0), (width, 0), (width, height), (0, height)]
@@ -26,13 +26,13 @@ def create_background(colors, width, height):
 
     rectangle = radial_gradient(rectangle, polygon, (point_x, point_y), color1, color2)
 
-    rectangle.save(config.DATA_ARTIFICIAL_WSP_BACKGROUND_IMG)
+    rectangle.save(config.DATA_SYNTHETIC_WSP_BACKGROUND_IMG)
 
-    img = cv2.imread(config.DATA_ARTIFICIAL_WSP_BACKGROUND_IMG, cv2.IMREAD_COLOR) 
+    img = cv2.imread(config.DATA_SYNTHETIC_WSP_BACKGROUND_IMG, cv2.IMREAD_COLOR) 
     img = add_noise(img)
     #img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    cv2.imwrite(config.DATA_ARTIFICIAL_WSP_BACKGROUND_IMG, img)
+    cv2.imwrite(config.DATA_SYNTHETIC_WSP_BACKGROUND_IMG, img)
 
 
 def add_noise(img): 

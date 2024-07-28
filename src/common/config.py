@@ -4,14 +4,15 @@ import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
-DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset" / "wsp" 
+#DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset" / "wsp" 
+DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset_new" / "wsp" 
 DATA_SYNTHETIC_SIMPLE_WSP_DIR = Path("data") / "synthetic_simple_dataset" / "wsp" 
 DATA_REAL_RECTANGLE_DIR = Path("data") / "real_rectangle_dataset" / "wsp" 
 
 DATA_SYNTHETIC_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
 DATA_SYNTHETIC_BG_DIR = Path("data") / "artificial_dataset" / "background" 
 DATA_SYNTHETIC_RAW_DIR = Path("data") / "artificial_dataset" / "raw" 
-DATA_SYNTHETIC_WSP_BACKGROUND_IMG = os.path.join("data", "artificial_dataset_3", "wsp" , "background.png")
+DATA_SYNTHETIC_WSP_BACKGROUND_IMG = os.path.join("data", "synthetic_normal_dataset_new", "wsp" , "background.png")
 
 DATA_REAL_RAW_DIR = Path("data") / "real_rectangle_dataset" / "test"  
 DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
@@ -48,7 +49,7 @@ RESULTS_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
 
 ### CREATE SYNTHETIC DATASET VALUES
 
-NUM_WSP = 1000                                    # how many images to create
+NUM_WSP = 300                                    # how many images to create
 MAX_NUM_SPOTS = 7000                            # maximum number of spots per image
 MIN_NUM_SPOTS = 300                             # minimum number of spots per image
 
@@ -60,8 +61,8 @@ MIN_RADIUS = math.ceil(RESOLUTION * 0.05)       # minimum radius for a droplet g
 CHARACTERISTIC_PARTICLE_SIZE = 15                # characteristic particle size for distribution of droplet values
 UNIFORMITY_CONSTANT = 5                         # uniformity constant for distribution of droplet values (smaller values make radius less uniform)
 
-MEAN_DROPLETS = 1000                            # mean number of droplets per image for the normal distribution
-STD_DROPLETS = 500                              # standard deviation of droplets per image for the normal distribution
+MEAN_DROPLETS = 2000                            # mean number of droplets per image for the normal distribution
+STD_DROPLETS = 750                              # standard deviation of droplets per image for the normal distribution
 
 DROPLET_COLOR_THRESHOLD_1 = 3                     # threshold for the radius for the droplet to be brown if lower or blue if higher
 DROPLET_COLOR_THRESHOLD_2 = 5                     # threshold for the radius for the droplet to be brown if lower or blue if higher
@@ -93,6 +94,9 @@ light_color1 = ['#63219f',  '#642aa5',  '#7f24a5',  '#812ba6',  '#6a0fa8',  '#69
 outside_color2 = [ '#190e00', '#1f150c', '#0e0f13', '#131514', '#1b0f19', '#14141c', '#1b141c', '#131522', '#0c0d22', '#181123', '#141325', '#1c1527', '#181729', '#1b1a2a']
 dark_color2 =['#09082a', '#0f0c2b', '#181130', '#0a0a30', '#030430', '#160e33', '#000233', '#191935', '#0e0d35', '#0e0d35', '#140c35', '#181736', '#060838', '#060838', '#060a3a', '#060a3a', '#11143d', '#0d0b3d', '#0e1040', '#030444', '#060845', '#0d0b4a', '#0b094a', '#070654']
 light_color2 = ['#181872', '#18107f', '#221d91', '#272595', '#2c2897', '#352ea0', '#2d29a2', '#2524ac', '#2e2db5', '#2c2bb7']
+
+
+background_colors=['#ffff16', '#f7e52d', '#fff60a', '#fffb0b', '#fee900', '#ffdc1f', '#fffe18', '#fff200', '#fdf41b', '#f7e715', '#ffe827', '#f9d400', '#ebcb00', '#eab742', '#faeb0a', '#ffd600', '#fff808', '#f8e80c', '#f9fa09', '#fff212', '#fff316', '#fbf227', '#e3d22b', '#ddd02b', '#e2d033', '#e2eb67', '#eaf388', '#e2e20f', '#efef04', '#e6eb2d', '#ecf56d', '#ffe700', '#ffe800', '#ffe800', '#f8e600', '#fce600', '#f6df00', '#ffe500', '#fee53f', '#f9e039', '#fdf0aa', '#f8eba5', '#fff59d', '#dac82b', '#e1d52a', '#e2d026', '#e1ca22', '#e3d02f', '#ddd124', '#d59d00', '#f8c10f', '#ffd63d', '#fbad27', '#ffd52e', '#fff50a', '#ffed3b', '#ffbd00', '#ffda25', '#f5c847', '#ffe652', '#f4c223', '#e8ef8d', '#e6ed86', '#e6ed8b', '#e9ef92', '#dfe57b', '#ebf28e', '#edf780', '#e2e753', '#e4ed6a', '#f2f765', '#fdff77', '#e3ea58', '#e5ea65', '#edf272']
 
 background_color_1 = (255, 244, 137)
 background_color_2 = (159, 127, 19)

@@ -13,14 +13,14 @@ classes = [0]
 
 if __name__ == '__main__': 
   
-    model = YOLO("models\\yolov8s-seg.pt")
+    model = YOLO("models\\yolov8m-seg.pt")
     
     test_metrics = model.train( data=yaml_file,
                                 project=results_folder,
                                 name=train_model_name,
                                 save_period = 50,
-                                epochs=50,
-                                batch=8,
+                                epochs=300,
+                                batch=16,
                                 imgsz=320,
                                 workers=4,  
                                 lr0=0.0001,

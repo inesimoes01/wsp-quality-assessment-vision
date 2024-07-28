@@ -18,13 +18,15 @@ def detect_rectangle(image, image_color):
     return largest_contour
 
 
-def remove_distortion(image, contour):
+def remove_distortion(image, contour, filename, save_steps=False):
     maxWidth, maxHeight, pts_src, pts_dst = calculate_points(contour)
 
     h, status = cv2.findHomography(pts_src, pts_dst)
     #matrix = cv2.getPerspectiveTransform(input_pts, output_pts)
     undistorted_image = cv2.warpPerspective(image, h, (maxWidth, maxHeight), flags=cv2.INTER_LINEAR)
-
+    
+    if save_steps:
+        cv2.imwrite("results\\latex\\rectangle_cv\\" + filename + "undistorted.png", undistorted_image)
     return undistorted_image
 
     
@@ -74,7 +76,6 @@ def detect_rectangle( image, image_color):
     cv2.drawContours(image_color, [contours[0]], -1, (255, 255, 0), 4)
 
 
-
     plt.imshow(image_color)
     plt.show()
 
@@ -102,8 +103,11 @@ def draw_grouped_lines( image, grouped_lines, axis=0):
         end_point = tuple(coords[-1][0:2])
         cv2.line(image, start_point, end_point, (0, 255, 0), 2)
 
-def detect_rectangle_alternative(image):
+def detect_rectangle_alternative(image, filename, save_steps = False):
     edges = cv2.GaussianBlur(image, (5, 5), 3, 3)
+    
+    if save_steps:
+        cv2.imwrite("results\\latex\\rectangle_cv\\" + filename + "blur.png", edges)
 
     # find the most present color
     histogram = cv2.calcHist([edges], [0, 1, 2], None, [256, 256, 256], [0, 256, 0, 256, 0, 256])
@@ -118,28 +122,38 @@ def detect_rectangle_alternative(image):
     mask = cv2.inRange(edges, lower_bound, upper_bound)
     result = cv2.bitwise_and(edges, edges, mask=cv2.bitwise_not(mask))
 
+    if save_steps:
+        cv2.imwrite("results\\latex\\rectangle_cv\\" + filename + "_mask.png", result)
+
     # threshold image
     gray = cv2.cvtColor(result, cv2.COLOR_RGB2GRAY)
     _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
+
+    if save_steps:
+        cv2.imwrite("results\\latex\\rectangle_cv\\" + filename + "_threshold.png", thresh)
 
     # find contours        
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
-    cv2.drawContours(image, contours, -1, (0, 0, 0), 5)
-
     hull = []
    
     for contour in contours:
         hull.append(cv2.convexHull(contour, False))
- 
+
+    cv2.drawContours(image, [hull[0]], -1, (255, 0, 0), 2)
+
+    if save_steps:
+        cv2.imwrite("results\\latex\\rectangle_cv\\" + filename + "_final.png", image)
+
     return hull[0]
 
 
-# im = "data\\real_dataset\\raw\\image\\1_V1_A2.jpg"
-# im = cv2.imread(im)
-# contour = detect_rectangle_alternative(im)
-
+im = "data\\real_rectangle_dataset\\test\\image\\2_V1_A3_jpg.rf.3ff6c061dd2d3f7239d33e83352914b1.jpg"
+im = cv2.imread(im)
+im_to_destroi = copy.copy(im)
+contour = detect_rectangle_alternative(im_to_destroi, "2_V1_A3_jpg.rf.3ff6c061dd2d3f7239d33e83352914b1.jpg", True)
+remove_distortion(im, contour, "2_V1_A3_jpg.rf.3ff6c061dd2d3f7239d33e83352914b1.jpg", True)
 # maxHeight = 2000
 # maxWidth = 300
 # output_pts = np.float32([[0, 0],
