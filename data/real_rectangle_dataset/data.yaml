@@ -1,8 +1,0 @@
-path: C:/Users/mines/Desktop/github/vision-quality-assessment-opencv/data/real_rectangle_dataset
-
-train: ../train/images
-val: ../valid/images
-test: ../test/images
-
-nc: 1
-names: ['rectangle']
