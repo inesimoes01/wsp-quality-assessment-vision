@@ -9,8 +9,8 @@ from skimage.transform import hough_circle, hough_circle_peaks
 from skimage.feature import canny
 from skimage.morphology import skeletonize
 from skimage.draw import disk
-sys.path.insert(0, 'src\\common')
-import Util
+sys.path.insert(0, 'src')
+import Common.Util as Util
 
 show_plots = False
 
@@ -25,6 +25,7 @@ def apply_hough_circles_with_kmeans(roi_filled, roi_edges, no_convex_points, con
                                     param2=10,           # Accumulator threshold for circle centers at the detection stage. Smaller values may lead to more false detections.
                                     minRadius=1,         # Minimum radius of circles to be detected.
                                     maxRadius=0)         # Maximum radius of circles to be detected. If negative, it defaults to the maximum image dimension.
+   
     if circles is None:
         circles = cv2.HoughCircles(roi_filled, 
                                     cv2.HOUGH_GRADIENT, 
@@ -38,6 +39,7 @@ def apply_hough_circles_with_kmeans(roi_filled, roi_edges, no_convex_points, con
     roi_initial_list = copy.copy(roi_img)
     roi_kmeans = copy.copy(roi_img)
     roi_iou_check = copy.copy(roi_img)
+    roi_size_check = copy.copy(roi_img)
 
     if circles is not None:
         circles = np.uint16(np.around(circles))
@@ -56,12 +58,15 @@ def apply_hough_circles_with_kmeans(roi_filled, roi_edges, no_convex_points, con
             circles = remove_circles_outside_mask(circles, roi_filled)
 
         # kmeans approximation with the final number of circles
-        circles = k_means_approximation(circles, no_convex_points, roi_kmeans)
+        circles = k_means_approximation(circles, no_convex_points-1, roi_kmeans)
 
         if len(circles) > 1:
             circles = remove_circles_based_on_iou_contribution(roi_filled, roi_iou_check, circles)
 
-    #Util.plotFourImages(roi_edges, roi_initial_list, roi_kmeans, roi_iou_check)
+        if len(circles) > 1:
+            circles = remove_circles_based_on_proximity(roi_size_check, circles, 2)
+
+    #Util.plotFourImages(roi_edges, roi_initial_list, roi_kmeans, roi_size_check)
 
     return circles, roi_initial_list, roi_kmeans, roi_iou_check
 
@@ -168,6 +173,28 @@ def circle_overlap(selected_circle, other):
     distance = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
     return distance + 2 < (r1 + r2)
+
+def remove_circles_based_on_proximity(roi, circles, min_distance):
+    result = []
+
+    updated_circles = []
+    for i, circle1 in enumerate(circles):
+        too_close = False
+        for j, circle2 in enumerate(circles):
+            distance = math.sqrt((int(circle1[0]) - int(circle2[0]))**2 + (int(circle1[1]) - int(circle2[1]))**2)
+            if i != j and (int(circle1[2]) + int(circle2[2]) + min_distance) < distance:
+                too_close = True
+                break
+        if not too_close:
+            updated_circles.append(circle1)
+
+    for circle in updated_circles:
+        r = int(circle[2])
+        x = int(circle[0])
+        y = int(circle[1])
+        cv2.circle(roi, (x, y), r, 255, thickness=1)
+
+    return updated_circles
 
 def remove_circles_based_on_size(circles, width, height):
     final_list = []

@@ -43,6 +43,7 @@ class Statistics:
         dv_nine = np.argmax(cumulative_fraction >= 0.9)
         rsf = (diameters_sorted[dv_nine] - diameters_sorted[dv_one]) / vmd_value
         return rsf
+    
     def area_to_diameter_micro(droplet_area, width_px, width_mm):
         ratio_pxTOcm = width_mm * 1000 / width_px
         

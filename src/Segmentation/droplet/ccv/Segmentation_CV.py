@@ -4,12 +4,12 @@ import copy
 import os
 import sys
 from matplotlib import pyplot as plt 
-import droplet.ccv.HoughTransform as hough_transform
+import Segmentation.droplet.ccv.HoughTransform as hough_transform
 
-sys.path.insert(0, 'src/common')
-import config
-from Droplet import Droplet
-from Statistics import Statistics
+sys.path.insert(0, 'src')
+import Common.config as config
+from Common.Droplet import Droplet
+from Common.Statistics import Statistics
 
 circle_color = (255, 0, 0)
 elipse_color = (0, 255, 255)
@@ -60,14 +60,14 @@ class Segmentation_CV:
 
                         # for hough, create a roi mask with only the shape contour we are trying to identify
                         # careful with the changes in coordinates of the roi
+                        
                         object_roi_mask_filled, object_roi_mask_edges, object_roi_color, object_roi_gray, x_roi, y_roi, h_roi, w_roi = self.crop_roi(contour, x_rect, y_rect, w_rect, h_rect)
                      
                         circles, img1, img2, img3 = hough_transform.apply_hough_circles_with_kmeans(object_roi_mask_filled, object_roi_mask_edges, no_droplets, contour, contour_area, object_roi_color, isOnEdge, w_roi, h_roi)
             
-    
                         if self.save_image_steps:
-                            roi_img = cv2.cvtColor(roi_img, cv2.COLOR_BGR2RGB)
-                            cv2.imwrite(os.path.join(config.RESULTS_LATEX_PIP_ROI_DIR, filename + "_" + str(i) + "roi.png"), roi_img_color)
+                            roi_img = cv2.cvtColor(object_roi_color, cv2.COLOR_BGR2RGB)
+                            cv2.imwrite(os.path.join(config.RESULTS_LATEX_PIP_ROI_DIR, filename + "_" + str(i) + "roi.png"), roi_img)
                             
                             img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)
                             img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
@@ -161,7 +161,7 @@ class Segmentation_CV:
             circle_area = np.pi * radius ** 2
 
             self.droplets_data.append(Droplet(center_x, center_y, circle_area, int(index + j), overlapped_ids, radius))
-            cv2.circle(self.detected_image, (center_x, center_y), radius, detected_colors[2], 1)
+            cv2.circle(self.detected_image, (center_x, center_y), radius, detected_colors[2], 2)
             if self.create_masks: cv2.circle(self.mask_overlapped, (center_x, center_y), radius, 255, cv2.FILLED)
            
             self.final_no_droplets += 1        
@@ -182,7 +182,7 @@ class Segmentation_CV:
     def save_single_droplet(self, contour, id, center_x, center_y, area, overlappedIDs, shape):
        
         self.droplets_data.append(Droplet(center_x, center_y, area, id, overlappedIDs))
-        cv2.drawContours(self.detected_image, [contour], -1, detected_colors[shape], 1)
+        cv2.drawContours(self.detected_image, [contour], -1, detected_colors[shape], 2)
         if self.create_masks: cv2.drawContours(self.mask_single, [contour], -1, 255, cv2.FILLED)
 
         cv2.drawContours(self.separate_image, [contour], -1, detected_colors[shape], 2)
@@ -319,3 +319,12 @@ class Segmentation_CV:
         self.contours, _ = cv2.findContours(inverted_threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     
+path = "data\\synthetic_normal_dataset_new\\wsp\\image\\270.png"
+# read image
+image_gray = cv2.imread(path ,cv2.IMREAD_GRAYSCALE)
+image_colors = cv2.imread(path)  
+
+image_colors = cv2.cvtColor(image_colors, cv2.COLOR_BGR2RGB)
+
+# calculate statistics
+calculated = Segmentation_CV(image_colors, image_gray, "0", True, True, 0, "results\\computer_vision_algorithm")

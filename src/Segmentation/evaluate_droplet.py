@@ -365,11 +365,10 @@ def compute_segmentation(file, filename):
     
     # calculate stats
     predicted_seg.droplet_area = [d.area for d in predicted_seg.droplets_data]
-
-    predicted_seg.volume_list = sorted(stats.area_to_volume(predicted_seg.droplet_area, predicted_seg.width, config.WIDTH_MM))
+    predicted_seg.diameter_list = sorted(stats.area_to_diameter_microa(predicted_seg.droplet_area, predicted_seg.width, config.WIDTH_MM))
 
     image_area = predicted_seg.width * predicted_seg.height
-    vmd_value, coverage_percentage, rsf_value, _ = stats.calculate_statistics(predicted_seg.volume_list, image_area, predicted_seg.contour_area)
+    vmd_value, coverage_percentage, rsf_value, _ = stats.calculate_statistics(predicted_seg.diameter_list, image_area, predicted_seg.contour_area)
     
     no_droplets_overlapped = 0
     for drop in predicted_seg.droplets_data:

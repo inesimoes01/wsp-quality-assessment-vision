@@ -73,8 +73,7 @@ def cellpose_to_label_studio(image_width, image_height, path_to_cellpose_annotat
                     "type": "polygonlabels",
                     "origin": "manual",
                  
-                   
-
+            
             }
                 
             annotations.append(result)

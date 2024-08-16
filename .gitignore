@@ -155,9 +155,5 @@ cython_debug/
 #artificial dataset
 images/
 inputs/
-data/artificial_dataset
-data/synthetic_simple_dataset
-data/synthetic_normal_dataset
-data/synthetic_normal_dataset_new
-data/real_dataset
+data/
 results/yolo

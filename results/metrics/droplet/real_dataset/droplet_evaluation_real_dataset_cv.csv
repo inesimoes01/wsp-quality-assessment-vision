@@ -1,0 +1,2 @@
+file,precision,recall,f1_score,map50,map50-95,tp,fp,fn,segmentation_time
+2_Z1_cut,0.0,0.0,0,0.0,0.0,0,2879,2029,3.1723930835723877

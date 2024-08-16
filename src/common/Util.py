@@ -3,7 +3,9 @@ import shutil
 from matplotlib import pyplot as plt 
 import csv
 import cv2
-from Droplet import *
+
+from Common.Droplet import Droplet
+
 
 def delete_old_files(file_path):
     for filename in os.listdir(file_path):

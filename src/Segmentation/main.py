@@ -54,19 +54,19 @@ k = 0
 
 # for each one of the images of the artificial dataset
 if isArtificialDataset:
-    for file in os.listdir(os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME)):
+    for file in os.listdir(os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME)):
         # get name of the file
         parts = file.split(".")
         filename = parts[0]
         
         # read image
-        image_gray = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME, filename + ".png"), cv2.IMREAD_GRAYSCALE)
-        image_colors = cv2.imread(os.path.join(config.DATA_ARTIFICIAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME, filename + ".png"))  
+        image_gray = cv2.imread(os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME, filename + ".png"), cv2.IMREAD_GRAYSCALE)
+        image_colors = cv2.imread(os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME, filename + ".png"))  
 
         image_colors = cv2.cvtColor(image_colors, cv2.COLOR_BGR2RGB)
         
         # calculate statistics
-        calculated:Segmentation = Segmentation(image_colors, image_gray, filename, True, True, 1, config.WIDTH_MM, config.HEIGHT_MM)
+        calculated:Segmentation = Segmentation_CV(image_colors, image_gray, filename, True, True, 1, config.WIDTH_MM, config.HEIGHT_MM)
         droplets_calculated_dict = {droplet.id: droplet for droplet in calculated.droplets_data}
         stats_calculated:Statistics = calculated.stats
 

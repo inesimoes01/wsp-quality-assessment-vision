@@ -55,5 +55,5 @@ for (x, y, r) in circles:
 
 plt.axis('off')
 
-plt.savefig("results\\latex\\hough_circles.png", dpi = 1200)
+plt.savefig("results\\latex\\hough_circles.png", dpi = 600)
 plt.show()

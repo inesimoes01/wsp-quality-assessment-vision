@@ -39,26 +39,26 @@ def process_dataset(images_folder, labels_folder, output_folder):
         # Read labels
         labels = read_labels(label_path)
         square_count = 0
-        square_size = 512
+        square_size = 320
         height, width, _ = image.shape
 
-        # Resize image if it is smaller than 512x512
-        if height < square_size or width < square_size:
-            image = cv2.resize(image, (square_size, square_size))
-            height, width = square_size, square_size
+        # # Resize image if it is smaller than 512x512
+        # if height < square_size or width < square_size:
+        #     image = cv2.resize(image, (square_size, square_size))
+        #     height, width = square_size, square_size
 
-            # Adjust labels
-            new_labels = []
-            for line in labels:
-                data = line.strip().split()
-                if len(data) < 2:
-                    continue
-                new_data = [data[0]]
-                for i in range(1, len(data), 2):
-                    new_data.append(float(data[i]) * width / square_size)
-                    new_data.append(float(data[i+1]) * height / square_size)
-                new_labels.append(new_data)
-            labels = [" ".join(map(str, l)) for l in new_labels]
+        #     # Adjust labels
+        #     new_labels = []
+        #     for line in labels:
+        #         data = line.strip().split()
+        #         if len(data) < 2:
+        #             continue
+        #         new_data = [data[0]]
+        #         for i in range(1, len(data), 2):
+        #             new_data.append(float(data[i]) * width / square_size)
+        #             new_data.append(float(data[i+1]) * height / square_size)
+        #         new_labels.append(new_data)
+        #     labels = [" ".join(map(str, l)) for l in new_labels]
 
         for y in range(0, height, square_size):
             for x in range(0, width, square_size):
@@ -109,8 +109,8 @@ def process_dataset(images_folder, labels_folder, output_folder):
                     
                     square_count += 1
 
-images_folder = "data\\artificial_dataset_3\\wsp\\image"
-labels_folder = "data\\artificial_dataset_3\\wsp\\label"
-output_folder = "data\\artificial_dataset_3\\processed\\all"
+images_folder = "data\\testing\\synthetic_dataset\\image"
+labels_folder = "data\\testing\\synthetic_dataset\\label"
+output_folder = "data\\testing\\synthetic_dataset_squares"
 
 process_dataset(images_folder, labels_folder, output_folder)
