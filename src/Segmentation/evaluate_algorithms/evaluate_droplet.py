@@ -221,73 +221,56 @@ def match_predicted_to_groundtruth(predicted_polygon, ground_truths, droplet_sha
 
     return mask_predicted, best_match, best_iou, best_match_index
 
-def match_masks(predicted_polygons, grounds_truths_polygons, droplet_shapes, image_shape, distance_threshold):
-    matched_indices = set()
+
+
+def match_predictions_to_ground_truth(im, predicted_polygons, droplet_shapes, grounds_truths_polygons, distance_threshold):
     matches = []
+    matched_indices = set() 
 
 
-    #spatial_index = STRtree([gt for gt, _ in grounds_truths_polygons])
+    for predicted_polygon in predicted_polygons:
+        best_iou = 0
+        best_match = None
+        best_match_index = None
+        
+        mask_predicted = np.zeros_like(im)
+        if predicted_polygon.overlappedIDs == []:
+            cont = droplet_shapes.get(predicted_polygon.id)
+            cv2.drawContours(mask_predicted, [cont], -1, 255, cv2.FILLED)
+        else:
+            cv2.circle(mask_predicted, (predicted_polygon.center_x, predicted_polygon.center_y), predicted_polygon.radius, 255, cv2.FILLED)
+        
+        for index, (ground_truth_polygon, gt_center) in enumerate(grounds_truths_polygons):
+            # skip when groundtruth already matched
+            if index in matched_indices:
+                continue  
 
-    results = Parallel(n_jobs=-1)(
-        delayed(match_predicted_to_groundtruth)(predicted_polygon, grounds_truths_polygons, droplet_shapes, distance_threshold, image_shape, matched_indices)
-        for predicted_polygon in predicted_polygons
-    )
+            mask_groundtruth = np.zeros_like(im)
+            cont = ground_truth_polygon
+            cv2.fillPoly(mask_groundtruth, np.array([cont], dtype=np.int32), 255)
 
-    for mask_predicted, best_match, best_iou, best_match_index in results:
-        if best_match_index is not None:
+            gt_x, gt_y = gt_center
+            pr_x, pr_y = predicted_polygon.center_x, predicted_polygon.center_y
+
+            distance = np.sqrt((pr_x - gt_x)**2 + (pr_y - gt_y)**2)
+
+            if distance < distance_threshold:
+                iou = calculate_iou(im, mask_predicted, mask_groundtruth)
+
+                if iou > best_iou:
+                    best_iou = iou
+                    best_match = mask_groundtruth
+                    best_match_index = index
+
+                    if best_iou > 0.9:
+                        break
+
+        if best_match is not None:
             matched_indices.add(best_match_index)
+
         matches.append((mask_predicted, best_match, best_iou))
 
     return matches, matched_indices
-
-# def match_predictions_to_ground_truth(im, predicted_polygons, droplet_shapes, grounds_truths_polygons, distance_threshold):
-#     matches = []
-#     matched_indices = set() 
-
-
-#     for predicted_polygon in predicted_polygons:
-#         best_iou = 0
-#         best_match = None
-#         best_match_index = None
-        
-#         mask_predicted = np.zeros_like(im)
-#         if predicted_polygon.overlappedIDs == []:
-#             cont = droplet_shapes.get(predicted_polygon.id)
-#             cv2.drawContours(mask_predicted, [cont], -1, 255, cv2.FILLED)
-#         else:
-#             cv2.circle(mask_predicted, (predicted_polygon.center_x, predicted_polygon.center_y), predicted_polygon.radius, 255, cv2.FILLED)
-        
-#         for index, (ground_truth_polygon, gt_center) in enumerate(grounds_truths_polygons):
-#             # skip when groundtruth already matched
-#             if index in matched_indices:
-#                 continue  
-
-#             mask_groundtruth = np.zeros_like(im)
-#             cont = ground_truth_polygon
-#             cv2.fillPoly(mask_groundtruth, np.array([cont], dtype=np.int32), 255)
-
-#             gt_x, gt_y = gt_center
-#             pr_x, pr_y = predicted_polygon.center_x, predicted_polygon.center_y
-
-#             distance = np.sqrt((pr_x - gt_x)**2 + (pr_y - gt_y)**2)
-
-#             if distance < distance_threshold:
-#                 iou = calculate_iou(im, mask_predicted, mask_groundtruth)
-
-#                 if iou > best_iou:
-#                     best_iou = iou
-#                     best_match = mask_groundtruth
-#                     best_match_index = index
-
-#                     if best_iou > 0.9:
-#                         break
-
-#         if best_match is not None:
-#             matched_indices.add(best_match_index)
-
-#         matches.append((mask_predicted, best_match, best_iou))
-
-#     return matches, matched_indices
 
 def visualize_results(image_path, matches):
     image = cv2.imread(image_path)
@@ -365,10 +348,11 @@ def compute_segmentation(file, filename):
     
     # calculate stats
     predicted_seg.droplet_area = [d.area for d in predicted_seg.droplets_data]
-    predicted_seg.diameter_list = sorted(stats.area_to_diameter_microa(predicted_seg.droplet_area, predicted_seg.width, config.WIDTH_MM))
+
+    predicted_seg.volume_list = sorted(stats.area_to_volume(predicted_seg.droplet_area, predicted_seg.width, config.WIDTH_MM))
 
     image_area = predicted_seg.width * predicted_seg.height
-    vmd_value, coverage_percentage, rsf_value, _ = stats.calculate_statistics(predicted_seg.diameter_list, image_area, predicted_seg.contour_area)
+    vmd_value, coverage_percentage, rsf_value, _ = stats.calculate_statistics(predicted_seg.volume_list, image_area, predicted_seg.contour_area)
     
     no_droplets_overlapped = 0
     for drop in predicted_seg.droplets_data:

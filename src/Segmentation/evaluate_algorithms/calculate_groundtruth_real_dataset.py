@@ -411,9 +411,6 @@ def calculate_yolo_stats(points, width, width_mm, height, filename):
                 list_polygons.append(p)
 
 
-
-
-
     polygons_with_centroids = [(polygon, calculate_centroid_yolo(polygon)) for polygon in list_polygons]
     sorted_polygons = sorted(polygons_with_centroids, key=lambda item: (item[1][0], item[1][1]))
         
