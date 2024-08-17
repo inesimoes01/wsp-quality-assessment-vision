@@ -6,50 +6,19 @@ import csv
 import time
 import gc
 import pandas as pd
-from shapely.geometry import Polygon
-from shapely.strtree import STRtree
 from joblib import Parallel, delayed
 from matplotlib import pyplot as plt 
 
-import droplet.ccv.Segmentation_CV as seg
-
-sys.path.insert(0, 'src')
+import Segmentation.droplet.ccv.Segmentation_CCV as seg
 import Common.config as config 
 import Common.Util as Util
 from Common.Statistics import Statistics as stats
 
-TP, FN, TN, FP = 0, 0, 0, 0
-iou_threshold = 0.5
 
-directory_image = os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_IMAGE_FOLDER_NAME)
-directory_label = os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_LABEL_FOLDER_NAME)
-directory_stats = os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_STATS_FOLDER_NAME)
-
-file_count = len([entry for entry in os.listdir(directory_image) if os.path.isfile(os.path.join(directory_image, entry))])
-gt_matched = [False] * file_count
-
-# manage folder
-list_folders = []
-list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_STATS_FOLDER_NAME))
-list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_ACC_FOLDER_NAME))
-list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_LABEL_FOLDER_NAME))
-list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_INFO_FOLDER_NAME))
-list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME))
-list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME))
-list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_MASK_SIN_FOLDER_NAME))
-list_folders.append(os.path.join(config.RESULTS_CV_DIR , config.RESULTS_GENERAL_MASK_OV_FOLDER_NAME))
-
-Util.manage_folders(list_folders)
-
-def write_stats_csv(filename, predicted_stats:stats, groundtruth_stats:stats):
+def write_stats_csv(filename, predicted_stats:stats, groundtruth_stats:stats, path_statistics, fieldname_statistics):
     
-    with open(os.path.join(config.RESULTS_ACCURACY_DIR, "droplet_stats_evaluation_cv.csv"), mode='a', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["file", "VMD_pred", "VMD_gt", "VMD_error", 
-                                                  "RSF_pred", "RSF_gt", "RSF_error", 
-                                                  "CoveragePercentage_pred", "CoveragePercentage_gt", "CoveragePercentage_error", 
-                                                  "NoDroplets_pred", "NoDroplets_gt", "NoDroplets_error", 
-                                                  "NoOverlappedDroplets_pred", "NoOverlappedDroplets_gt", "NoOverlappedDroplets_error",
-                                                  "OverlappedDropletsPercentage_pred", "OverlappedDropletsPercentage_gt", "OverlappedDropletsPercentage_error"])
+    with open(path_statistics, mode='a', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=fieldname_statistics)
         
         new_row = {
             "file": filename, 
@@ -61,7 +30,6 @@ def write_stats_csv(filename, predicted_stats:stats, groundtruth_stats:stats):
             "OverlappedDropletsPercentage_pred": predicted_stats.overlaped_percentage, "OverlappedDropletsPercentage_gt": groundtruth_stats.overlaped_percentage, "OverlappedDropletsPercentage_error": abs((predicted_stats.overlaped_percentage - groundtruth_stats.overlaped_percentage) / groundtruth_stats.overlaped_percentage), 
         }
         writer.writerow(new_row)
-
 
 def calculate_map_multiple(matches, matches_indices, ground_truth_masks):
     avg_precs = []
@@ -221,53 +189,21 @@ def match_predicted_to_groundtruth(predicted_polygon, ground_truths, droplet_sha
 
     return mask_predicted, best_match, best_iou, best_match_index
 
-
-
-def match_predictions_to_ground_truth(im, predicted_polygons, droplet_shapes, grounds_truths_polygons, distance_threshold):
+def match_masks(predicted_polygons, grounds_truths_polygons, droplet_shapes, image_shape, distance_threshold):
+    matched_indices = set()
     matches = []
-    matched_indices = set() 
 
 
-    for predicted_polygon in predicted_polygons:
-        best_iou = 0
-        best_match = None
-        best_match_index = None
-        
-        mask_predicted = np.zeros_like(im)
-        if predicted_polygon.overlappedIDs == []:
-            cont = droplet_shapes.get(predicted_polygon.id)
-            cv2.drawContours(mask_predicted, [cont], -1, 255, cv2.FILLED)
-        else:
-            cv2.circle(mask_predicted, (predicted_polygon.center_x, predicted_polygon.center_y), predicted_polygon.radius, 255, cv2.FILLED)
-        
-        for index, (ground_truth_polygon, gt_center) in enumerate(grounds_truths_polygons):
-            # skip when groundtruth already matched
-            if index in matched_indices:
-                continue  
+    #spatial_index = STRtree([gt for gt, _ in grounds_truths_polygons])
 
-            mask_groundtruth = np.zeros_like(im)
-            cont = ground_truth_polygon
-            cv2.fillPoly(mask_groundtruth, np.array([cont], dtype=np.int32), 255)
+    results = Parallel(n_jobs=-1)(
+        delayed(match_predicted_to_groundtruth)(predicted_polygon, grounds_truths_polygons, droplet_shapes, distance_threshold, image_shape, matched_indices)
+        for predicted_polygon in predicted_polygons
+    )
 
-            gt_x, gt_y = gt_center
-            pr_x, pr_y = predicted_polygon.center_x, predicted_polygon.center_y
-
-            distance = np.sqrt((pr_x - gt_x)**2 + (pr_y - gt_y)**2)
-
-            if distance < distance_threshold:
-                iou = calculate_iou(im, mask_predicted, mask_groundtruth)
-
-                if iou > best_iou:
-                    best_iou = iou
-                    best_match = mask_groundtruth
-                    best_match_index = index
-
-                    if best_iou > 0.9:
-                        break
-
-        if best_match is not None:
+    for mask_predicted, best_match, best_iou, best_match_index in results:
+        if best_match_index is not None:
             matched_indices.add(best_match_index)
-
         matches.append((mask_predicted, best_match, best_iou))
 
     return matches, matched_indices
@@ -294,10 +230,8 @@ def evaluate_matches(matches, matches_indices, ground_truth_masks, iou_threshold
     fn = 0
 
     for _, _, iou in matches:
-        if iou >= iou_threshold:
-            tp += 1
-        else:
-            fp += 1
+        if iou >= iou_threshold: tp += 1
+        else: fp += 1
 
     unmatched_ground_truths = [ground_truth_masks[i] for i in range(len(ground_truth_masks)) if i not in matches_indices]
     fn = len(unmatched_ground_truths)
@@ -308,15 +242,15 @@ def evaluate_matches(matches, matches_indices, ground_truth_masks, iou_threshold
 
     return precision, recall, f1_score, map05, map0595, tp, fp, fn
 
-def write_final_csv_metrics(metric):
-    with open(os.path.join(config.RESULTS_ACCURACY_DIR, "droplet_evaluation_cv.csv"), mode='a', newline='') as file:
+def write_final_csv_metrics(metric, path_csv_segmentation, fieldnames_segmentation):
+    with open(path_csv_segmentation, mode='a', newline='') as file:
         new_row = {
-                "file": metric[0], "precision": metric[1], "recall": metric[2], "f1_score": metric[3], "map0.5": metric[4], "map0.5-0.95": metric[5], "tp": metric[6], "fp": metric[7], "fn": metric[8], "segmentation_time": metric[9]
+                "file": metric[0], "precision": metric[1], "recall": metric[2], "f1_score": metric[3], "map50": metric[4], "map50-95": metric[5], "tp": metric[6], "fp": metric[7], "fn": metric[8], "segmentation_time": metric[9]
             }
-        writer = csv.DictWriter(file, fieldnames=["file", "precision", "recall", "f1_score", "map0.5", "map0.5-0.95", "tp", "fp", "fn", "segmentation_time"])
+        writer = csv.DictWriter(file, fieldnames=fieldnames_segmentation)
         writer.writerow(new_row)
 
-def read_stats_file(filename):
+def read_stats_file(filename, directory_stats):
     stats_file_path = (os.path.join(directory_stats, filename + ".csv"))
     data = pd.read_csv(stats_file_path)
 
@@ -332,7 +266,7 @@ def read_stats_file(filename):
     return stats_groundtruth
 
 
-def compute_segmentation(file, filename):
+def compute_segmentation(file, filename, directory_image):
     # read image
     image_gray = cv2.imread(os.path.join(directory_image, file), cv2.IMREAD_GRAYSCALE)
     image_colors = cv2.imread(os.path.join(directory_image, file))  
@@ -340,19 +274,19 @@ def compute_segmentation(file, filename):
     width, height = image_colors.shape[:2]
     
     # get the predicted droplets with cv algorithm
-    predicted_seg:seg.Segmentation_CV = seg.Segmentation_CV(image_colors, image_gray, filename, 
+    predicted_seg:seg.Segmentation_CCV = seg.Segmentation_CCV(image_colors, image_gray, filename, 
                                                 save_image_steps = False, 
                                                 create_masks = False, 
                                                 segmentation_method = 0, 
                                                 dataset_results_folder=config.DATA_SYNTHETIC_NORMAL_WSP_DIR)
     
     # calculate stats
-    predicted_seg.droplet_area = [d.area for d in predicted_seg.droplets_data]
+    droplet_area = [d.area for d in predicted_seg.droplets_data]
 
-    predicted_seg.volume_list = sorted(stats.area_to_volume(predicted_seg.droplet_area, predicted_seg.width, config.WIDTH_MM))
+    diameter_list = sorted(stats.area_to_diameter_micro(droplet_area, predicted_seg.width, config.WIDTH_MM))
 
     image_area = predicted_seg.width * predicted_seg.height
-    vmd_value, coverage_percentage, rsf_value, _ = stats.calculate_statistics(predicted_seg.volume_list, image_area, predicted_seg.contour_area)
+    vmd_value, coverage_percentage, rsf_value, _ = stats.calculate_statistics(diameter_list, image_area, predicted_seg.contour_area)
     
     no_droplets_overlapped = 0
     for drop in predicted_seg.droplets_data:
@@ -367,20 +301,29 @@ def compute_segmentation(file, filename):
 
     return image_colors, sorted_droplets, predicted_seg.droplet_shapes, width, height, predicted_stats
 
-def main():
-    # start file
-    with open(os.path.join(config.RESULTS_ACCURACY_DIR, "droplet_evaluation_cv.csv"), mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["file", "precision", "recall", "f1_score", "map0.5", "map0.5-0.95", "tp", "fp", "fn", "segmentation_time"])
-        writer.writeheader()
+def main_synthetic_ccv(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentation, path_csv_statistics, path_dataset, path_results):
+    directory_image = os.path.join(path_dataset, config.DATA_GENERAL_IMAGE_FOLDER_NAME)
+    directory_label = os.path.join(path_dataset, config.DATA_GENERAL_LABEL_FOLDER_NAME)
+    directory_stats = os.path.join(path_dataset, config.DATA_GENERAL_STATS_FOLDER_NAME)
 
-    with open(os.path.join(config.RESULTS_ACCURACY_DIR, "droplet_stats_evaluation_cv.csv"), mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=["file", "VMD_pred", "VMD_gt", "VMD_error", 
-                                                  "RSF_pred", "RSF_gt", "RSF_error", 
-                                                  "CoveragePercentage_pred", "CoveragePercentage_gt", "CoveragePercentage_error", 
-                                                  "NoDroplets_pred", "NoDroplets_gt", "NoDroplets_error", 
-                                                  "NoOverlappedDroplets_pred", "NoOverlappedDroplets_gt", "NoOverlappedDroplets_error",
-                                                  "OverlappedDropletsPercentage_pred", "OverlappedDropletsPercentage_gt", "OverlappedDropletsPercentage_error"])
-        writer.writeheader()
+    # manage folders to store the results of the segmentation
+    list_folders = []
+    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_STATS_FOLDER_NAME))
+    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_ACC_FOLDER_NAME))
+    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_LABEL_FOLDER_NAME))
+    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_INFO_FOLDER_NAME))
+    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME))
+    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME))
+    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_MASK_SIN_FOLDER_NAME))
+    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_MASK_OV_FOLDER_NAME))
+    Util.manage_folders(list_folders)
+
+    # start file
+    with open(path_csv_segmentation, mode='w', newline='') as file:
+        csv.DictWriter(file, fieldnames=fieldnames_segmentation).writeheader()
+
+    with open(path_csv_statistics, mode='w', newline='') as file:
+        csv.DictWriter(file, fieldnames=fieldnames_statistics).writeheader()
 
     # apply the segmentation in each one of the images and then calculate the accuracy and save it
     for i, file in enumerate(os.listdir(directory_image)): 
@@ -392,20 +335,20 @@ def main():
         print("Evaluating image", filename + "..." )
 
         try:
-            image_colors, predicted_droplets, droplet_shapes, width, height, predicted_stats = compute_segmentation(file, filename)
+            image_colors, predicted_droplets, droplet_shapes, width, height, predicted_stats = compute_segmentation(file, filename, directory_image)
             seg_time = time.time()
 
             # get groundtruth
-            groundtruth_polygons = create_yolo_mask(os.path.join(config.DATA_SYNTHETIC_NORMAL_WSP_DIR, config.DATA_GENERAL_LABEL_FOLDER_NAME, filename + ".txt"), width, height, image_colors)
-            gt_stats = read_stats_file(filename)
+            groundtruth_polygons = create_yolo_mask(os.path.join(directory_label, filename + ".txt"), width, height, image_colors)
+            gt_stats = read_stats_file(filename, os.path.join(path_dataset, config.DATA_GENERAL_STATS_FOLDER_NAME))
             matches, matched_indices = match_masks(predicted_droplets, groundtruth_polygons, droplet_shapes, image_colors.shape, 10)
 
             precision, recall, f1_score, map5, map595, tp, fp, fn = evaluate_matches(matches, matched_indices, groundtruth_polygons, 0.5)
         
             segmentation_time = seg_time - start_time
-            write_final_csv_metrics((filename, precision, recall, f1_score, map5, map595, tp, fp, fn, segmentation_time))
+            write_final_csv_metrics((filename, precision, recall, f1_score, map5, map595, tp, fp, fn, segmentation_time), path_csv_segmentation, fieldnames_segmentation)
             
-            write_stats_csv(filename, predicted_stats, gt_stats)
+            write_stats_csv(filename, predicted_stats, gt_stats, path_csv_statistics, fieldnames_statistics)
 
             end_time = time.time()
             elapsed_time = end_time - start_time
@@ -414,11 +357,5 @@ def main():
 
         except np.core._exceptions._ArrayMemoryError as e:
             print(f"Memory error encountered while processing {filename}: {e}")
-        
-        # finally:
-        #     # Cleanup to free memory
-        #     del image_colors, predicted_droplets, droplet_shapes, groundtruth_polygons, matches, matched_indices, precision, recall, f1_score, map5, map595, tp, fp, fn 
-        #     gc.collect()
 
 
-main()

@@ -5,7 +5,7 @@ import numpy as np
 import csv
 import time
 
-import paper.ccv.Distortion as dist
+import Segmentation.paper.ccv.Distortion as dist
 
 sys.path.insert(0, 'src/common')
 import config

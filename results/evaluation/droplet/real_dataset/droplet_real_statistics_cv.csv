@@ -1,0 +1,2 @@
+file,VMD_pred,VMD_gt,VMD_error,RSF_pred,RSF_gt,RSF_error,CoveragePercentage_pred,CoveragePercentage_gt,CoveragePercentage_error,NoDroplets_pred,NoDroplets_gt,NoDroplets_error,NoOverlappedDroplets_pred,NoOverlappedDroplets_gt,NoOverlappedDroplets_error,OverlappedDropletsPercentage_pred,OverlappedDropletsPercentage_gt,OverlappedDropletsPercentage_error
+2_Z1_cut,732.7208986740912,630.8111926651404,0.16155342072861495,3.35913453887828,0.7991612469371311,3.203325113364185,5.3649857967181225,3.7142323407838767,0.4444400092606645,2722,1913,0.42289597490852066,,,,,,

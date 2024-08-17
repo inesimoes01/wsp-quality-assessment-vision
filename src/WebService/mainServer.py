@@ -9,7 +9,7 @@ import io
 import numpy as np
 
 sys.path.insert(0, 'src/')
-from Segmentation.droplet.ccv.Segmentation_CV import Segmentation_CV
+from Segmentation.droplet.ccv.Segmentation_CCV import Segmentation_CV
 #from Distortion import Distortion
 #from Segmentation_CV import Segmentation
 # from Distortion import Distortion

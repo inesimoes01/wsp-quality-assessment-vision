@@ -149,11 +149,11 @@ def detect_rectangle_alternative(image, filename, save_steps = False):
     return hull[0]
 
 
-im = "data\\real_rectangle_dataset\\test\\image\\2_V1_A3_jpg.rf.3ff6c061dd2d3f7239d33e83352914b1.jpg"
-im = cv2.imread(im)
-im_to_destroi = copy.copy(im)
-contour = detect_rectangle_alternative(im_to_destroi, "2_V1_A3_jpg.rf.3ff6c061dd2d3f7239d33e83352914b1.jpg", True)
-remove_distortion(im, contour, "2_V1_A3_jpg.rf.3ff6c061dd2d3f7239d33e83352914b1.jpg", True)
+# im = "data\\real_rectangle_dataset\\test\\image\\2_V1_A3_jpg.rf.3ff6c061dd2d3f7239d33e83352914b1.jpg"
+# im = cv2.imread(im)
+# im_to_destroi = copy.copy(im)
+# contour = detect_rectangle_alternative(im_to_destroi, "2_V1_A3_jpg.rf.3ff6c061dd2d3f7239d33e83352914b1.jpg", True)
+# remove_distortion(im, contour, "2_V1_A3_jpg.rf.3ff6c061dd2d3f7239d33e83352914b1.jpg", True)
 # maxHeight = 2000
 # maxWidth = 300
 # output_pts = np.float32([[0, 0],

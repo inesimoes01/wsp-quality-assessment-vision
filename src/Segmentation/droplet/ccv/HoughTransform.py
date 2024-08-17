@@ -58,7 +58,7 @@ def apply_hough_circles_with_kmeans(roi_filled, roi_edges, no_convex_points, con
             circles = remove_circles_outside_mask(circles, roi_filled)
 
         # kmeans approximation with the final number of circles
-        circles = k_means_approximation(circles, no_convex_points-1, roi_kmeans)
+        circles = k_means_approximation(circles, no_convex_points, roi_kmeans)
 
         if len(circles) > 1:
             circles = remove_circles_based_on_iou_contribution(roi_filled, roi_iou_check, circles)

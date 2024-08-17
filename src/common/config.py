@@ -4,6 +4,10 @@ import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
+DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "test"
+DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "test"
+
+
 #DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset" / "wsp" 
 DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset_new" / "wsp" 
 DATA_SYNTHETIC_SIMPLE_WSP_DIR = Path("data") / "synthetic_simple_dataset" / "wsp" 
@@ -18,7 +22,8 @@ DATA_REAL_RAW_DIR = Path("data") / "real_rectangle_dataset" / "test"
 DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
 DATA_REAL_PAPER_DIR = Path("data") / "real_dataset" / "paper" /"raw" 
 
-RESULTS_CV_DIR = Path("results") / "computer_vision_algorithm"
+RESULTS_REAL_CCV_DIR = Path("results") / "computer_vision_algorithm" / "real_dataset"
+RESULTS_SYNTHETIC_CCV_DIR = Path("results") / "computer_vision_algorithm" / "synthetic_dataset"
 RESULTS_ACCURACY_DIR = Path("results") / "metrics" 
 
 
