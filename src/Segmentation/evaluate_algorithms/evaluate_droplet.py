@@ -265,8 +265,7 @@ def read_stats_file(filename, directory_stats):
     stats_groundtruth = stats(vmd_value, rsf_value, coverage_percentage, no_total_droplets, no_overlapped_droplets, overlapped_percentage, None)
     return stats_groundtruth
 
-
-def compute_segmentation(file, filename, directory_image):
+def compute_segmentation(file, filename, directory_image, results_path):
     # read image
     image_gray = cv2.imread(os.path.join(directory_image, file), cv2.IMREAD_GRAYSCALE)
     image_colors = cv2.imread(os.path.join(directory_image, file))  
@@ -278,7 +277,7 @@ def compute_segmentation(file, filename, directory_image):
                                                 save_image_steps = False, 
                                                 create_masks = False, 
                                                 segmentation_method = 0, 
-                                                dataset_results_folder=config.DATA_SYNTHETIC_NORMAL_WSP_DIR)
+                                                dataset_results_folder = results_path)
     
     # calculate stats
     droplet_area = [d.area for d in predicted_seg.droplets_data]
@@ -294,9 +293,17 @@ def compute_segmentation(file, filename, directory_image):
             no_droplets_overlapped += 1
 
     overlaped_percentage = no_droplets_overlapped /  predicted_seg.final_no_droplets * 100
-    
     predicted_stats = stats(vmd_value, rsf_value, coverage_percentage, predicted_seg.final_no_droplets, no_droplets_overlapped, overlaped_percentage, predicted_seg.droplets_data)
     
+    # save statistics file
+    data = {
+        '': ['VMD', 'RSF', 'Coverage %', 'Nº Droplets', 'Overlapped Droplets %', 'Number of overlapped droplets'],
+        'Predicted': [predicted_stats.vmd_value, predicted_stats.rsf_value, predicted_stats.coverage_percentage, predicted_stats.no_droplets, predicted_stats.overlaped_percentage, predicted_stats.no_droplets_overlapped], 
+    }
+    df = pd.DataFrame(data)
+    df.to_csv(os.path.join(results_path, config.RESULTS_GENERAL_STATS_FOLDER_NAME, filename + '.csv'), index=False, float_format='%.2f')
+
+
     sorted_droplets = sorted(predicted_seg.droplets_data, key=lambda droplet: (droplet.center_x, droplet.center_y))
 
     return image_colors, sorted_droplets, predicted_seg.droplet_shapes, width, height, predicted_stats
@@ -335,7 +342,7 @@ def main_synthetic_ccv(fieldnames_segmentation, fieldnames_statistics, path_csv_
         print("Evaluating image", filename + "..." )
 
         try:
-            image_colors, predicted_droplets, droplet_shapes, width, height, predicted_stats = compute_segmentation(file, filename, directory_image)
+            image_colors, predicted_droplets, droplet_shapes, width, height, predicted_stats = compute_segmentation(file, filename, directory_image, path_results)
             seg_time = time.time()
 
             # get groundtruth

@@ -147,8 +147,8 @@ class Segmentation_CCV:
         circle_ids = list(range(index, index + len(circles)))
         j = 0
 
-        if isOnEdge: cv2.drawContours(self.separate_image, [contour], -1, detected_colors[3], 2)
-        else: cv2.drawContours(self.separate_image, [contour], -1, detected_colors[2], 2)
+        if isOnEdge: cv2.drawContours(self.separate_image, [contour], -1, detected_colors[3], 1)
+        else: cv2.drawContours(self.separate_image, [contour], -1, detected_colors[2], 1)
         
         # save the ids from all the circles in the list that do not include its own index
         for circle in circles:
@@ -161,7 +161,7 @@ class Segmentation_CCV:
             circle_area = np.pi * radius ** 2
 
             self.droplets_data.append(Droplet(center_x, center_y, circle_area, int(index + j), overlapped_ids, radius))
-            cv2.circle(self.detected_image, (center_x, center_y), radius, detected_colors[2], 2)
+            cv2.circle(self.detected_image, (center_x, center_y), radius, detected_colors[2], 1)
             if self.create_masks: cv2.circle(self.mask_overlapped, (center_x, center_y), radius, 255, cv2.FILLED)
            
             self.final_no_droplets += 1        
@@ -182,10 +182,10 @@ class Segmentation_CCV:
     def save_single_droplet(self, contour, id, center_x, center_y, area, overlappedIDs, shape):
        
         self.droplets_data.append(Droplet(center_x, center_y, area, id, overlappedIDs))
-        cv2.drawContours(self.detected_image, [contour], -1, detected_colors[shape], 2)
+        cv2.drawContours(self.detected_image, [contour], -1, detected_colors[shape], 1)
         if self.create_masks: cv2.drawContours(self.mask_single, [contour], -1, 255, cv2.FILLED)
 
-        cv2.drawContours(self.separate_image, [contour], -1, detected_colors[shape], 2)
+        cv2.drawContours(self.separate_image, [contour], -1, detected_colors[shape], 1)
 
         self.droplet_shapes[id] = contour
         

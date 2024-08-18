@@ -32,7 +32,7 @@ def apply_hough_circles_with_kmeans(roi_filled, roi_edges, no_convex_points, con
                                     dp=1,              # Inverse ratio of accumulator resolution to image resolution. Higher values mean lower resolution/precision but potentially faster processing.
                                     minDist=1,           # Minimum distance between centers of detected circles.
                                     param1=150,          # Higher threshold of Canny edge detector.
-                                    param2=6,           # Accumulator threshold for circle centers at the detection stage. Smaller values may lead to more false detections.
+                                    param2=5,           # Accumulator threshold for circle centers at the detection stage. Smaller values may lead to more false detections.
                                     minRadius=1,         # Minimum radius of circles to be detected.
                                     maxRadius=0)         # Maximum radius of circles to be detected. If negative, it defaults to the maximum image dimension.
 
@@ -54,7 +54,7 @@ def apply_hough_circles_with_kmeans(roi_filled, roi_edges, no_convex_points, con
         if len(circles) > 1:
             circles = remove_circles_based_on_size(circles, w_roi, h_roi)
 
-        if len(circles) > 1:
+        if len(circles) > 1 and not isOnEdge:
             circles = remove_circles_outside_mask(circles, roi_filled)
 
         # kmeans approximation with the final number of circles
@@ -64,7 +64,7 @@ def apply_hough_circles_with_kmeans(roi_filled, roi_edges, no_convex_points, con
             circles = remove_circles_based_on_iou_contribution(roi_filled, roi_iou_check, circles)
 
         if len(circles) > 1:
-            circles = remove_circles_based_on_proximity(roi_size_check, circles, 2)
+            circles = remove_circles_based_on_proximity(roi_size_check, circles, 6)
 
     #Util.plotFourImages(roi_edges, roi_initial_list, roi_kmeans, roi_size_check)
 
@@ -175,18 +175,20 @@ def circle_overlap(selected_circle, other):
     return distance + 2 < (r1 + r2)
 
 def remove_circles_based_on_proximity(roi, circles, min_distance):
-    result = []
-
     updated_circles = []
+    
     for i, circle1 in enumerate(circles):
         too_close = False
-        for j, circle2 in enumerate(circles):
+   
+        for j, circle2 in enumerate(updated_circles):
             distance = math.sqrt((int(circle1[0]) - int(circle2[0]))**2 + (int(circle1[1]) - int(circle2[1]))**2)
-            if i != j and (int(circle1[2]) + int(circle2[2]) + min_distance) < distance:
+    
+            if i != j and distance < min_distance and abs(int(circle1[2]) - int(circle2[2])) < min_distance:
                 too_close = True
                 break
         if not too_close:
             updated_circles.append(circle1)
+               
 
     for circle in updated_circles:
         r = int(circle[2])
@@ -194,7 +196,9 @@ def remove_circles_based_on_proximity(roi, circles, min_distance):
         y = int(circle[1])
         cv2.circle(roi, (x, y), r, 255, thickness=1)
 
-    return updated_circles
+    if len(updated_circles) < 1:
+        return circles
+    else: return updated_circles
 
 def remove_circles_based_on_size(circles, width, height):
     final_list = []
@@ -202,14 +206,18 @@ def remove_circles_based_on_size(circles, width, height):
         circle_x, circle_y = int(circle[0]), int(circle[1])
         circle_radius = int(circle[2])
         
-        # Check if the circle is within the bounds of the square
-        if (circle_x - circle_radius >= 0 and    # Left bound
-            circle_x + circle_radius <= width and  # Right bound
-            circle_y - circle_radius >= 0 and    # Top bound
-            circle_y + circle_radius <= height):  # Bottom bound
+        # check if the circle is within the bounds of the square
+        if (circle_x - circle_radius >= 0 and    # left 
+            circle_x + circle_radius <= width and  # right 
+            circle_y - circle_radius >= 0 and    # top 
+            circle_y + circle_radius <= height):  # bottom 
         
             final_list.append(circle)
-    return final_list
+    
+    if len(final_list) < 1:
+        return circles
+    else: return final_list
+
 
 
 def remove_circles_outside_mask(circles, roi_mask):
@@ -225,8 +233,11 @@ def remove_circles_outside_mask(circles, roi_mask):
 
         if intersection_exists:
             final_list_circles.append(circle)
+    
+    if len(final_list_circles) < 1:
+        return circles
+    else: return final_list_circles
 
-    return final_list_circles
 
 def remove_circles_based_on_iou_contribution(roi_filled, roi_final, circles):
     # check iou values with and without some circles to make sure that we have the best result
@@ -272,7 +283,7 @@ def remove_circles_based_on_iou_contribution(roi_filled, roi_final, circles):
             
 
             max_iou = max(iou_array)
-            if max_iou > iou_original:
+            if max_iou > iou_original and len(circles) > 1:
                 circles = np.delete(np.array(circles), iou_array.index(max_iou), axis = 0)
                 
         mask_check_calculated = np.zeros_like(roi_filled)
@@ -292,10 +303,10 @@ def k_means_approximation(circles, no_convex_points, roi):
 
     circles = np.unique(circles, axis=0)
 
-    if (len(circles) < no_convex_points + 2): 
+    if (len(circles) < no_convex_points): 
         return circles
     
-    model = KMeans(n_clusters=no_convex_points + 2, random_state=0, n_init='auto').fit(circles)
+    model = KMeans(n_clusters=no_convex_points, random_state=0, n_init='auto').fit(circles)
     
     for circle in model.cluster_centers_:
         results.append(circle)
