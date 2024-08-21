@@ -7,6 +7,7 @@ PROJ_ROOT = Path(__file__).resolve().parents[2]
 DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "test"
 DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "test"
 
+DATA_SYNTHETIC_NORMAL_WSP_MRCNN_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "mrcnn_ready"
 
 #DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset" / "wsp" 
 DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset_new" / "wsp" 
@@ -51,6 +52,8 @@ RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME = "undistorted"
 RESULTS_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single" 
 RESULTS_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
 
+CODE_MRCNN_DIR = Path("src") / "Segmentation" / "droplet" / "cnn" / "MaskRCNN"
+MODELS_MRCNN_DIR = Path("models") / "mrcnn"
 
 ### CREATE SYNTHETIC DATASET VALUES
 
