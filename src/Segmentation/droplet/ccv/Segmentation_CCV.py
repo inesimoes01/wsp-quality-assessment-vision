@@ -234,8 +234,7 @@ class Segmentation_CCV:
             shape, no_droplets = 0, 1
         else: shape = 2
         
-        
-        if no_droplets == 0: no_droplets += 1
+        if no_droplets < 1: no_droplets = 1
         
         return shape, no_droplets, isOnEdge
         

@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 import csv
 import time
+import copy
 import gc
 import pandas as pd
 from joblib import Parallel, delayed
@@ -187,26 +188,32 @@ def match_predicted_to_groundtruth(predicted_polygon, ground_truths, droplet_sha
                 if best_iou > 0.9:
                     break
 
-    return mask_predicted, best_match, best_iou, best_match_index
+    return predicted_polygon, mask_predicted, best_match, best_iou, best_match_index
 
-def match_masks(predicted_polygons, grounds_truths_polygons, droplet_shapes, image_shape, distance_threshold):
+def match_masks(image_correct_predictions, predicted_polygons, grounds_truths_polygons, droplet_shapes, image_shape, distance_threshold):
     matched_indices = set()
     matches = []
 
-
-    #spatial_index = STRtree([gt for gt, _ in grounds_truths_polygons])
 
     results = Parallel(n_jobs=-1)(
         delayed(match_predicted_to_groundtruth)(predicted_polygon, grounds_truths_polygons, droplet_shapes, distance_threshold, image_shape, matched_indices)
         for predicted_polygon in predicted_polygons
     )
 
-    for mask_predicted, best_match, best_iou, best_match_index in results:
+    for predicted_polygon, mask_predicted, best_match, best_iou, best_match_index in results:
         if best_match_index is not None:
             matched_indices.add(best_match_index)
+            
+            if best_iou > 0.7:
+                if predicted_polygon.overlappedIDs == []:
+                    cont = droplet_shapes.get(predicted_polygon.id)
+                    cv2.drawContours(image_correct_predictions, [cont], -1, (0, 255, 0), 1)
+                else:
+                    cv2.circle(image_correct_predictions, (predicted_polygon.center_x, predicted_polygon.center_y), predicted_polygon.radius, (0, 255, 0), 1)
+                
         matches.append((mask_predicted, best_match, best_iou))
 
-    return matches, matched_indices
+    return matches, matched_indices, image_correct_predictions
 
 def visualize_results(image_path, matches):
     image = cv2.imread(image_path)
@@ -219,7 +226,7 @@ def visualize_results(image_path, matches):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-def evaluate_matches(matches, matches_indices, ground_truth_masks, iou_threshold = 0.7):
+def evaluate_matches(matches, matches_indices, ground_truth_masks, iou_threshold = 0.5):
     
     precision, recall, f1_score, map05, tp, fp, fn = calculate_map_single(matches, matches_indices, ground_truth_masks, iou_threshold)
 
@@ -259,8 +266,9 @@ def read_stats_file(filename, directory_stats):
     rsf_value = data.at[1, 'GroundTruth']
     coverage_percentage = data.at[2, 'GroundTruth']
     no_total_droplets = data.at[3, 'GroundTruth']
-    overlapped_percentage = data.at[4, 'GroundTruth']
-    no_overlapped_droplets = data.at[5, 'GroundTruth']
+      # this is an error in the creation of the synthetic dataset
+    overlapped_percentage = data.at[5, 'GroundTruth']
+    no_overlapped_droplets = data.at[4, 'GroundTruth']
             
     stats_groundtruth = stats(vmd_value, rsf_value, coverage_percentage, no_total_droplets, no_overlapped_droplets, overlapped_percentage, None)
     return stats_groundtruth
@@ -303,7 +311,6 @@ def compute_segmentation(file, filename, directory_image, results_path):
     df = pd.DataFrame(data)
     df.to_csv(os.path.join(results_path, config.RESULTS_GENERAL_STATS_FOLDER_NAME, filename + '.csv'), index=False, float_format='%.2f')
 
-
     sorted_droplets = sorted(predicted_seg.droplets_data, key=lambda droplet: (droplet.center_x, droplet.center_y))
 
     return image_colors, sorted_droplets, predicted_seg.droplet_shapes, width, height, predicted_stats
@@ -342,13 +349,16 @@ def main_synthetic_ccv(fieldnames_segmentation, fieldnames_statistics, path_csv_
         print("Evaluating image", filename + "..." )
 
         try:
+            
             image_colors, predicted_droplets, droplet_shapes, width, height, predicted_stats = compute_segmentation(file, filename, directory_image, path_results)
             seg_time = time.time()
+
+            image_correct_predictions = copy.copy(image_colors)
 
             # get groundtruth
             groundtruth_polygons = create_yolo_mask(os.path.join(directory_label, filename + ".txt"), width, height, image_colors)
             gt_stats = read_stats_file(filename, os.path.join(path_dataset, config.DATA_GENERAL_STATS_FOLDER_NAME))
-            matches, matched_indices = match_masks(predicted_droplets, groundtruth_polygons, droplet_shapes, image_colors.shape, 10)
+            matches, matched_indices, image_correct_predictions = match_masks(image_correct_predictions, predicted_droplets, groundtruth_polygons, droplet_shapes, image_colors.shape, 10)
 
             precision, recall, f1_score, map5, map595, tp, fp, fn = evaluate_matches(matches, matched_indices, groundtruth_polygons, 0.5)
         
@@ -361,8 +371,12 @@ def main_synthetic_ccv(fieldnames_segmentation, fieldnames_statistics, path_csv_
             elapsed_time = end_time - start_time
             
             print("Time taken:", elapsed_time, "seconds")
+ 
+            cv2.imwrite(os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, filename + "_correct_predictions.png"), image_correct_predictions)
 
         except np.core._exceptions._ArrayMemoryError as e:
             print(f"Memory error encountered while processing {filename}: {e}")
+    
+    return image_correct_predictions
 
 
