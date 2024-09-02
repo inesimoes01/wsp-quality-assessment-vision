@@ -17,17 +17,6 @@ import Common.config as config
 import Common.Util as FoldersUtil
 import Segmentation.evaluate_algorithms.util_evaluate_droplet as util
 
-sys.path.insert(0, 'src\\Segmentation\\droplet\\cnn\\MaskRCNN\\')
-# from Segmentation.droplet.cnn.MaskRCNN.mrcnn import utils
-# from mrcnn import visualize
-# from mrcnn.visualize import display_images
-# from mrcnn.visualize import display_instances
-import mrcnn.model as modellib
-# from mrcnn.model import log
-# from mrcnn.config import Config
-# from mrcnn import model as modellib, utils
-
-import custom_mrcnn_classes as custom_mrcnn_classes
 
 
 from Common.Statistics import Statistics as stats
@@ -126,33 +115,7 @@ def compute_yolo_segmentation(image_path, width, height, image_width_mm, yolo_mo
 
     return predicted_droplets_adjusted, predicted_droplets_with_centroid, predicted_stats
 
-def compute_mrcnn_segmentation(image, mrcnn_model_path):
-    inference_config = custom_mrcnn_classes.InferenceConfig()
 
-    # recreate the model in inference mode
-    mrcnn_model = modellib.MaskRCNN(mode="inference", 
-                            config=inference_config, model_dir=mrcnn_model_path)
-    mrcnn_model.load_weights(mrcnn_model_path, by_name=True)
-
-    img_arr = np.array(image)
-    results = mrcnn_model.detect([img_arr])
-    r = results[0]
-
-    for i in range(r['masks'].shape[-1]):
-        mask = r['masks'][:, :, i]
-        contours, _ = cv2.findContours((mask * 255).astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        
-        for contour in contours:
-            points = contour.reshape(-1, 2)
-            print(f"Object {i + 1} points:")
-            print(points)
-
-            cv2.polylines(image, [contour], isClosed=True, color=(0, 255, 0), thickness=2)
-
-    plt.imshow(image)
-    plt.show()
-
-    return
 
 
 def main_ccv(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, iou_threshold, distance_threshold):
@@ -262,51 +225,4 @@ def main_yolo(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentat
             print(f"Memory error encountered while processing {filename}: {e}")
     
     return image_correct_predictions
-
-def main_mrcnn(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, model_path, iou_threshold, distance_threshold, width_mm):
-    directory_image, directory_label, directory_stats = manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_segmentation, path_csv_statistics, fieldnames_statistics)
-
-    # apply the segmentation in each one of the images and then calculate the accuracy and save it
-    for i, file in enumerate(os.listdir(directory_image)): 
-        start_time = time.time()
-        filename = file.split(".")[0]
-       
-        image_path = os.path.join(directory_image, file)
-        image_colors = skimage.io.imread(image_path)
-        width, height = image_colors.shape[:2]
-        image_area = width * height
-        image_correct_predictions = copy.copy(image_colors)
-
-        print("Evaluating image", filename + "..." )
-
-        try:
-            predicted_droplets, predicted_droplets_centroid, predicted_stats = compute_mrcnn_segmentation(image_colors, model_path)
-            
-            seg_time = time.time()
-            segmentation_time = seg_time - start_time
-            
-            # get groundtruth from saved files
-            groundtruth_polygons = util.create_yolo_mask(os.path.join(directory_label, filename + ".txt"), width, height)
-            gt_stats = util.read_stats_file(filename, os.path.join(path_dataset, config.DATA_GENERAL_STATS_FOLDER_NAME))
-
-            # calculate evaluation metrics
-            results = util.match_predicted_to_groundtruth_yolo(predicted_droplets_centroid, groundtruth_polygons, distance_threshold, image_colors)
-            image_correct_predictions, precision, recall, f1_score, map5, map595, tp, fp, fn = util.evaluate_matches_yolo(groundtruth_polygons, results, image_correct_predictions, iou_threshold)
-
-            # write results of predictions in the correct files
-            util.write_final_csv_metrics((filename, precision, recall, f1_score, map5, map595, tp, fp, fn, segmentation_time), path_csv_segmentation, fieldnames_segmentation)
-            util.write_stats_csv(filename, predicted_stats, gt_stats, path_csv_statistics, fieldnames_statistics)
-
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            
-            print("Time taken:", elapsed_time, "seconds")
- 
-            cv2.imwrite(os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, filename + "_correct_predictions.png"), image_correct_predictions)
-
-        except np.core._exceptions._ArrayMemoryError as e:
-            print(f"Memory error encountered while processing {filename}: {e}")
-    
-    return image_correct_predictions
-
 

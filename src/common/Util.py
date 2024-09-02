@@ -28,13 +28,13 @@ def create_folders(file_path):
     if not os.path.exists(file_path):
         os.makedirs(file_path)
 
-def save_dropletinfo_csv(file_path, droplet_info:list[Droplet]):
-    with open(file_path, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(["DropletID", "CenterX", "CenterY", "Area", "OverlappedDropletsID"])
-        for drop in droplet_info:
-            row = [drop.id, drop.center_x, drop.center_y, drop.area, str(drop.overlappedIDs)]
-            writer.writerow(row)
+# def save_dropletinfo_csv(file_path, droplet_info:list[Droplet]):
+#     with open(file_path, mode='w', newline='') as file:
+#         writer = csv.writer(file)
+#         writer.writerow(["DropletID", "CenterX", "CenterY", "Area", "OverlappedDropletsID"])
+#         for drop in droplet_info:
+#             row = [drop.id, drop.center_x, drop.center_y, drop.area, str(drop.overlappedIDs)]
+#             writer.writerow(row)
 
 def manage_folders(list_file_path):
     for file in list_file_path:

@@ -54,7 +54,7 @@ class Segmentation_CCV:
                 continue
             
             else:  # overlapping droplets and on the edge
-
+ 
                 match segmentation_method:
                     case 0: # hough circles with clustering
                         original_contour = copy.copy(contour)
