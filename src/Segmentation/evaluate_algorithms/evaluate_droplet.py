@@ -11,10 +11,24 @@ import skimage
 from joblib import Parallel, delayed
 from matplotlib import pyplot as plt 
 
+
 import Segmentation.droplet.ccv.Segmentation_CCV as seg
 import Common.config as config 
 import Common.Util as FoldersUtil
 import Segmentation.evaluate_algorithms.util_evaluate_droplet as util
+
+sys.path.insert(0, 'src\\Segmentation\\droplet\\cnn\\MaskRCNN\\')
+# from Segmentation.droplet.cnn.MaskRCNN.mrcnn import utils
+# from mrcnn import visualize
+# from mrcnn.visualize import display_images
+# from mrcnn.visualize import display_instances
+import mrcnn.model as modellib
+# from mrcnn.model import log
+# from mrcnn.config import Config
+# from mrcnn import model as modellib, utils
+
+import custom_mrcnn_classes as custom_mrcnn_classes
+
 
 from Common.Statistics import Statistics as stats
 
@@ -112,14 +126,20 @@ def compute_yolo_segmentation(image_path, width, height, image_width_mm, yolo_mo
 
     return predicted_droplets_adjusted, predicted_droplets_with_centroid, predicted_stats
 
-def compute_mrcnn_segmentation(image, mrcnn_model):
+def compute_mrcnn_segmentation(image, mrcnn_model_path):
+    inference_config = custom_mrcnn_classes.InferenceConfig()
+
+    # recreate the model in inference mode
+    mrcnn_model = modellib.MaskRCNN(mode="inference", 
+                            config=inference_config, model_dir=mrcnn_model_path)
+    mrcnn_model.load_weights(mrcnn_model_path, by_name=True)
+
     img_arr = np.array(image)
     results = mrcnn_model.detect([img_arr])
     r = results[0]
 
     for i in range(r['masks'].shape[-1]):
         mask = r['masks'][:, :, i]
-        
         contours, _ = cv2.findContours((mask * 255).astype(np.uint8), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         
         for contour in contours:
@@ -243,7 +263,7 @@ def main_yolo(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentat
     
     return image_correct_predictions
 
-def main_mrcnn(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, mrcnn_model, iou_threshold, distance_threshold, width_mm):
+def main_mrcnn(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, model_path, iou_threshold, distance_threshold, width_mm):
     directory_image, directory_label, directory_stats = manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_segmentation, path_csv_statistics, fieldnames_statistics)
 
     # apply the segmentation in each one of the images and then calculate the accuracy and save it
@@ -260,7 +280,7 @@ def main_mrcnn(fieldnames_segmentation, fieldnames_statistics, path_csv_segmenta
         print("Evaluating image", filename + "..." )
 
         try:
-            predicted_droplets, predicted_droplets_centroid, predicted_stats = compute_mrcnn_segmentation(image_path, width, height, width_mm, yolo_model)
+            predicted_droplets, predicted_droplets_centroid, predicted_stats = compute_mrcnn_segmentation(image_colors, model_path)
             
             seg_time = time.time()
             segmentation_time = seg_time - start_time

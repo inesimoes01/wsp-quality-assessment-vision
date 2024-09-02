@@ -15,7 +15,7 @@ import Common.config as config
 from Statistics import Statistics as stats
 
 # WHAT EVALUATIONS TO UPDATE
-isDropletCCV, isDropletYOLO, isDropletMRCNN, isPaperCCV, isPaperYOLO = False, True, False, False, False
+isDropletCCV, isDropletYOLO, isDropletMRCNN, isPaperCCV, isPaperYOLO = False, False, True, False, False
 
 
 
@@ -39,11 +39,11 @@ FIELDNAMES_DROPLET_GENERAL_SEGMENTATION = ['method', 'precision', 'recall', 'f1-
 
 
 # YOLO MODELS
-PAPER_YOLO_MODEL = YOLO(os.path.join("models\\yolo_rectangle\\30epc_rectangle7", "weights", "best.pt"))
-DROPLET_YOLO_MODEL = YOLO(os.path.join("models\\yolo_droplet\\50epc_droplet4", "weights", "best.pt"))
+PAPER_YOLO_MODEL = os.path.join("models\\yolo_rectangle\\30epc_rectangle7", "weights", "best.pt")
+DROPLET_YOLO_MODEL = os.path.join("models\\yolo_droplet\\50epc_droplet4", "weights", "best.pt")
 
 # MRCNN MODELS
-DROPLET_MRCNN_MODEL = os.path.join("models\\yolo_droplet\\50epc_droplet4", "weights", "best.pt")
+DROPLET_MRCNN_MODEL = "models\\droplets\\mrcnn\\mask_rcnn_droplet_dataset_0050.h5"
 
 EVAL_MAIN_DROPLET_REAL_PATH = Path("results") / "evaluation" / "droplet" / "real_dataset"
 EVAL_MAIN_DROPLET_SYNTHETIC_PATH = Path("results") / "evaluation" / "droplet" / "synthetic_dataset" 
@@ -222,19 +222,20 @@ def compute_evaluations():
         update_general_evaluation_droplet_stats(EVAL_DROPLET_STATS_GENERAL, EVAL_DROPLET_STATS_SYNTHETIC_DATASET_CV, "droplet_synthetic_dataset_ccv") 
     
     if isDropletYOLO:
+        model = YOLO(DROPLET_YOLO_MODEL)
         # SYNTHETIC DATASET
-        evaluate_droplet.main_yolo(FIELDNAMES_DROPLET_SEGMENTATION, FIELDNAMES_DROPLET_STATISTICS, EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO, EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, config.DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR, config.RESULTS_SYNTHETIC_CCV_DIR, DROPLET_YOLO_MODEL, 0.5, 10, 76)
+        evaluate_droplet.main_yolo(FIELDNAMES_DROPLET_SEGMENTATION, FIELDNAMES_DROPLET_STATISTICS, EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO, EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, config.DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR, config.RESULTS_SYNTHETIC_CCV_DIR, model, 0.5, 10, 76)
         update_general_evaluation_droplet_segm(EVAL_DROPLET_SEGM_GENERAL, EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO, "droplet_synthetic_dataset_yolo")
         update_general_evaluation_droplet_stats(EVAL_DROPLET_STATS_GENERAL, EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, "droplet_synthetic_dataset_yolo")
         
         # REAL DATASET
-        evaluate_droplet.main_yolo(FIELDNAMES_DROPLET_SEGMENTATION, FIELDNAMES_DROPLET_STATISTICS, EVAL_DROPLET_SEGM_REAL_DATASET_YOLO, EVAL_DROPLET_STATS_REAL_DATASET_YOLO, config.DATA_REAL_WSP_TESTING_DIR, config.RESULTS_REAL_CCV_DIR, DROPLET_YOLO_MODEL, 0.5, 10, 76)
+        evaluate_droplet.main_yolo(FIELDNAMES_DROPLET_SEGMENTATION, FIELDNAMES_DROPLET_STATISTICS, EVAL_DROPLET_SEGM_REAL_DATASET_YOLO, EVAL_DROPLET_STATS_REAL_DATASET_YOLO, config.DATA_REAL_WSP_TESTING_DIR, config.RESULTS_REAL_CCV_DIR, model, 0.5, 10, 76)
         update_general_evaluation_droplet_segm(EVAL_DROPLET_SEGM_GENERAL, EVAL_DROPLET_SEGM_REAL_DATASET_YOLO, "droplet_real_dataset_yolo")
         update_general_evaluation_droplet_stats(EVAL_DROPLET_STATS_GENERAL, EVAL_DROPLET_STATS_REAL_DATASET_YOLO, "droplet_real_dataset_yolo")
         
     if isDropletMRCNN:
         # SYNTHETIC DATASET
-        evaluate_droplet.main_mrcnn(FIELDNAMES_DROPLET_SEGMENTATION, FIELDNAMES_DROPLET_STATISTICS, EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO, EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, config.DATA_SYNTHETIC_WSP_TESTING_DIR, config.RESULTS_SYNTHETIC_CCV_DIR, DROPLET_MRCNN_MODEL, 0.5, 10, 76)
+        evaluate_droplet.main_mrcnn(FIELDNAMES_DROPLET_SEGMENTATION, FIELDNAMES_DROPLET_STATISTICS, EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO, EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, config.DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR, config.RESULTS_SYNTHETIC_CCV_DIR, DROPLET_MRCNN_MODEL, 0.5, 10, 76)
         update_general_evaluation_droplet_segm(EVAL_DROPLET_SEGM_GENERAL, EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO, "droplet_synthetic_dataset_mrcnn")
         update_general_evaluation_droplet_stats(EVAL_DROPLET_STATS_GENERAL, EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, "droplet_synthetic_dataset_mrcnn")
 
@@ -248,7 +249,8 @@ def compute_evaluations():
         update_general_evaluation_paper(EVAL_PAPER_SEGM_GENERAL, EVAL_PAPER_SEGM_CV, "paper_classicalcomputervision")
     
     if isPaperYOLO:
-        evaluate_paper.main_yolo(EVAL_PAPER_SEGM_YOLO, FIELDNAMES_RECTANGLE, config.DATA_REAL_PAPER_DIR, PAPER_YOLO_MODEL)
+        model = YOLO(PAPER_YOLO_MODEL)
+        evaluate_paper.main_yolo(EVAL_PAPER_SEGM_YOLO, FIELDNAMES_RECTANGLE, config.DATA_REAL_PAPER_DIR, model)
         update_general_evaluation_paper(EVAL_PAPER_SEGM_GENERAL, EVAL_PAPER_SEGM_YOLO, "paper_yolo")
 
 

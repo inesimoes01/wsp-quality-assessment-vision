@@ -24,9 +24,6 @@ import tensorflow.keras.models as KM
 
 #import tensorflow.keras.engine as KE
 
-
-
-
 from mrcnn import utils
 import sys
 from mrcnn.parallel_model import ParallelModel
