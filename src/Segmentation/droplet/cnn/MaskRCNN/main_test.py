@@ -129,13 +129,13 @@ for filename in os.listdir(os.path.join(DATASET_PATH, "test")):
     if os.path.splitext(filename)[1].lower() in ['.png', '.jpg', '.jpeg']:
         image_paths.append(os.path.join(DATASET_TEST_PATH, filename))
 
-# for image_path in image_paths:
-#     img = skimage.io.imread(image_path)
-#     img_arr = np.array(img)
-#     results = model.detect([img_arr])
-#     r = results[0]
-#     #visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], 
-#                                 #dataset_val.class_names, r['scores'], figsize=(5,5))
+for image_path in image_paths:
+    img = skimage.io.imread(image_path)
+    img_arr = np.array(img)
+    results = model.detect([img_arr])
+    r = results[0]
+    visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], 
+                                dataset_val.class_names, r['scores'], figsize=(5,5))
     
 
 tp, fp, fn, gt_bbox, gt_class_id, gt_mask, r = draw_confusion_matrix(inference_config, dataset_val)

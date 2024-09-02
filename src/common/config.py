@@ -4,7 +4,7 @@ import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
-DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "test"
+DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "test_yolo"
 DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "test"
 
 DATA_SYNTHETIC_NORMAL_WSP_MRCNN_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "mrcnn_ready"
@@ -32,7 +32,7 @@ RESULTS_CELLPOSE_DIR = Path("results") / "cellpose"
 RESULTS_LATEX_DIR = Path("results") / "latex"
 RESULTS_LATEX_PIP_DIR = Path("results") / "latex" / "pipeline"
 RESULTS_LATEX_PIP_ROI_DIR = Path("results") / "latex" / "pipeline" / "rois"
-YOLO_MODEL_DIR = Path("models") 
+YOLO_MODEL_DIR = Path("models") / "yolo_droplet" / "50epc_droplet4"
 
 
 DATA_GENERAL_STATS_FOLDER_NAME = "statistics"

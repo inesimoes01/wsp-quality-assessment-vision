@@ -4,7 +4,7 @@ import sys
 ROOT_DIR = os.path.abspath("")
 
 sys.path.insert(0, 'src')
-import common.config as path_configurations
+import Common.config as path_configurations
 import Segmentation.droplet.cnn.MaskRCNN.custom_mrcnn_classes as custom_mrcnn_classes
 
 

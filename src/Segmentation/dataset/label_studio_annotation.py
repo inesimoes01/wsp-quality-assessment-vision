@@ -51,9 +51,6 @@ def close_contour(contour):
 
 def contour_to_label_studio_format(contours, image_width, image_height, path_to_file):
     annotations = []
-
-
-    
     for contour in contours:
 
         area = cv2.contourArea(contour)
@@ -102,28 +99,7 @@ def contour_to_label_studio_format(contours, image_width, image_height, path_to_
             "original_width": image_width,
             "original_height": image_height,
         }
-           
-        
-        # result = {
-        #     "original_width": image_width,
-        #     "original_height": image_height,
-        #     "image_rotation": 0,
-        #     "value": {
-        #         "points": points,
-        #         "closed": True,
-        #         "polygonlabels": [class_name]
-        #     },
-        #     "id": str(uuid.uuid4()),  # Unique ID for each annotation
-        #     "from_name": "label",
-        #     "to_name": "image",
-        #     "type": "polygonlabels",
-        #     "origin": "manual"
-        # }
         annotations.append(result)
-
-
-
-    
     return annotations
 
 def save_annotations_to_json(results, image_name, path):
@@ -139,28 +115,6 @@ def save_annotations_to_json(results, image_name, path):
             "project": 8
         }],
     }
-
-    # task = {
-    #     'data': {'image': image_name},
-    #     'annotations': [{
-    #         'created_username': ' up201904665@up.pt, 1',
-    #         'completed_by': 1,
-    #         'result': results,
-    #         'was_cancelled': False,
-    #         'ground_truth': False,
-    #         'created_at': '2024-06-20T13:30:47.192675Z',
-    #         'updated_at': '2024-06-20T13:38:11.981557Z',
-    #         'draft_created_at': '2024-06-20T13:30:25.149324Z',
-    #         'lead_time': 448.987,
-    #         'task': 33,
-    #         'project': 1,
-    #         'updated_by': 1,
-    #         'parent_prediction': 3,
-    #     }],
-    #     'predictions': []
-    #     }
-
-
     with open(path, 'w') as f:
         json.dump(task, f)
 
