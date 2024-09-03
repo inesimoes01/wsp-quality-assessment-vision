@@ -83,40 +83,6 @@ def compute_ccv_segmentation(image_colors, image_gray, filename, results_path):
 
     return sorted_droplets, predicted_seg.droplet_shapes, predicted_stats
 
-def compute_yolo_segmentation(image_path, width, height, image_width_mm, yolo_model):
-    # predict image results
-    results = yolo_model(image_path, conf=0.1)
-    segmentation_result = results[0].masks.xy
-
-    predicted_droplets_adjusted = []
-    detected_pts = []
-
-    for polygon in segmentation_result:
-        pts = np.array(polygon, np.int32)
-        pts = pts.reshape((-1, 1, 2))
-        detected_pts.append(pts)
-
-    image = cv2.imread(image_path)
-    for pts in detected_pts:
-        cv2.polylines(image, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
-
-    plt.imshow(image)
-    plt.show()
-
-    for coords in detected_pts:
-        adjusted_coords = []
-        for point in coords:
-            x, y = point[0]
-            adjusted_coords.append([x, y])
-        if adjusted_coords != []:
-            predicted_droplets_adjusted.append(np.array(adjusted_coords, dtype=np.int32))
-
-    predicted_droplets_with_centroid, predicted_stats = util.calculate_yolo_stats(predicted_droplets_adjusted, width, height, image_width_mm, image_path)
-
-    return predicted_droplets_adjusted, predicted_droplets_with_centroid, predicted_stats
-
-
-
 
 def main_ccv(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, iou_threshold, distance_threshold):
     directory_image, directory_label, directory_stats = manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_segmentation, path_csv_statistics, fieldnames_statistics)

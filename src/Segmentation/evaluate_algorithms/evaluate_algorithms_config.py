@@ -22,7 +22,7 @@ FIELDNAMES_DROPLET_GENERAL_SEGMENTATION = ['method', 'precision', 'recall', 'f1-
 
 # YOLO MODELS
 PAPER_YOLO_MODEL = os.path.join("models\\yolo_rectangle\\30epc_rectangle7", "weights", "best.pt")
-DROPLET_YOLO_MODEL = os.path.join("models\\yolo_droplet\\50epc_droplet4", "weights", "best.pt")
+DROPLET_YOLO_MODEL = os.path.join("models\\droplets\\yolo_droplet\\50epc_droplet4", "weights", "best.pt")
 
 # MRCNN MODELS
 DROPLET_MRCNN_MODEL = "models\\droplets\\mrcnn\\mask_rcnn_droplet_dataset_0050.h5"

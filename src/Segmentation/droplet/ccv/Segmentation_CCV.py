@@ -20,9 +20,8 @@ detected_colors = [circle_color, elipse_color, overlapped_color, edge_color]
 
 
 class Segmentation_CCV:
-    def __init__(self, image_color, image_gray, filename, save_image_steps:bool, create_masks:bool, segmentation_method:int, dataset_results_folder):
+    def __init__(self, image_color, image_gray, filename, save_image_steps:bool, segmentation_method:int, dataset_results_folder):
         self.save_image_steps = save_image_steps
-        self.create_masks = create_masks
         self.filename = filename
     
         self.initialize_variables(image_gray, image_color)
@@ -99,11 +98,7 @@ class Segmentation_CCV:
                                 self.save_single_droplet(contour, i, center_x, center_y, contour_area, overlapped_ids, 1)
                             
 
-        # # create the masks and calculate values for statistics
-        if self.create_masks:
-            cv2.imwrite(os.path.join(dataset_results_folder, config.RESULTS_GENERAL_MASK_OV_FOLDER_NAME, filename + '.png'), self.mask_overlapped)
-            cv2.imwrite(os.path.join(dataset_results_folder, config.RESULTS_GENERAL_MASK_SIN_FOLDER_NAME, filename + '.png'), self.mask_single)
-        
+
 
         self.detected_image = cv2.cvtColor(self.detected_image, cv2.COLOR_BGR2RGB)
         cv2.imwrite(os.path.join(dataset_results_folder, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, filename + ".png"), self.detected_image)
@@ -162,8 +157,7 @@ class Segmentation_CCV:
 
             self.droplets_data.append(Droplet(center_x, center_y, circle_area, int(index + j), overlapped_ids, radius))
             cv2.circle(self.detected_image, (center_x, center_y), radius, detected_colors[2], 1)
-            if self.create_masks: cv2.circle(self.mask_overlapped, (center_x, center_y), radius, 255, cv2.FILLED)
-           
+            
             self.final_no_droplets += 1        
             
             j+=1
@@ -183,8 +177,7 @@ class Segmentation_CCV:
        
         self.droplets_data.append(Droplet(center_x, center_y, area, id, overlappedIDs))
         cv2.drawContours(self.detected_image, [contour], -1, detected_colors[shape], 1)
-        if self.create_masks: cv2.drawContours(self.mask_single, [contour], -1, 255, cv2.FILLED)
-
+        
         cv2.drawContours(self.separate_image, [contour], -1, detected_colors[shape], 1)
 
         self.droplet_shapes[id] = contour
@@ -282,11 +275,6 @@ class Segmentation_CCV:
 
         self.height, self.width, _ = image_color.shape
 
-        # create masks
-        if self.create_masks:
-            mask = np.zeros_like(self.image_color)
-            self.mask_overlapped = copy.copy(mask)
-            self.mask_single = copy.copy(mask)
 
         # initialize variables
         self.droplets_data:list[Droplet]=[]
@@ -294,12 +282,6 @@ class Segmentation_CCV:
         self.droplet_shapes = {}
 
         self.final_no_droplets = 0
-
-    def create_mask(self, category, contour):
-        if category == 2:
-            if self.create_masks: cv2.drawContours(self.mask_overlapped, [contour], -1, 255, thickness=cv2.FILLED)
-        else:
-            if self.create_masks: cv2.drawContours(self.mask_single, [contour], -1, 255, thickness=cv2.FILLED)
 
     def get_contours(self):        
         img = copy.copy(self.image_gray)

@@ -23,10 +23,16 @@ DATA_REAL_RAW_DIR = Path("data") / "real_rectangle_dataset" / "test"
 DATA_REAL_PROC_DIR = Path("data") / "real_dataset" / "processed" 
 DATA_REAL_PAPER_DIR = Path("data") / "real_dataset" / "paper" /"raw" 
 
-RESULTS_REAL_CCV_DIR = Path("results") / "computer_vision_algorithm" / "real_dataset"
-RESULTS_SYNTHETIC_CCV_DIR = Path("results") / "computer_vision_algorithm" / "synthetic_dataset"
-RESULTS_ACCURACY_DIR = Path("results") / "metrics" 
+# RESULTS_REAL_CCV_DIR = Path("results") / "computer_vision_algorithm" / "real_dataset"
+# RESULTS_SYNTHETIC_CCV_DIR = Path("results") / "computer_vision_algorithm" / "synthetic_dataset"
+# RESULTS_ACCURACY_DIR = Path("results") / "metrics" 
 
+RESULTS_REAL_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "real_dataset"
+RESULTS_SYNTHETIC_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "synthetic_dataset"
+RESULTS_REAL_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "real_dataset"
+RESULTS_SYNTHETIC_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "synthetic_dataset"
+RESULTS_REAL_CCV_DIR = Path("results") / "droplet_detection" / "computer_vision_algorithm" / "real_dataset"
+RESULTS_SYNTHETIC_CCV_DIR = Path("results") / "droplet_detection" / "computer_vision_algorithm" / "synthetic_dataset"
 
 RESULTS_CELLPOSE_DIR = Path("results") / "cellpose"
 RESULTS_LATEX_DIR = Path("results") / "latex"
@@ -51,6 +57,7 @@ RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME = "droplet_visual_classificati
 RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME = "undistorted"
 RESULTS_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single" 
 RESULTS_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
+RESULTS_GENERAL_SEGMENTATIONTIME_FOLDER_NAME = "segmentation_time"
 
 CODE_MRCNN_DIR = Path("src") / "Segmentation" / "droplet" / "cnn" / "MaskRCNN"
 MODELS_MRCNN_DIR = Path("models") / "mrcnn"
