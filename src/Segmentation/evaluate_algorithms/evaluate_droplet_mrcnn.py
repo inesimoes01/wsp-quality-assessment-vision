@@ -80,23 +80,18 @@ def manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_
     list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_MASK_OV_FOLDER_NAME))
     FoldersUtil.manage_folders(list_folders)
 
-    with open(path_csv_segmentation, mode='w', newline='') as file:
-        csv.DictWriter(file, fieldnames=fieldnames_segmentation).writeheader()
-
-    with open(path_csv_statistics, mode='w', newline='') as file:
-        csv.DictWriter(file, fieldnames=fieldnames_statistics).writeheader()
 
     return directory_image, directory_label, directory_stats
 
 
 
-def main_mrcnn(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, model_path):
+def main_mrcnn(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, model_path):
     directory_image, directory_label, directory_stats = manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_segmentation, path_csv_statistics, fieldnames_statistics)
     
     segmentation_time_csv_path = os.path.join(path_results, config.RESULTS_GENERAL_SEGMENTATIONTIME_FOLDER_NAME + ".csv")
     with open(segmentation_time_csv_path, mode='w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Filename', 'Segmentation Time (seconds)'])
+        csv_writer.writerow()
         
 
         # apply the segmentation in each one of the images and then calculate the accuracy and save it

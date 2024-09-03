@@ -10,7 +10,7 @@ DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" 
 DATA_SYNTHETIC_NORMAL_WSP_MRCNN_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "mrcnn_ready"
 
 #DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset" / "wsp" 
-DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset_new" / "wsp" 
+DATA_SYNTHETIC_WSP_DIR = Path("data") / "synthetic_dataset_normal_droplets" / "wsp" 
 DATA_SYNTHETIC_SIMPLE_WSP_DIR = Path("data") / "synthetic_simple_dataset" / "wsp" 
 DATA_REAL_RECTANGLE_DIR = Path("data") / "real_rectangle_dataset" / "wsp" 
 
@@ -61,6 +61,8 @@ RESULTS_GENERAL_SEGMENTATIONTIME_FOLDER_NAME = "segmentation_time"
 
 CODE_MRCNN_DIR = Path("src") / "Segmentation" / "droplet" / "cnn" / "MaskRCNN"
 MODELS_MRCNN_DIR = Path("models") / "mrcnn"
+
+FIELDNAMES_STATISTICS = ['VMD', 'RSF', 'Coverage %', 'Nº Droplets', 'Overlapped Droplets %', 'Number of overlapped droplets']
 
 ### CREATE SYNTHETIC DATASET VALUES
 

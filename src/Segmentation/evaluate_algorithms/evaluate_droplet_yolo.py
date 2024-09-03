@@ -68,13 +68,9 @@ def manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_
     # manage folders to store the results of the segmentation
     list_folders = []
     list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_STATS_FOLDER_NAME))
-    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_ACC_FOLDER_NAME))
     list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_LABEL_FOLDER_NAME))
-    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_INFO_FOLDER_NAME))
     list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME))
-    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME))
-    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_MASK_SIN_FOLDER_NAME))
-    list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_MASK_OV_FOLDER_NAME))
+
     FoldersUtil.manage_folders(list_folders)
 
     with open(path_csv_segmentation, mode='w', newline='') as file:
@@ -85,13 +81,13 @@ def manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_
 
     return directory_image, directory_label, directory_stats
 
-def main_yolo(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, yolo_model):
+def main_yolo(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, yolo_model):
     directory_image, directory_label, directory_stats = manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_segmentation, path_csv_statistics, fieldnames_statistics)
  
     segmentation_time_csv_path = os.path.join(path_results, config.RESULTS_GENERAL_SEGMENTATIONTIME_FOLDER_NAME + ".csv")
     with open(segmentation_time_csv_path, mode='w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Filename', 'Segmentation Time (seconds)'])
+        csv_writer.writerow(fieldnames_time)
         
 
         # apply the segmentation in each one of the images and then calculate the accuracy and save it
@@ -119,7 +115,7 @@ def main_yolo(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentat
                 segmentation_time = seg_time - start_time
                 
                 # save segmentation time to a file
-                csv_writer.writerow([file, segmentation_time])
+                csv_writer.writerow([filename, segmentation_time])
 
                 save_shapes_to_yolo_label(label_path, predicted_droplets, width, height)
 
@@ -132,6 +128,7 @@ model = YOLO(evaluate_algorithms_config.DROPLET_YOLO_MODEL)
 # SYNTHETIC DATASET
 main_yolo(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
           evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
+          evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
           evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO, 
           evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, 
           config.DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR,
@@ -141,6 +138,7 @@ main_yolo(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION,
 # REAL DATASET
 main_yolo(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
           evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
+          evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
           evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_DATASET_YOLO, 
           evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_DATASET_YOLO, 
           config.DATA_REAL_WSP_TESTING_DIR, 

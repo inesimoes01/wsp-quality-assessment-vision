@@ -30,12 +30,6 @@ def manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_
     list_folders.append(os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME))
     FoldersUtil.manage_folders(list_folders)
 
-    with open(path_csv_segmentation, mode='w', newline='') as file:
-        csv.DictWriter(file, fieldnames=fieldnames_segmentation).writeheader()
-
-    with open(path_csv_statistics, mode='w', newline='') as file:
-        csv.DictWriter(file, fieldnames=fieldnames_statistics).writeheader()
-
     return directory_image, directory_label, directory_stats
 
 def save_shapes_to_yolo_label(label_path, droplets_detected, width, height):
@@ -53,8 +47,7 @@ def save_shapes_to_yolo_label(label_path, droplets_detected, width, height):
             yolo_line = f"0"
             for (x_norm, y_norm) in normalized_points:
                 yolo_line += f" {x_norm:.10f} {y_norm:.10f}"
-            file.write(yolo_line + "\n")
-               
+            file.write(yolo_line + "\n")      
 
 
 def compute_ccv_segmentation(image_colors, image_gray, filename, results_path):

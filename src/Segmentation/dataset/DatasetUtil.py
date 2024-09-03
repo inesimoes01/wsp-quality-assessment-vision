@@ -4,40 +4,48 @@ import sys
 import cv2
 import numpy as np
 import random
+import pandas as pd
 from shutil import copyfile
 from PIL import Image
 from sklearn.model_selection import KFold
+from shapely import Polygon
 
 random.seed(42)
 
 sys.path.insert(0, 'src')
-import common.config as config
+import Common.config as config
+from Common.Statistics import Statistics as stats
 
 
 def prepare_dataset_for_yolo():
-    original_dataset_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\raw"
-    output_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\cropped"
-    separated_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\divided"
+    original_dataset_folder = "data\\droplets\\real_dataset_droplets\\raw"
+    output_squares_folder = "data\\droplets\\real_dataset_droplets\\cropped"
+    separated_squares_folder = "data\\droplets\\real_dataset_droplets\\divided"
 
     print("Dividing images into squares...")
-    #divide_images_into_squares_with_yolo_annotations(original_dataset_folder, output_squares_folder)
+    divide_images_into_squares_with_yolo_annotations(original_dataset_folder, output_squares_folder)
 
-    print("Applying Kfold...")
+    print("Dividing dataset...")
     split_dataset_normal(output_squares_folder, separated_squares_folder)
 
 def split_dataset_normal(source_dir, dest_dir, train_ratio=0.7, val_ratio=0.1):
 
-    train_dir_im = os.path.join(dest_dir, 'train', 'image')
-    val_dir_im = os.path.join(dest_dir, 'val', 'image')
-    test_dir_im = os.path.join(dest_dir, 'test', 'image')
-    train_dir_l = os.path.join(dest_dir, 'train', 'label')
-    val_dir_l = os.path.join(dest_dir, 'val', 'label')
-    test_dir_l = os.path.join(dest_dir, 'test', 'label')
+    train_dir_im = os.path.join(dest_dir, 'train', config.DATA_GENERAL_IMAGE_FOLDER_NAME)
+    val_dir_im = os.path.join(dest_dir, 'val', config.DATA_GENERAL_IMAGE_FOLDER_NAME)
+    test_dir_im = os.path.join(dest_dir, 'test', config.DATA_GENERAL_IMAGE_FOLDER_NAME)
+    train_dir_l = os.path.join(dest_dir, 'train', config.DATA_GENERAL_LABEL_FOLDER_NAME)
+    val_dir_l = os.path.join(dest_dir, 'val', config.DATA_GENERAL_LABEL_FOLDER_NAME)
+    test_dir_l = os.path.join(dest_dir, 'test', config.DATA_GENERAL_LABEL_FOLDER_NAME)
+    train_dir_s = os.path.join(dest_dir, 'train', config.DATA_GENERAL_STATS_FOLDER_NAME)
+    val_dir_s = os.path.join(dest_dir, 'val', config.DATA_GENERAL_STATS_FOLDER_NAME)
+    test_dir_s = os.path.join(dest_dir, 'test', config.DATA_GENERAL_STATS_FOLDER_NAME)
     
 
     for directory in [train_dir_im, val_dir_im, test_dir_im]:
         os.makedirs(directory, exist_ok=True)
     for directory in [train_dir_l, val_dir_l, test_dir_l]:
+        os.makedirs(directory, exist_ok=True)
+    for directory in [train_dir_s, val_dir_s, test_dir_s]:
         os.makedirs(directory, exist_ok=True)
     
     # List all image in the source directory
@@ -58,29 +66,31 @@ def split_dataset_normal(source_dir, dest_dir, train_ratio=0.7, val_ratio=0.1):
     test_image = image[num_train + num_val:]
     
     # Function to copy image and label
-    def copy_image_and_label(image_list, split_dir_im, split_dir_l):
+    def copy_image_and_label(image_list, split_dir_im, split_dir_l, split_dir_s):
         for image_name in image_list:
             filename = os.path.splitext(image_name)[0]
         
             image_path = os.path.join(source_dir, config.DATA_GENERAL_IMAGE_FOLDER_NAME, filename + ".png")
             label_name = image_name.replace('.png', '.txt')  # Assuming label are txt files
             label_path = os.path.join(source_dir, config.DATA_GENERAL_LABEL_FOLDER_NAME, filename + ".txt")
+            stats_path = os.path.join(source_dir, config.DATA_GENERAL_STATS_FOLDER_NAME, filename + ".csv")
             
             # Copy image
             shutil.copy(image_path, os.path.join(split_dir_im, filename+ ".png"))
             
             # Copy label
             shutil.copy(label_path, os.path.join(split_dir_l, filename+ ".txt"))
+
+            shutil.copy(stats_path, os.path.join(split_dir_s, filename + ".csv"))
     
     # Copy image and label to train directory
-    copy_image_and_label(train_image, train_dir_im, train_dir_l)
+    copy_image_and_label(train_image, train_dir_im, train_dir_l, train_dir_s)
     
     # Copy image and label to validation directory
-    copy_image_and_label(val_image, val_dir_im, val_dir_l)
+    copy_image_and_label(val_image, val_dir_im, val_dir_l, val_dir_s)
     
     # Copy image and label to test directory
-    copy_image_and_label(test_image, test_dir_im, test_dir_l)
-
+    copy_image_and_label(test_image, test_dir_im, test_dir_l, test_dir_s)
 
 def split_dataset_kfold(dataset_folder, output_dir, n_splits=5):
 
@@ -146,8 +156,61 @@ def split_dataset_kfold(dataset_folder, output_dir, n_splits=5):
         
         fold += 1
         
+def calculate_statistics_from_yolo_annotation(shapes, width_px, height_px, width_mm, statistics_file_path):
+    total_droplet_area = 0
+    total_no_droplets = 0
+    list_droplet_area = []
+    list_polygons = []
+    
+    # get general information from the polygons
+    for pred in shapes:
+        if len(pred) >= 8:
+            coordinate_pairs = []
+            for i in range(0, len(pred), 2):
+                x = pred[i] * width_px
+                y = pred[i + 1] * height_px
+                coordinate_pairs.append((x, y))
 
+            polygon = Polygon(coordinate_pairs)
+            list_polygons.append(polygon)
+            polygon_area = polygon.area
 
+            total_droplet_area += polygon_area
+            list_droplet_area.append(polygon_area)
+            total_no_droplets += 1
+
+    # get list of the droplet diameters
+    diameter_list = sorted(stats.area_to_diameter_micro(list_droplet_area, width_px, width_mm))
+    
+    # find the overlapping polygons
+    no_droplets_overlapped = 0
+    overlapping_polygons = []
+    for i, polygon in enumerate(list_polygons):
+        if not polygon.is_valid:
+            polygon = polygon.buffer(0)  # Attempt to fix invalid polygon
+        for j, other_polygon in enumerate(list_polygons):
+            if i != j:
+                if not other_polygon.is_valid:
+                    other_polygon = other_polygon.buffer(0)  # Attempt to fix invalid other polygon
+                if polygon.intersects(other_polygon):
+                    overlapping_polygons.append(i)
+                    overlapping_polygons.append(j)
+                    
+    no_droplets_overlapped = len(overlapping_polygons)
+    overlaped_percentage = no_droplets_overlapped / total_no_droplets * 100
+
+    # calculate statistics
+    vmd_value, coverage_percentage, rsf_value, _ = stats.calculate_statistics(diameter_list, height_px * width_px, total_droplet_area)    
+    predicted_stats = stats(vmd_value, rsf_value, coverage_percentage, total_no_droplets, no_droplets_overlapped, overlaped_percentage)
+    
+    data = {
+        '': config.FIELDNAMES_STATISTICS,
+        'Groundtruth': [predicted_stats.vmd_value, predicted_stats.rsf_value, predicted_stats.coverage_percentage, predicted_stats.no_droplets, predicted_stats.overlaped_percentage, predicted_stats.no_droplets_overlapped], 
+    }
+    df = pd.DataFrame(data)
+    df.to_csv(statistics_file_path, index=False, float_format='%.2f')
+
+    return predicted_stats  
 
 def divide_images_into_squares_with_yolo_annotations(original_dataset_folder, output_folder, square_size=320):
     """
@@ -185,8 +248,12 @@ def divide_images_into_squares_with_yolo_annotations(original_dataset_folder, ou
      
         height, width, _ = image.shape
 
+        if height > width: width_mm = 26
+        else: width_mm = 76
+
         for y in range(0, height, square_size):
             for x in range(0, width, square_size):
+                
                 # extract the square
                 square = image[y:y+square_size, x:x+square_size]
 
@@ -220,6 +287,10 @@ def divide_images_into_squares_with_yolo_annotations(original_dataset_folder, ou
                         adjusted_labels.append(coordinates)
                 
                 if len(adjusted_labels) > 0:
+                    square_filename = f"{filename}_{square_count}"
+                    # calculate statistics 
+                    calculate_statistics_from_yolo_annotation(adjusted_labels, original_square_shape[1], original_square_shape[0], original_square_shape[1] * width_mm / width, os.path.join(output_folder, config.DATA_GENERAL_STATS_FOLDER_NAME, square_filename + ".csv"))
+
                     # Save the square
                     square_filename = f"{filename}_{square_count}.png"
                     square_path = os.path.join(output_folder, config.DATA_GENERAL_IMAGE_FOLDER_NAME, square_filename)
@@ -238,7 +309,6 @@ def _read_labels(label_file):
     with open(label_file, 'r') as f:
         lines = f.readlines()
     return lines
-
 
 def _save_split(images, labels, output_dir, split_name):
     image_output_dir = os.path.join(output_dir, split_name, config.DATA_GENERAL_IMAGE_FOLDER_NAME)

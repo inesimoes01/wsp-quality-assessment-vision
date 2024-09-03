@@ -1,1 +1,4 @@
-file,precision,recall,f1_score,map50,map50-95,tp,fp,fn,segmentation_time
+method,precision,recall,f1-score,map50,map50-95,tp,fp,fn,segmentation_time
+0_0_0,0.9935897435897436,0.5,0.6652360515021459,0.541958041958042,0.5419580419580419,155,1,155,"Empty DataFrame
+Columns: [Filename, Segmentation Time (seconds)]
+Index: []"

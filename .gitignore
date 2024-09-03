@@ -156,5 +156,5 @@ cython_debug/
 images/
 inputs/
 data/
-results/yolo
+results/droplet_detection
 models/

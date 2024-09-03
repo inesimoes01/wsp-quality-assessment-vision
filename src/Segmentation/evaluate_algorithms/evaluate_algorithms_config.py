@@ -17,8 +17,10 @@ FIELDNAMES_DROPLET_GENERAL_STATISTICS = ["method",
                                 "VMD_median", "RSF_median", "CoveragePercentage_median", "NoDroplets_median", "OtherCoveragePercentage_median",
                                 "VMD_std", "RSF_std", "CoveragePercentage_std", "NoDroplets_std", "OtherCoveragePercentage_std",
                                 "VMD_max", "RSF_max", "CoveragePercentage_max", "NoDroplets_max", "OtherCoveragePercentage_max",]
-FIELDNAMES_DROPLET_GENERAL_SEGMENTATION = ['method', 'precision', 'recall', 'f1-score', 'map50', 'map50-95', 'tp', 'fp', 'fn', 'segmentation_time', 'iou_mask']
+FIELDNAMES_DROPLET_GENERAL_SEGMENTATION = ['method', 'precision', 'recall', 'f1-score', 'map50', 'map50-95', 'tp', 'fp', 'fn', 'segmentation_time']
 
+FIELDNAMES_SEGMENTATION_TIME = ['Filename', 'Segmentation Time (seconds)']
+FIELDNAMES_PREDICTED_STATISTICS = ['VMD', 'RSF', 'Coverage %', 'Nº Droplets', 'Overlapped Droplets %', 'Number of overlapped droplets']
 
 # YOLO MODELS
 PAPER_YOLO_MODEL = os.path.join("models\\yolo_rectangle\\30epc_rectangle7", "weights", "best.pt")
