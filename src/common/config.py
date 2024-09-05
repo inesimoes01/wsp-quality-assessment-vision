@@ -4,15 +4,10 @@ import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
-DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "divided" / "test"
+DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_droplets" / "divided" / "test"
 DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "divided" / "test"
 
-DATA_SYNTHETIC_NORMAL_WSP_MRCNN_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "mrcnn_ready"
-
-#DATA_SYNTHETIC_NORMAL_WSP_DIR = Path("data") / "synthetic_normal_dataset" / "wsp" 
-DATA_SYNTHETIC_WSP_DIR = Path("data") / "synthetic_dataset_normal_droplets" / "wsp" 
-DATA_SYNTHETIC_SIMPLE_WSP_DIR = Path("data") / "synthetic_simple_dataset" / "wsp" 
-DATA_REAL_RECTANGLE_DIR = Path("data") / "real_rectangle_dataset" / "wsp" 
+DATA_SYNTHETIC_FULL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_droplets" / "full" / "divided" / "test"
 
 DATA_SYNTHETIC_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
 DATA_SYNTHETIC_BG_DIR = Path("data") / "artificial_dataset" / "background" 
@@ -27,12 +22,21 @@ DATA_REAL_PAPER_DIR = Path("data") / "real_dataset" / "paper" /"raw"
 # RESULTS_SYNTHETIC_CCV_DIR = Path("results") / "computer_vision_algorithm" / "synthetic_dataset"
 # RESULTS_ACCURACY_DIR = Path("results") / "metrics" 
 
-RESULTS_REAL_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "real_dataset"
-RESULTS_SYNTHETIC_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "synthetic_dataset"
-RESULTS_REAL_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "real_dataset"
-RESULTS_SYNTHETIC_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "synthetic_dataset"
-RESULTS_REAL_CCV_DIR = Path("results") / "droplet_detection" / "computer_vision_algorithm" / "real_dataset"
-RESULTS_SYNTHETIC_CCV_DIR = Path("results") / "droplet_detection" / "computer_vision_algorithm" / "synthetic_dataset"
+RESULTS_REAL_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "real_dataset" / "square"
+RESULTS_SYNTHETIC_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "synthetic_dataset" / "square"
+RESULTS_REAL_FULL_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "real_dataset" / "full"
+RESULTS_SYNTHETIC_FULL_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "synthetic_dataset" / "full"
+
+RESULTS_REAL_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "real_dataset" / "square"
+RESULTS_SYNTHETIC_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "synthetic_dataset" / "square"
+RESULTS_REAL_FULL_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "real_dataset" / "full"
+RESULTS_SYNTHETIC_FULL_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "synthetic_dataset" / "full"
+
+RESULTS_REAL_CCV_DIR = Path("results") / "droplet_detection" / "computer_vision_algorithm" / "real_dataset" / "square" 
+RESULTS_SYNTHETIC_CCV_DIR = Path("results") / "droplet_detection" / "computer_vision_algorithm" / "synthetic_dataset" / "square" 
+RESULTS_REAL_FULL_CCV_DIR = Path("results") / "droplet_detection" / "computer_vision_algorithm" / "real_dataset" / "full"
+RESULTS_SYNTHETIC_FULL_CCV_DIR = Path("results") / "droplet_detection" / "computer_vision_algorithm" / "synthetic_dataset" / "full"
+
 
 RESULTS_CELLPOSE_DIR = Path("results") / "cellpose"
 RESULTS_LATEX_DIR = Path("results") / "latex"

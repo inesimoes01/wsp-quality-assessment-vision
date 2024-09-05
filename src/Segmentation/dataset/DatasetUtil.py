@@ -18,25 +18,27 @@ from Common.Statistics import Statistics as stats
 
 
 def prepare_dataset_for_yolo():
-    original_dataset_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\raw"
+    original_dataset_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\raw"
     output_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\cropped2"
-    separated_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\divided"
+    separated_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided"
+
+    original_dataset_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided\\test"
+    output_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided\\test_divided"
+    print("Dividing images into squares...")
+    divide_images_into_squares_with_yolo_annotations(original_dataset_folder, output_squares_folder)
+
+    print("Dividing dataset...")
+    #split_dataset_normal(original_dataset_folder, separated_squares_folder)
+
+    original_dataset_folder = "data\\droplets\\real_dataset_droplets\\full\\raw"
+    output_squares_folder = "data\\droplets\\real_dataset_droplets\\cropped2"
+    separated_squares_folder = "data\\droplets\\real_dataset_droplets\\full\\divided"
 
     print("Dividing images into squares...")
     #divide_images_into_squares_with_yolo_annotations(original_dataset_folder, output_squares_folder)
 
     print("Dividing dataset...")
-    split_dataset_normal(output_squares_folder, separated_squares_folder)
-
-    original_dataset_folder = "data\\droplets\\real_dataset_droplets\\raw"
-    output_squares_folder = "data\\droplets\\real_dataset_droplets\\cropped2"
-    separated_squares_folder = "data\\droplets\\real_dataset_droplets\\divided"
-
-    print("Dividing images into squares...")
-    divide_images_into_squares_with_yolo_annotations(original_dataset_folder, output_squares_folder)
-
-    print("Dividing dataset...")
-    split_dataset_normal(output_squares_folder, separated_squares_folder)
+    #split_dataset_normal(original_dataset_folder, separated_squares_folder)
 
 def split_dataset_normal(source_dir, dest_dir, train_ratio=0.7, val_ratio=0.1):
 
@@ -301,16 +303,16 @@ def divide_images_into_squares_with_yolo_annotations(original_dataset_folder, ou
                 
                 if len(adjusted_labels) > 0:
                     width_mm_str = str(original_square_shape[1] * width_mm / width).replace('.', '_')
-                    square_filename = f"{filename}_{square_count}-{width_mm_str}"
+                    square_filename = f"{filename}_{x}_{y}-{width_mm_str}"
                     # calculate statistics 
                     calculate_statistics_from_yolo_annotation(adjusted_labels, original_square_shape[1], original_square_shape[0], original_square_shape[1] * width_mm / width, os.path.join(output_folder, config.DATA_GENERAL_STATS_FOLDER_NAME, square_filename + ".csv"))
 
                     # Save the square
-                    square_filename = f"{filename}_{square_count}-{width_mm_str}.png"
+                    square_filename = f"{filename}_{x}_{y}-{width_mm_str}.png"
                     square_path = os.path.join(output_folder, config.DATA_GENERAL_IMAGE_FOLDER_NAME, square_filename)
                     cv2.imwrite(square_path, square)
 
-                    label_filename = f"{filename}_{square_count}-{width_mm_str}.txt"
+                    label_filename = f"{filename}_{x}_{y}-{width_mm_str}.txt"
                     cropped_label_path = os.path.join(output_folder, config.DATA_GENERAL_LABEL_FOLDER_NAME, label_filename)    
                     with open(cropped_label_path, 'w') as f:
                         for coords in adjusted_labels:
@@ -318,6 +320,24 @@ def divide_images_into_squares_with_yolo_annotations(original_dataset_folder, ou
                             f.write(f"{0} {coord_str}\n")
                     
                     square_count += 1
+
+def divide_image_into_squares_simple(image, square_size=320):
+
+    list_squares = []   
+    height, width, _ = image.shape
+
+    for y in range(0, height, square_size):
+        for x in range(0, width, square_size):
+            
+            # extract the square
+            square = image[y:y+square_size, x:x+square_size]
+            original_square_shape = square.shape
+
+            list_squares.append((square, x, y, original_square_shape))
+    
+    return list_squares
+            
+            
 
 def _read_labels(label_file):
     with open(label_file, 'r') as f:
@@ -337,4 +357,4 @@ def _save_split(images, labels, output_dir, split_name):
 
 
 
-prepare_dataset_for_yolo()
+#prepare_dataset_for_yolo()

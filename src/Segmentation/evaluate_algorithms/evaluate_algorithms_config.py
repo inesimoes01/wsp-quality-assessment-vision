@@ -49,6 +49,14 @@ EVAL_DROPLET_SEGM_REAL_DATASET_MRCNN = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH,
 EVAL_DROPLET_STATS_REAL_DATASET_MRCNN = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH, "droplet_real_statistics_mrcnn.csv")
 EVAL_DROPLET_STATS_REAL_DATASET_DROPLEAF = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH, "droplet_real_statistics_dropleaf.csv")
 
+EVAL_DROPLET_SEGM_REAL_FULL_DATASET_CV = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH, "droplet_real_full_segmentation_cv.csv")
+EVAL_DROPLET_STATS_REAL_FULL_DATASET_CV = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH, "droplet_real_full_statistics_cv.csv")
+EVAL_DROPLET_SEGM_REAL_FULL_DATASET_YOLO = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH, "droplet_real_full_segmentation_yolo.csv")
+EVAL_DROPLET_STATS_REAL_FULL_DATASET_YOLO = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH, "droplet_real_full_statistics_yolo.csv")
+EVAL_DROPLET_SEGM_REAL_FULL_DATASET_MRCNN = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH, "droplet_real_full_segmentation_mrcnn.csv")
+EVAL_DROPLET_STATS_REAL_FULL_DATASET_MRCNN = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH, "droplet_real_full_statistics_mrcnn.csv")
+EVAL_DROPLET_STATS_REAL_FULL_DATASET_DROPLEAF = os.path.join(EVAL_MAIN_DROPLET_REAL_PATH, "droplet_real_full_statistics_dropleaf.csv")
+
 # DROPLET SYNTHETIC DATASET WITH CV AND YOLO
 EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_CV = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_segmentation_cv.csv")
 EVAL_DROPLET_STATS_SYNTHETIC_DATASET_CV = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_statistics_cv.csv")
@@ -58,6 +66,14 @@ EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_MRCNN = os.path.join(EVAL_MAIN_DROPLET_SYNTH
 EVAL_DROPLET_STATS_SYNTHETIC_DATASET_MRCNN = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_statistics_mrcnn.csv")
 EVAL_DROPLET_STATS_SYNTHETIC_DATASET_DROPLEAF = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_statistics_dropleaf.csv")
 
+
+EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_CV = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_full_segmentation_cv.csv")
+EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_CV = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_full_statistics_cv.csv")
+EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_YOLO = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_full_segmentation_yolo.csv")
+EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_YOLO = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_full_statistics_yolo.csv")
+EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_MRCNN = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_full_segmentation_mrcnn.csv")
+EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_MRCNN = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_full_statistics_mrcnn.csv")
+EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_DROPLEAF = os.path.join(EVAL_MAIN_DROPLET_SYNTHETIC_PATH, "droplet_synthetic_full_statistics_dropleaf.csv")
 # DROPLET GENERAL EVAL
 EVAL_DROPLET_SEGM_GENERAL = os.path.join(EVAL_MAIN_DROPLET_GENERAL_PATH, "droplet_real_segmentation_general.csv")
 EVAL_DROPLET_STATS_GENERAL = os.path.join(EVAL_MAIN_DROPLET_GENERAL_PATH, "droplet_real_statistics_general.csv")
