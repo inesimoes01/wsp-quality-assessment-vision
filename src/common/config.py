@@ -4,8 +4,8 @@ import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
-DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "test_yolo"
-DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "test"
+DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "divided" / "test"
+DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "divided" / "test"
 
 DATA_SYNTHETIC_NORMAL_WSP_MRCNN_DIR = Path("data") / "droplets" / "synthetic_dataset_normal_droplets" / "mrcnn_ready"
 
@@ -49,7 +49,7 @@ DATA_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single"
 DATA_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
 DATA_GENERAL_MASK_FOLDER_NAME = "mask"
 
-RESULTS_GENERAL_STATS_FOLDER_NAME = "statistcs"
+RESULTS_GENERAL_STATS_FOLDER_NAME = "statistics"
 RESULTS_GENERAL_ACC_FOLDER_NAME = "accuracy"
 RESULTS_GENERAL_LABEL_FOLDER_NAME = "label"
 RESULTS_GENERAL_INFO_FOLDER_NAME = "info"

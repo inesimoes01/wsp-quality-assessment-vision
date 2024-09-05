@@ -1,0 +1,20 @@
+
+\begin{table}[h!]
+    \centering
+    \caption{Results of algorithms for calculating droplet segmentation metrics on water-sensitive paper.}
+    \label{tab:segmentation-metrics-drop}
+    \begin{tabular}{ccccccc }
+        \hline
+        \textbf{Method} & \textbf{Dataset} & \textbf{P} & \textbf{R} & \textbf{F1} & \textbf{mAP50} & \textbf{Time (ms)}\\
+        \hline
+        \multirow{2}{2cm}[0em]{YOLOv8} & RD & 0.097 & 0.0757 & 0.085 & 0.0091 & 3.165\\
+         & SD & 0.5652 & 0.6109 & 0.5872 & 0.415 & 2.3616 \\
+        
+        \multirow{2}{2cm}[0em]{MRCNN} & RD & 0.6789 & 0.1648 & 0.2652 & 0.1656 & 12.7961\\
+         & SD & 0.8875 & 0.1544 & 0.2631 & 0.2366 & 12.7448\\
+       
+        \multirow{2}{2cm}[0em]{CCV} & RD & 0.784 & 0.8361 & 0.8092 & 0.7045 & 0.1054\\
+         & SD & 0.8423 & 0.7041 & 0.767 & 0.6254 & 0.1924\\
+        \hline
+    \end{tabular}
+\end{table}

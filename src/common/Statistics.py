@@ -20,11 +20,13 @@ class Statistics:
     
     
     def calculate_statistics(diameters_sorted, image_area, contour_area):
-        cumulative_fraction = Statistics.calculate_cumulative_fraction(diameters_sorted)
-        vmd_value = Statistics.calculate_vmd(cumulative_fraction, diameters_sorted)
-        coverage_percentage = Statistics.calculate_coverage_percentage(image_area, contour_area)
-        rsf_value = Statistics.calculate_rsf(cumulative_fraction, diameters_sorted, vmd_value)
-        return vmd_value, coverage_percentage, rsf_value, cumulative_fraction
+        if len(diameters_sorted) > 0:
+            cumulative_fraction = Statistics.calculate_cumulative_fraction(diameters_sorted)
+            vmd_value = Statistics.calculate_vmd(cumulative_fraction, diameters_sorted)
+            coverage_percentage = Statistics.calculate_coverage_percentage(image_area, contour_area)
+            rsf_value = Statistics.calculate_rsf(cumulative_fraction, diameters_sorted, vmd_value)
+            return vmd_value, coverage_percentage, rsf_value, cumulative_fraction
+        else: return 0, 0, 0, 0
 
 
     def calculate_cumulative_fraction(diameters_sorted):

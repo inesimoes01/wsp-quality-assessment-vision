@@ -18,8 +18,18 @@ from Common.Statistics import Statistics as stats
 
 
 def prepare_dataset_for_yolo():
+    original_dataset_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\raw"
+    output_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\cropped2"
+    separated_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\divided"
+
+    print("Dividing images into squares...")
+    #divide_images_into_squares_with_yolo_annotations(original_dataset_folder, output_squares_folder)
+
+    print("Dividing dataset...")
+    split_dataset_normal(output_squares_folder, separated_squares_folder)
+
     original_dataset_folder = "data\\droplets\\real_dataset_droplets\\raw"
-    output_squares_folder = "data\\droplets\\real_dataset_droplets\\cropped"
+    output_squares_folder = "data\\droplets\\real_dataset_droplets\\cropped2"
     separated_squares_folder = "data\\droplets\\real_dataset_droplets\\divided"
 
     print("Dividing images into squares...")
@@ -225,6 +235,9 @@ def divide_images_into_squares_with_yolo_annotations(original_dataset_folder, ou
         os.makedirs(os.path.join(output_folder, config.DATA_GENERAL_IMAGE_FOLDER_NAME))
     if not os.path.exists(os.path.join(output_folder, config.DATA_GENERAL_LABEL_FOLDER_NAME)):
         os.makedirs(os.path.join(output_folder, config.DATA_GENERAL_LABEL_FOLDER_NAME))
+
+    if not os.path.exists(os.path.join(output_folder, config.DATA_GENERAL_STATS_FOLDER_NAME)):
+        os.makedirs(os.path.join(output_folder, config.DATA_GENERAL_STATS_FOLDER_NAME))
     
     # list all images in images_folder
     image_files = os.listdir(images_folder)
@@ -287,16 +300,17 @@ def divide_images_into_squares_with_yolo_annotations(original_dataset_folder, ou
                         adjusted_labels.append(coordinates)
                 
                 if len(adjusted_labels) > 0:
-                    square_filename = f"{filename}_{square_count}"
+                    width_mm_str = str(original_square_shape[1] * width_mm / width).replace('.', '_')
+                    square_filename = f"{filename}_{square_count}-{width_mm_str}"
                     # calculate statistics 
                     calculate_statistics_from_yolo_annotation(adjusted_labels, original_square_shape[1], original_square_shape[0], original_square_shape[1] * width_mm / width, os.path.join(output_folder, config.DATA_GENERAL_STATS_FOLDER_NAME, square_filename + ".csv"))
 
                     # Save the square
-                    square_filename = f"{filename}_{square_count}.png"
+                    square_filename = f"{filename}_{square_count}-{width_mm_str}.png"
                     square_path = os.path.join(output_folder, config.DATA_GENERAL_IMAGE_FOLDER_NAME, square_filename)
                     cv2.imwrite(square_path, square)
 
-                    label_filename = f"{filename}_{square_count}.txt"
+                    label_filename = f"{filename}_{square_count}-{width_mm_str}.txt"
                     cropped_label_path = os.path.join(output_folder, config.DATA_GENERAL_LABEL_FOLDER_NAME, label_filename)    
                     with open(cropped_label_path, 'w') as f:
                         for coords in adjusted_labels:

@@ -56,8 +56,6 @@ def compute_ccv_segmentation(image_colors, image_gray, filename, results_path):
                                                 save_image_steps = False, 
                                                 segmentation_method = 0, 
                                                 dataset_results_folder = results_path)
-    
-
 
     #sorted_droplets = sorted(predicted_seg.droplets_data, key=lambda droplet: (droplet.center_x, droplet.center_y))
     droplets_detected = []
@@ -85,13 +83,13 @@ def compute_ccv_segmentation(image_colors, image_gray, filename, results_path):
     return droplets_detected
 
 
-def main_ccv(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentation, path_csv_statistics, path_dataset, path_results):
+def main_ccv(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, path_csv_segmentation, path_csv_statistics, path_dataset, path_results):
     directory_image, directory_label, directory_stats = manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_segmentation, path_csv_statistics, fieldnames_statistics)
     
     segmentation_time_csv_path = os.path.join(path_results, config.RESULTS_GENERAL_SEGMENTATIONTIME_FOLDER_NAME + ".csv")
     with open(segmentation_time_csv_path, mode='w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['Filename', 'Segmentation Time (seconds)'])
+        csv_writer.writerow(fieldnames_time)
         
 
         # apply the segmentation in each one of the images and then calculate the accuracy and save it
@@ -119,7 +117,7 @@ def main_ccv(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentati
                 segmentation_time = seg_time - start_time
 
                 # save segmentation time to a file
-                csv_writer.writerow([file, segmentation_time])
+                csv_writer.writerow([filename, segmentation_time])
 
                 save_shapes_to_yolo_label(label_path, predicted_droplets, width, height)
 
@@ -132,6 +130,7 @@ def main_ccv(fieldnames_segmentation, fieldnames_statistics, path_csv_segmentati
 # REAL DATASET
 main_ccv(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
          evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
+         evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
          evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_DATASET_CV, 
          evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_DATASET_CV, 
          config.DATA_REAL_WSP_TESTING_DIR, 
@@ -140,6 +139,7 @@ main_ccv(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION,
 # SYNTHETIC DATASET
 main_ccv(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
          evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
+         evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
          evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_CV, 
          evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_CV, 
          config.DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR, 

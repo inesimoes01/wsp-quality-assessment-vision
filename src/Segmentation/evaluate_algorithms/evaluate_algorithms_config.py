@@ -13,10 +13,16 @@ FIELDNAMES_DROPLET_STATISTICS = ["file",
                                 "OverlappedDropletsPercentage_pred", "OverlappedDropletsPercentage_gt", "OverlappedDropletsPercentage_error"]
 FIELDNAMES_DROPLET_SEGMENTATION = ["file", "precision", "recall", "f1_score", "map50", "map50-95", "tp", "fp", "fn", "segmentation_time"]
 FIELDNAMES_DROPLET_GENERAL_STATISTICS = ["method", 
-                                "VMD_error", "RSF_error", "CoveragePercentage_error", "NoDroplets_error", "OtherCoveragePercentage_error",
-                                "VMD_median", "RSF_median", "CoveragePercentage_median", "NoDroplets_median", "OtherCoveragePercentage_median",
-                                "VMD_std", "RSF_std", "CoveragePercentage_std", "NoDroplets_std", "OtherCoveragePercentage_std",
-                                "VMD_max", "RSF_max", "CoveragePercentage_max", "NoDroplets_max", "OtherCoveragePercentage_max",]
+                                "VMD_error", "RSF_error", "CoveragePercentage_error", "NoDroplets_error",
+                                "VMD_median", "RSF_median", "CoveragePercentage_median", "NoDroplets_median",
+                                "VMD_std", "RSF_std", "CoveragePercentage_std", "NoDroplets_std",
+                                "VMD_max", "RSF_max", "CoveragePercentage_max", "NoDroplets_max",]
+
+# FIELDNAMES_DROPLET_GENERAL_STATISTICS = ["method", 
+#                                 "VMD_error", "RSF_error", "CoveragePercentage_error", "NoDroplets_error", "OtherCoveragePercentage_error",
+#                                 "VMD_median", "RSF_median", "CoveragePercentage_median", "NoDroplets_median", "OtherCoveragePercentage_median",
+#                                 "VMD_std", "RSF_std", "CoveragePercentage_std", "NoDroplets_std", "OtherCoveragePercentage_std",
+#                                 "VMD_max", "RSF_max", "CoveragePercentage_max", "NoDroplets_max", "OtherCoveragePercentage_max",]
 FIELDNAMES_DROPLET_GENERAL_SEGMENTATION = ['method', 'precision', 'recall', 'f1-score', 'map50', 'map50-95', 'tp', 'fp', 'fn', 'segmentation_time']
 
 FIELDNAMES_SEGMENTATION_TIME = ['Filename', 'Segmentation Time (seconds)']

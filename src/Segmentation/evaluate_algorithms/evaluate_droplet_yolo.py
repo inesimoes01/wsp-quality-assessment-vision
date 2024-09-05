@@ -19,25 +19,29 @@ import Common.config as config
 
 
 def compute_yolo_segmentation(image_path, yolo_model):
-    # predict image results
-    results = yolo_model(image_path, conf=0.1)
-    segmentation_result = results[0].masks.xy
-
     predicted_droplets_adjusted = []
-    detected_pts = []
+    # predict image results
+    
+    results = yolo_model(image_path, conf=0.1)
 
-    for polygon in segmentation_result:
-        pts = np.array(polygon, np.int32)
-        pts = pts.reshape((-1, 1, 2))
-        detected_pts.append(pts)
+    if results[0].masks:
+        segmentation_result = results[0].masks.xy
 
-    for coords in detected_pts:
-        adjusted_coords = []
-        for point in coords:
-            x, y = point[0]
-            adjusted_coords.append([x, y])
-        if adjusted_coords != []:
-            predicted_droplets_adjusted.append(np.array(adjusted_coords, dtype=np.int32))
+       
+        detected_pts = []
+
+        for polygon in segmentation_result:
+            pts = np.array(polygon, np.int32)
+            pts = pts.reshape((-1, 1, 2))
+            detected_pts.append(pts)
+
+        for coords in detected_pts:
+            adjusted_coords = []
+            for point in coords:
+                x, y = point[0]
+                adjusted_coords.append([x, y])
+            if adjusted_coords != []:
+                predicted_droplets_adjusted.append(np.array(adjusted_coords, dtype=np.int32))
 
     return predicted_droplets_adjusted
 
@@ -81,7 +85,7 @@ def manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_
 
     return directory_image, directory_label, directory_stats
 
-def main_yolo(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, yolo_model):
+def main_yolo(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, path_csv_segmentation, path_csv_statistics, path_dataset, path_results, yolo_model_path):
     directory_image, directory_label, directory_stats = manage_folder(path_dataset, path_results, path_csv_segmentation, fieldnames_segmentation, path_csv_statistics, fieldnames_statistics)
  
     segmentation_time_csv_path = os.path.join(path_results, config.RESULTS_GENERAL_SEGMENTATIONTIME_FOLDER_NAME + ".csv")
@@ -89,22 +93,19 @@ def main_yolo(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, p
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(fieldnames_time)
         
-
         # apply the segmentation in each one of the images and then calculate the accuracy and save it
         for i, file in enumerate(os.listdir(directory_image)): 
+        
             start_time = time.time()
+            yolo_model = YOLO(yolo_model_path)
             filename = file.split(".")[0]
         
             image_path = os.path.join(directory_image, file)
             image_colors = cv2.imread(os.path.join(directory_image, file))  
             image_colors = cv2.cvtColor(image_colors, cv2.COLOR_BGR2RGB)
             height, width = image_colors.shape[:2]
-            image_area = width * height
-
-            image_correct_predictions = copy.copy(image_colors)
            
             label_path = os.path.join(path_results, config.RESULTS_GENERAL_LABEL_FOLDER_NAME, filename + ".txt")
-
 
             print("Evaluating image", filename + "..." )
 
@@ -123,7 +124,8 @@ def main_yolo(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, p
                 print(f"Memory error encountered while processing {filename}: {e}")
 
 
-model = YOLO(evaluate_algorithms_config.DROPLET_YOLO_MODEL)
+
+yolo_model_path = evaluate_algorithms_config.DROPLET_YOLO_MODEL
 
 # SYNTHETIC DATASET
 main_yolo(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
@@ -133,7 +135,7 @@ main_yolo(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION,
           evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, 
           config.DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR,
           config.RESULTS_SYNTHETIC_YOLO_DIR, 
-          model)
+          yolo_model_path)
 
 # REAL DATASET
 main_yolo(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
@@ -143,4 +145,4 @@ main_yolo(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION,
           evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_DATASET_YOLO, 
           config.DATA_REAL_WSP_TESTING_DIR, 
           config.RESULTS_REAL_YOLO_DIR, 
-          model)
+          yolo_model_path)

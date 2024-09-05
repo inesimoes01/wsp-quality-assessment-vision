@@ -101,7 +101,7 @@ class Segmentation_CCV:
 
 
         self.detected_image = cv2.cvtColor(self.detected_image, cv2.COLOR_BGR2RGB)
-        cv2.imwrite(os.path.join(dataset_results_folder, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, filename + ".png"), self.detected_image)
+        #cv2.imwrite(os.path.join(dataset_results_folder, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, filename + ".png"), self.detected_image)
 
         if self.save_image_steps:
             #self.detected_image = cv2.cvtColor(self.detected_image, cv2.COLOR_BGR2RGB)
