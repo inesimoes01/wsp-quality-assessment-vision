@@ -18,13 +18,13 @@ from Common.Statistics import Statistics as stats
 
 
 def prepare_dataset_for_yolo():
-    original_dataset_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\raw"
-    output_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\cropped2"
+    original_dataset_folder = "data\\droplets\\synthetic_dataset_droplets\\full\\divided\\test"
+    output_squares_folder = "data\\droplets\\synthetic_dataset_droplets\\square2"
     separated_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided"
 
-    original_dataset_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided\\test"
-    output_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided\\test_divided"
-    print("Dividing images into squares...")
+    # original_dataset_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided\\test"
+    # output_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided\\test_divided"
+    # print("Dividing images into squares...")
     divide_images_into_squares_with_yolo_annotations(original_dataset_folder, output_squares_folder)
 
     print("Dividing dataset...")

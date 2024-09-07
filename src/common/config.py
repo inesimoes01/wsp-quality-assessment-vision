@@ -4,10 +4,12 @@ import os
 
 PROJ_ROOT = Path(__file__).resolve().parents[2]
 
-DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_droplets" / "divided" / "test"
-DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "divided" / "test"
-
+DATA_SYNTHETIC_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_droplets" / "square2"
 DATA_SYNTHETIC_FULL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_droplets" / "full" / "divided" / "test"
+
+DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "square" 
+DATA_REAL_FULL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "full"
+
 
 DATA_SYNTHETIC_AUGMENTED_DIR = Path("data") / "artificial_dataset" / "augmentation" 
 DATA_SYNTHETIC_BG_DIR = Path("data") / "artificial_dataset" / "background" 

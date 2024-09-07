@@ -125,8 +125,7 @@ def main_ccv(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, pa
                 print(f"Memory error encountered while processing {filename}: {e}")
 
 
-
-
+### SQUARES
 # REAL DATASET
 main_ccv(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
          evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
@@ -142,5 +141,24 @@ main_ccv(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION,
          evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
          evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_CV, 
          evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_CV, 
-         config.DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR, 
+         config.DATA_SYNTHETIC_WSP_TESTING_DIR, 
          config.RESULTS_SYNTHETIC_CCV_DIR)
+
+# ### FULL IMAGE
+# # REAL DATASET
+# main_ccv(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
+#          evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
+#          evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
+#          evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_FULL_DATASET_CV, 
+#          evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_FULL_DATASET_CV, 
+#          config.DATA_REAL_FULL_WSP_TESTING_DIR, 
+#          config.RESULTS_REAL_FULL_CCV_DIR)
+
+# # SYNTHETIC DATASET
+# main_ccv(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
+#          evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
+#          evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
+#          evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_CV, 
+#          evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_CV, 
+#          config.DATA_SYNTHETIC_FULL_WSP_TESTING_DIR, 
+#          config.RESULTS_SYNTHETIC_FULL_CCV_DIR)
