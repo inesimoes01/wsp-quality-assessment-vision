@@ -8,6 +8,7 @@ DATA_SYNTHETIC_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_
 DATA_SYNTHETIC_FULL_WSP_TESTING_DIR = Path("data") / "droplets" / "synthetic_dataset_droplets" / "full" / "divided" / "test"
 
 DATA_REAL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "square" 
+DATA_REAL_WSP_TESTING_DIR2 = Path("data") / "droplets" / "real_dataset_droplets" / "square2" 
 DATA_REAL_FULL_WSP_TESTING_DIR = Path("data") / "droplets" / "real_dataset_droplets" / "full"
 
 
@@ -28,6 +29,11 @@ RESULTS_REAL_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorith
 RESULTS_SYNTHETIC_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "synthetic_dataset" / "square"
 RESULTS_REAL_FULL_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "real_dataset" / "full"
 RESULTS_SYNTHETIC_FULL_MRCNN_DIR = Path("results") / "droplet_detection" / "mrcnn_algorithm" / "synthetic_dataset" / "full"
+
+RESULTS_REAL_CELLPOSE_DIR = Path("results") / "droplet_detection" / "cellpose_algorithm" / "real_dataset" / "square"
+RESULTS_SYNTHETIC_CELLPOSE_DIR = Path("results") / "droplet_detection" / "cellpose_algorithm" / "synthetic_dataset" / "square"
+RESULTS_REAL_FULL_CELLPOSE_DIR = Path("results") / "droplet_detection" / "cellpose_algorithm" / "real_dataset" / "full"
+RESULTS_SYNTHETIC_FULL_CELLPOSE_DIR = Path("results") / "droplet_detection" / "cellpose_algorithm" / "synthetic_dataset" / "full"
 
 RESULTS_REAL_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "real_dataset" / "square"
 RESULTS_SYNTHETIC_YOLO_DIR = Path("results") / "droplet_detection" / "yolo_algorithm" / "synthetic_dataset" / "square"
@@ -50,19 +56,10 @@ YOLO_MODEL_DIR = Path("models") / "yolo_droplet" / "50epc_droplet4"
 DATA_GENERAL_STATS_FOLDER_NAME = "statistics"
 DATA_GENERAL_LABEL_FOLDER_NAME = "label"
 DATA_GENERAL_IMAGE_FOLDER_NAME = "image"
-DATA_GENERAL_INFO_FOLDER_NAME = "info"
-DATA_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single" 
-DATA_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
-DATA_GENERAL_MASK_FOLDER_NAME = "mask"
 
 RESULTS_GENERAL_STATS_FOLDER_NAME = "statistics"
-RESULTS_GENERAL_ACC_FOLDER_NAME = "accuracy"
 RESULTS_GENERAL_LABEL_FOLDER_NAME = "label"
-RESULTS_GENERAL_INFO_FOLDER_NAME = "info"
 RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME = "droplet_visual_classification"
-RESULTS_GENERAL_UNDISTORTED_FOLDER_NAME = "undistorted"
-RESULTS_GENERAL_MASK_SIN_FOLDER_NAME = "mask\\single" 
-RESULTS_GENERAL_MASK_OV_FOLDER_NAME = "mask\\overlapped"
 RESULTS_GENERAL_SEGMENTATIONTIME_FOLDER_NAME = "segmentation_time"
 
 CODE_MRCNN_DIR = Path("src") / "Segmentation" / "droplet" / "cnn" / "MaskRCNN"

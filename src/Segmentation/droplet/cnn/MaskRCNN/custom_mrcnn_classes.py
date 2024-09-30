@@ -2,9 +2,10 @@ import os
 import json
 import numpy as np
 import skimage.draw
-
-from mrcnn.config import Config
-from mrcnn import model as modellib, utils
+import sys
+sys.path.insert(0, 'src')
+from Segmentation.droplet.cnn.MaskRCNN.mrcnn.config import Config
+from Segmentation.droplet.cnn.MaskRCNN.mrcnn import model as modellib, utils
 
 
 class CustomConfigDroplet(Config):
@@ -26,11 +27,11 @@ class CustomConfigDroplet(Config):
     STEPS_PER_EPOCH = 5
 
     # Skip detections with < 70% confidence
-    DETECTION_MIN_CONFIDENCE = 0.7
+    DETECTION_MIN_CONFIDENCE = 0.4
 
-    IMAGE_MAX_DIM = 320
+    #IMAGE_MAX_DIM = 320
     
-    LEARNING_RATE = 0.001
+    LEARNING_RATE = 0.0001
 
 
 class CustomDataset(utils.Dataset):
@@ -151,9 +152,10 @@ class CustomDataset(utils.Dataset):
 class InferenceConfig(CustomConfigDroplet):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
+
     #Minimum probability value to accept a detected instance
     # ROIs below this threshold are skipped
-    DETECTION_MIN_CONFIDENCE = 0.7
+    DETECTION_MIN_CONFIDENCE = 0.1
 
     # Non-maximum suppression threshold for detection
-    DETECTION_NMS_THRESHOLD = 0.3
+    DETECTION_NMS_THRESHOLD = 0.1

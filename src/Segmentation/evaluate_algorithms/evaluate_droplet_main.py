@@ -19,10 +19,88 @@ from Common.Statistics import Statistics as stats
 
 isDropletCCV_Full, isDropletCCV_Square = False, False
 isDropletYOLO_Full, isDropletYOLO_Square = False, False
-isDropletMRCNN_Full, isDropletMRCNN_Square = False, True
+isDropletMRCNN_Full, isDropletMRCNN_Square = True, True
+isDropletCELLPOSE_Full, isDropletCELLPOSE_Square = False, False
 
 IOU_THRESHOLD, DISTANCE_THRESHOLD = 0.5, 20
 
+def are_polygons_equal(poly1, poly2, tolerance=1e-6):
+    """Custom function to check if two polygons are the same within a given tolerance."""
+    return poly1.equals_exact(poly2, tolerance)
+
+def handle_edge_cases(label_path, predicted_droplets, width, height, distance_threshold):
+    joined_droplets = []
+    with open(label_path, "w") as file:
+        # for each normal droplet, write it 
+        for (droplet, i, isEdge) in predicted_droplets:
+            if i not in joined_droplets:
+                # if the droplet is on the edge try to find the rest of the droplet
+                if isEdge:
+                    for (droplet2, j, isEdge) in predicted_droplets:
+                        if isEdge and i != j and j not in joined_droplets:
+            
+                            # check if the polygons are close enough to be considered the same
+                            poly1 = Polygon(droplet)
+                            poly2 = Polygon(droplet2)
+
+                            if poly1.is_valid and poly2.is_valid:
+
+                                if poly1.intersects(poly2) or poly1.distance(poly2) < distance_threshold:
+                                    # merge polygons
+                                    merged_polygon = unary_union([poly1, poly2])
+
+                                    if isinstance(merged_polygon, MultiPolygon): continue
+                                
+                                    exterior_coords = list(merged_polygon.exterior.coords)
+                                    
+                                    yolo_coords = []
+                                    for x, y in exterior_coords:
+                                        normalized_x = x / width
+                                        normalized_y = y / height
+                                        yolo_coords.append((normalized_x, normalized_y))
+                                
+
+                                    yolo_line = f"0"
+                                    for (x_norm, y_norm) in yolo_coords:
+                                        yolo_line += f" {x_norm:.10f} {y_norm:.10f}"
+                                    file.write(yolo_line + "\n")
+
+                                    joined_droplets.append(i)
+                                    joined_droplets.append(j)
+                                    break  
+                            else: 
+                                break
+
+                    normalized_points = []
+                    for point in droplet:
+                        x, y = point
+                    
+                        x_normalized = x / width
+                        y_normalized = y / height
+                        normalized_points.append((x_normalized, y_normalized))
+
+                    yolo_line = f"0"
+                    for (x_norm, y_norm) in normalized_points:
+                        yolo_line += f" {x_norm:.10f} {y_norm:.10f}"
+                    file.write(yolo_line + "\n")
+
+                            
+                
+                # if not save it as is
+                else:
+                    # write each one of the points in the label file
+                    normalized_points = []
+                    for point in droplet:
+                        x, y = point
+                    
+                        x_normalized = x / width
+                        y_normalized = y / height
+                        normalized_points.append((x_normalized, y_normalized))
+
+                    yolo_line = f"0"
+                    for (x_norm, y_norm) in normalized_points:
+                        yolo_line += f" {x_norm:.10f} {y_norm:.10f}"
+                    file.write(yolo_line + "\n")
 
 def match_predicted_to_groundtruth(predicted_polygons, ground_truths, distance_threshold, image):
     matched_indices = []
@@ -140,14 +218,21 @@ def evaluate_matches(ground_truth_masks, results, image_correct_predictions, iou
 def read_groundtruth_statistics_file(statistics_file_path):
     data = pd.read_csv(statistics_file_path)
 
-    vmd_value = data.at[0, 'Groundtruth']
-    rsf_value = data.at[1, 'Groundtruth']
-    coverage_percentage = data.at[2, 'Groundtruth']
-    no_total_droplets = data.at[3, 'Groundtruth']
-     
-    # this is an error in the creation of the synthetic dataset
-    overlapped_percentage = data.at[5, 'Groundtruth']
-    no_overlapped_droplets = data.at[4, 'Groundtruth']
+    if 'GroundTruth' in data.columns:
+        groundtruth_col = 'GroundTruth'
+    elif 'Groundtruth' in data.columns:
+        groundtruth_col = 'Groundtruth'
+    else:
+        raise KeyError("Neither 'GroundTruth' nor 'Groundtruth' found in the columns")
+
+    # Now, use this column name to extract the values
+    vmd_value = data.at[0, groundtruth_col]
+    rsf_value = data.at[1, groundtruth_col]
+    coverage_percentage = data.at[2, groundtruth_col]
+    no_total_droplets = data.at[3, groundtruth_col]
+    overlapped_percentage = data.at[4, groundtruth_col]
+    no_overlapped_droplets = data.at[5, groundtruth_col]
+
             
     stats_groundtruth = stats(vmd_value, rsf_value, coverage_percentage, no_total_droplets, no_overlapped_droplets, overlapped_percentage, None)
     return stats_groundtruth
@@ -162,12 +247,13 @@ def calculate_predicted_statistics(predicted_shapes, width_px, height_px, width_
     predicted_shapes = [item[0] for item in predicted_shapes]
     for pred in predicted_shapes:
         polygon = Polygon(pred)
-        list_polygons.append(polygon)
-        polygon_area = polygon.area
+        if polygon.area < 10000:
+            list_polygons.append(polygon)
+            polygon_area = polygon.area
 
-        total_droplet_area += polygon_area
-        list_droplet_area.append(polygon_area)
-        total_no_droplets += 1
+            total_droplet_area += polygon_area
+            list_droplet_area.append(polygon_area)
+            total_no_droplets += 1
 
     # get list of the droplet diameters
     diameter_list = sorted(stats.area_to_diameter_micro(list_droplet_area, width_px, width_mm))
@@ -267,7 +353,7 @@ def calculate_centroid(polygon):
     centroid_y = sum(y_coords) / len(polygon)
     return centroid_x, centroid_y
 
-def get_polygon_from_yolo_label(label_file_path, width, height, predicted_image, groundtruth = False):
+def get_polygon_from_yolo_label(label_file_path, width, height, x_offset = 0, y_offset = 0):
     polygons = []
     
     with open(label_file_path, 'r') as file:
@@ -276,13 +362,8 @@ def get_polygon_from_yolo_label(label_file_path, width, height, predicted_image,
             coordinates = list(map(float, parts[1:]))
             
             if len(coordinates) >= 8:
-                polygon = [(coordinates[i] * width, coordinates[i+1] * height) for i in range(0, len(coordinates), 2)]
+                polygon = [(coordinates[i] * width + x_offset, coordinates[i+1] * height + y_offset) for i in range(0, len(coordinates), 2)]
                 contour = np.array(polygon, dtype=np.int32)
-
-                if groundtruth:
-                    cv2.drawContours(predicted_image, [contour], -1, (0, 0, 255), 1)
-                else:
-                    cv2.drawContours(predicted_image, [contour], -1, (255, 0, 0), 1)
 
                 polygons.append(contour)
     
@@ -291,7 +372,7 @@ def get_polygon_from_yolo_label(label_file_path, width, height, predicted_image,
     polygons_with_centroids = [(polygon, calculate_centroid(polygon)) for polygon in polygons]
     sorted_polygons = sorted(polygons_with_centroids, key=lambda item: (item[1][0], item[1][1]))
         
-    return sorted_polygons, predicted_image
+    return sorted_polygons
 
 def main_evaluation(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, 
                     fieldnames_predicted_statistics, path_csv_segmentation, path_csv_statistics, 
@@ -311,6 +392,7 @@ def main_evaluation(fieldnames_segmentation, fieldnames_statistics, fieldnames_t
     for file in os.listdir(directory_image): 
         start_time = time.time()
         filename_with_real_width = file.split(".")[0]
+
 
         if width_mm == 0:
             filename, numerical_part = filename_with_real_width.split('-')
@@ -344,55 +426,56 @@ def main_evaluation(fieldnames_segmentation, fieldnames_statistics, fieldnames_t
         try:
             ####### EVALUATE SEGMENTATION
             # get predicted shapes given the yolo label file
-            predicted_shapes, image_predictions = get_polygon_from_yolo_label(predicted_label_path, width, height, image_predictions)
-            
-            # get groundtruth shapes given the yolo label file
-            groundtruth_shapes, image_groundtruth = get_polygon_from_yolo_label(groundtruth_label_path, width, height, image_groundtruth, groundtruth = True)
+            if os.path.exists(predicted_label_path):
+                predicted_shapes = get_polygon_from_yolo_label(predicted_label_path, width, height)
+                
+                # get groundtruth shapes given the yolo label file
+                groundtruth_shapes = get_polygon_from_yolo_label(groundtruth_label_path, width, height)
 
-            # match the groundtruth and the predicted shapes to find correct predictions given the iou threshold
-            results = match_predicted_to_groundtruth(predicted_shapes, groundtruth_shapes, distance_threshold, image_colors)
-            image_correct_predictions, precision, recall, f1_score, map5, map595, tp, fp, fn = evaluate_matches(groundtruth_shapes, results, image_correct_predictions, iou_threshold)
+                # match the groundtruth and the predicted shapes to find correct predictions given the iou threshold
+                results = match_predicted_to_groundtruth(predicted_shapes, groundtruth_shapes, distance_threshold, image_colors)
+                image_correct_predictions, precision, recall, f1_score, map5, map595, tp, fp, fn = evaluate_matches(groundtruth_shapes, results, image_correct_predictions, iou_threshold)
 
-            # get segmentation time value from the csv file created previously
-            if filename_with_real_width in str(df[fieldnames_time[0]].values):
-                filtered_df = df[df[fieldnames_time[0]] == filename_with_real_width]
-                segmentation_time = filtered_df[fieldnames_time[1]].values[0]
-            else: segmentation_time = 0
+                # get segmentation time value from the csv file created previously
+                if filename_with_real_width in df[fieldnames_time[0]].astype(str).values:
+                    filtered_df = df[df[fieldnames_time[0]].astype(str) == str(filename_with_real_width)]
+                    segmentation_time = filtered_df[fieldnames_time[1]].values[0]
+                else:
+                    segmentation_time = 0
 
-            # update metrics to the segmentation file
-            write_segmentation_csv_file((filename_with_real_width, precision, recall, f1_score, map5, map595, tp, fp, fn, segmentation_time), path_csv_segmentation, fieldnames_segmentation)
-            
-            ####### EVALUATE STATISTICS
+                # update metrics to the segmentation file
+                write_segmentation_csv_file((filename_with_real_width, precision, recall, f1_score, map5, map595, tp, fp, fn, segmentation_time), path_csv_segmentation, fieldnames_segmentation)
+                
+                ####### EVALUATE STATISTICS
 
-            # calculate predicted statistics 
-            predicted_statistics = calculate_predicted_statistics(predicted_shapes, width, height, width_mm)
-            
-            # get groundtruth statistics (ATTENTION !!!! SYNTHETIC DATASET WAS CREATED WITH OVERLAPPED PERCENTAGE AND OVERLAPPED NUMBER SWITCHED)
-            groundtruth_statistics = read_groundtruth_statistics_file(groundtruth_stats_path)
+                # calculate predicted statistics 
+                predicted_statistics = calculate_predicted_statistics(predicted_shapes, width, height, width_mm)
+                
+                # get groundtruth statistics (ATTENTION !!!! SYNTHETIC DATASET WAS CREATED WITH OVERLAPPED PERCENTAGE AND OVERLAPPED NUMBER SWITCHED)
+                groundtruth_statistics = read_groundtruth_statistics_file(groundtruth_stats_path)
 
-            # update metrics to the statistics file
-            write_statistics_csv_file(filename_with_real_width, predicted_statistics, groundtruth_statistics, path_csv_statistics, fieldnames_statistics)
+                # update metrics to the statistics file
+                write_statistics_csv_file(filename_with_real_width, predicted_statistics, groundtruth_statistics, path_csv_statistics, fieldnames_statistics)
 
+                ####### SAVE PREDICTED RESULTS FILES
 
-            ####### SAVE PREDICTED RESULTS FILES
+                # save predicted statistics file
+                save_predicted_statistics_file(predicted_stats_path, predicted_statistics, fieldnames_predicted_statistics)
 
-            # save predicted statistics file
-            save_predicted_statistics_file(predicted_stats_path, predicted_statistics, fieldnames_predicted_statistics)
+                # save predicted shapes image
+                image_predictions = cv2.cvtColor(image_predictions, cv2.COLOR_BGR2RGB)
+                image_correct_predictions = cv2.cvtColor(image_correct_predictions, cv2.COLOR_BGR2RGB)
+                image_groundtruth = cv2.cvtColor(image_groundtruth, cv2.COLOR_BGR2RGB)
+                #cv2.imwrite(total_predicted_image, image_predictions)
+                cv2.imwrite(correct_predicted_image, image_correct_predictions)
+                #cv2.imwrite(groundtruth_image, image_groundtruth)
 
-            # save predicted shapes image
-            image_predictions = cv2.cvtColor(image_predictions, cv2.COLOR_BGR2RGB)
-            image_correct_predictions = cv2.cvtColor(image_correct_predictions, cv2.COLOR_BGR2RGB)
-            image_groundtruth = cv2.cvtColor(image_groundtruth, cv2.COLOR_BGR2RGB)
-            cv2.imwrite(total_predicted_image, image_predictions)
-            cv2.imwrite(correct_predicted_image, image_correct_predictions)
-            cv2.imwrite(groundtruth_image, image_groundtruth)
-
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            
-            print("Time taken:", elapsed_time, "seconds")
- 
-            #cv2.imwrite(os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, filename + "_correct_predictions.png"), image_correct_predictions)
+                end_time = time.time()
+                elapsed_time = end_time - start_time
+                
+                print("Time taken:", elapsed_time, "seconds")
+    
+                #cv2.imwrite(os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, filename + "_correct_predictions.png"), image_correct_predictions)
 
         except np.core._exceptions._ArrayMemoryError as e:
             print(f"Memory error encountered while processing {filename}: {e}")
@@ -454,9 +537,9 @@ def update_general_evaluation_droplet_segm(path_general_evaluation, path_individ
     fp = df[fieldnames[7]].sum()
     fn = df[fieldnames[8]].sum()
 
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-    f1_score = 2 * precision * recall / (precision + recall)
+    precision = tp / (tp + fp) if tp + fp > 0 else 0
+    recall = tp / (tp + fn) if tp + fn > 0 else 0
+    f1_score = 2 * (precision * recall) / (precision + recall) if precision + recall > 0 else 0
 
     average_df = pd.DataFrame([{
         fieldnames_general[0]: method,
@@ -542,7 +625,22 @@ def calculate_metrics_for_resolution(df, method, fieldnames, fieldnames_general,
 
     # Save the updated general evaluation to CSV
     df_gen.to_csv(path_general_evaluation, index=False)
+def save_shapes_to_yolo_label(label_path, droplets_detected, width, height):
+    with open(label_path, "w") as file:
+        for droplet, centroid in droplets_detected:
+            # write each one of the points in the label file
+            normalized_points = []
+            for point in droplet:
+                x, y = point
+                # Normalize coordinates by dividing by the image dimensions and converting to percentages
+                x_normalized = x / width
+                y_normalized = y / height
+                normalized_points.append((x_normalized, y_normalized))
 
+            yolo_line = f"0"
+            for (x_norm, y_norm) in normalized_points:
+                yolo_line += f" {x_norm:.10f} {y_norm:.10f}"
+            file.write(yolo_line + "\n")      
 
 def divide_evaluations_by_image_resolution(path_individual_evaluation, path_general_evaluation, fieldnames_individual, fieldnames_general, method):
     df = pd.read_csv(path_individual_evaluation)
@@ -565,7 +663,137 @@ def divide_evaluations_by_image_resolution(path_individual_evaluation, path_gene
     if not high_res_df.empty:
         calculate_metrics_for_resolution(high_res_df, method + "_highresolution", fieldnames_individual, fieldnames_general, path_general_evaluation)
 
+def group_images_by_prefix(directory_image):
+    image_groups = {}
     
+    for file in os.listdir(directory_image):
+        filename = file.split(".")[0]
+        prefix = filename.split("-")[0]
+        full_image_name = "_".join(prefix.split("_")[0:-2])
+        x_offset, y_offset = int(prefix.split("_")[-2]), int(prefix.split("_")[-1])
+        
+        if full_image_name not in image_groups:
+            image_groups[full_image_name] = []
+        
+        image_groups[full_image_name].append((filename, x_offset, y_offset))
+    
+    return image_groups
+
+def main_evaluation_full_image(fieldnames_segmentation, fieldnames_statistics, fieldnames_time, 
+                    fieldnames_predicted_statistics, path_csv_segmentation, path_csv_statistics, 
+                    path_dataset, path_results, iou_threshold, distance_threshold, square_image_path, path_real_results, width_mm = 0):
+    directory_image = os.path.join(path_dataset, config.DATA_GENERAL_IMAGE_FOLDER_NAME)
+    directory_label = os.path.join(path_dataset, config.DATA_GENERAL_LABEL_FOLDER_NAME)
+    directory_stats = os.path.join(path_dataset, config.DATA_GENERAL_STATS_FOLDER_NAME)
+
+    directory_label_square = os.path.join(path_results, config.RESULTS_GENERAL_LABEL_FOLDER_NAME)
+    directory_image_square = os.path.join(square_image_path, config.DATA_GENERAL_IMAGE_FOLDER_NAME)
+
+    # create segmentation and statistics evaluation csv files
+    with open(path_csv_segmentation, mode='w', newline='') as file:
+        csv.DictWriter(file, fieldnames=fieldnames_segmentation).writeheader()
+    with open(path_csv_statistics, mode='w', newline='') as file:
+        csv.DictWriter(file, fieldnames=fieldnames_statistics).writeheader()
+
+    image_groups = group_images_by_prefix(directory_image_square)
+
+    for full_image_name, image_group in image_groups.items(): 
+        
+        start_time = time.time()
+        #filename = file.split(".")[0]
+
+        full_image_path = os.path.join(directory_image, full_image_name + ".png")
+        image_colors = cv2.imread(full_image_path)  
+        #image_colors = cv2.cvtColor(image_colors, cv2.COLOR_BGR2RGB)
+        height, width = image_colors.shape[:2]
+
+        image_path = os.path.join(directory_image, full_image_name + ".png")
+        predicted_label_path_full = os.path.join(path_real_results, config.DATA_GENERAL_LABEL_FOLDER_NAME, full_image_name + ".txt")
+        groundtruth_label_path = os.path.join(path_dataset, config.DATA_GENERAL_LABEL_FOLDER_NAME, full_image_name + ".txt")
+
+        time_csv_path = os.path.join(path_results, config.RESULTS_GENERAL_SEGMENTATIONTIME_FOLDER_NAME + ".csv")
+        
+        groundtruth_stats_path = (os.path.join(directory_stats, full_image_name + ".csv"))
+        predicted_stats_path = (os.path.join(path_results, config.DATA_GENERAL_STATS_FOLDER_NAME, full_image_name + ".csv"))
+        
+        #total_predicted_image = (os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, filename + "_predictions.png"))
+        correct_predicted_image = (os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, full_image_name + "_correct_predictions.png"))
+        #groundtruth_image = (os.path.join(path_results, config.RESULTS_GENERAL_DROPLETCLASSIFICATION_FOLDER_NAME, filename + ".png"))
+        
+        # get images
+        image_colors = cv2.imread(os.path.join(directory_image, full_image_name + ".png"))  
+        image_colors = cv2.cvtColor(image_colors, cv2.COLOR_BGR2RGB)
+        height, width = image_colors.shape[:2]
+
+        # image to show the correct predictions 
+        image_correct_predictions = copy.copy(image_colors)
+        image_predictions = copy.copy(image_colors)
+        image_groundtruth = copy.copy(image_colors)
+
+        df = pd.read_csv(time_csv_path)
+
+        print("Evaluating image", full_image_name + "..." )
+
+        predicted_shapes = []
+        segmentation_time = 0
+
+        for (square_filename, x_offset, y_offset) in image_group: 
+        
+            predicted_label_path = os.path.join(path_results, config.DATA_GENERAL_LABEL_FOLDER_NAME, square_filename + ".txt")
+            predicted_image_path = os.path.join(square_image_path, config.DATA_GENERAL_IMAGE_FOLDER_NAME, square_filename + ".png")
+            
+            if os.path.exists(predicted_label_path):
+                height_square, width_square = cv2.imread(predicted_image_path).shape[:2]
+                predicted_shapes.extend(get_polygon_from_yolo_label(predicted_label_path, width_square, height_square, x_offset, y_offset))
+
+                if square_filename in df[fieldnames_time[0]].astype(str).values:
+                    filtered_df = df[df[fieldnames_time[0]].astype(str) == str(square_filename)]
+                    segmentation_time += filtered_df[fieldnames_time[1]].values[0]
+                else:
+                    segmentation_time = 0
+
+        save_shapes_to_yolo_label(predicted_label_path_full, predicted_shapes, width, height)
+
+        groundtruth_shapes = get_polygon_from_yolo_label(groundtruth_label_path, width, height)
+
+        # match the groundtruth and the predicted shapes to find correct predictions given the iou threshold
+        results = match_predicted_to_groundtruth(predicted_shapes, groundtruth_shapes, distance_threshold, image_colors)
+        image_correct_predictions, precision, recall, f1_score, map5, map595, tp, fp, fn = evaluate_matches(groundtruth_shapes, results, image_correct_predictions, iou_threshold)
+
+
+        # update metrics to the segmentation file
+        write_segmentation_csv_file((full_image_name, precision, recall, f1_score, map5, map595, tp, fp, fn, segmentation_time), path_csv_segmentation, fieldnames_segmentation)
+        
+        ####### EVALUATE STATISTICS
+
+        # calculate predicted statistics 
+        predicted_statistics = calculate_predicted_statistics(predicted_shapes, width, height, width_mm)
+        
+        # get groundtruth statistics (ATTENTION !!!! SYNTHETIC DATASET WAS CREATED WITH OVERLAPPED PERCENTAGE AND OVERLAPPED NUMBER SWITCHED)
+        groundtruth_statistics = read_groundtruth_statistics_file(groundtruth_stats_path)
+
+        # update metrics to the statistics file
+        write_statistics_csv_file(full_image_name, predicted_statistics, groundtruth_statistics, path_csv_statistics, fieldnames_statistics)
+
+        ####### SAVE PREDICTED RESULTS FILES
+
+        # save predicted statistics file
+        save_predicted_statistics_file(predicted_stats_path, predicted_statistics, fieldnames_predicted_statistics)
+
+        # save predicted shapes image
+        image_predictions = cv2.cvtColor(image_predictions, cv2.COLOR_BGR2RGB)
+        image_correct_predictions = cv2.cvtColor(image_correct_predictions, cv2.COLOR_BGR2RGB)
+        image_groundtruth = cv2.cvtColor(image_groundtruth, cv2.COLOR_BGR2RGB)
+        
+        cv2.imwrite(correct_predicted_image, image_correct_predictions)
+       
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        
+        print("Time taken:", elapsed_time, "seconds")
+        
+    return image_correct_predictions
 
 def compute_evaluations():
     if isDropletCCV_Square:
@@ -618,31 +846,31 @@ def compute_evaluations():
                                                 evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS)
         
     if isDropletCCV_Full:
-        main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
-                        fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
-                        fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
-                        fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
+        # main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                 fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
+        #                 fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
+        #                 fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
 
-                        path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_CV,
-                        path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_CV,
-                        path_dataset=config.DATA_SYNTHETIC_FULL_WSP_TESTING_DIR, 
-                        path_results=config.RESULTS_SYNTHETIC_FULL_CCV_DIR,
-                        iou_threshold=IOU_THRESHOLD,
-                        distance_threshold=DISTANCE_THRESHOLD,
-                        width_mm=76)
+        #                 path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_CV,
+        #                 path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_CV,
+        #                 path_dataset=config.DATA_SYNTHETIC_FULL_WSP_TESTING_DIR, 
+        #                 path_results=config.RESULTS_SYNTHETIC_FULL_CCV_DIR,
+        #                 iou_threshold=IOU_THRESHOLD,
+        #                 distance_threshold=DISTANCE_THRESHOLD,
+        #                 width_mm=76)
         
 
-        update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
-                                               evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_CV, 
-                                               "droplet_synthetic_full_dataset_ccv",
-                                               evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
-                                               evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION)
+        # update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
+        #                                        evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_CV, 
+        #                                        "droplet_synthetic_full_dataset_ccv",
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION)
         
-        update_general_evaluation_droplet_stats(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, 
-                                                evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_CV, 
-                                                "droplet_synthetic_full_dataset_ccv",
-                                                evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
-                                                evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS) 
+        # update_general_evaluation_droplet_stats(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, 
+        #                                         evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_CV, 
+        #                                         "droplet_synthetic_full_dataset_ccv",
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS) 
     
     
         main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
@@ -679,7 +907,7 @@ def compute_evaluations():
 
                         path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_DATASET_MRCNN,
                         path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_DATASET_MRCNN,
-                        path_dataset=config.DATA_REAL_WSP_TESTING_DIR, 
+                        path_dataset=config.DATA_REAL_WSP_TESTING_DIR2, 
                         path_results=config.RESULTS_REAL_MRCNN_DIR,
                         iou_threshold=IOU_THRESHOLD,
                         distance_threshold=DISTANCE_THRESHOLD)
@@ -721,7 +949,7 @@ def compute_evaluations():
     
     if isDropletMRCNN_Full:
         # REAL
-        main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        main_evaluation_full_image(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
                         fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
                         fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
                         fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
@@ -729,9 +957,12 @@ def compute_evaluations():
                         path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_FULL_DATASET_MRCNN,
                         path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_FULL_DATASET_MRCNN,
                         path_dataset=config.DATA_REAL_FULL_WSP_TESTING_DIR, 
-                        path_results=config.RESULTS_REAL_FULL_MRCNN_DIR,
+                        path_results=config.RESULTS_REAL_MRCNN_DIR,
                         iou_threshold=IOU_THRESHOLD,
-                        distance_threshold=DISTANCE_THRESHOLD)
+                        distance_threshold=DISTANCE_THRESHOLD, 
+                        square_image_path=config.DATA_REAL_WSP_TESTING_DIR2,
+                        path_real_results = config.RESULTS_REAL_FULL_MRCNN_DIR,
+                        width_mm=26)
         
         update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
                                                evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_FULL_DATASET_MRCNN, 
@@ -745,8 +976,8 @@ def compute_evaluations():
                                                 evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
                                                 evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS)
 
-        # SYNTHETIC
-        main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #SYNTHETIC
+        main_evaluation_full_image(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
                         fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
                         fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
                         fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
@@ -754,9 +985,12 @@ def compute_evaluations():
                         path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_MRCNN,
                         path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_MRCNN,
                         path_dataset=config.DATA_SYNTHETIC_FULL_WSP_TESTING_DIR, 
-                        path_results=config.RESULTS_SYNTHETIC_FULL_MRCNN_DIR,
+                        path_results=config.RESULTS_SYNTHETIC_MRCNN_DIR,
                         iou_threshold=IOU_THRESHOLD,
-                        distance_threshold=DISTANCE_THRESHOLD)
+                        distance_threshold=DISTANCE_THRESHOLD, 
+                        square_image_path=config.DATA_SYNTHETIC_WSP_TESTING_DIR,
+                        path_real_results = config.RESULTS_SYNTHETIC_FULL_MRCNN_DIR,
+                        width_mm=76)
         
         update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
                                                evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_MRCNN, 
@@ -772,28 +1006,28 @@ def compute_evaluations():
     
     if isDropletYOLO_Square:
 
-        main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
-                        fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
-                        fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
-                        fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
+        # main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                 fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
+        #                 fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
+        #                 fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
 
-                        path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO,
-                        path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO,
-                        path_dataset=config.DATA_SYNTHETIC_NORMAL_WSP_TESTING_DIR, 
-                        path_results=config.RESULTS_SYNTHETIC_YOLO_DIR,
-                        iou_threshold=IOU_THRESHOLD,
-                        distance_threshold=DISTANCE_THRESHOLD)
+        #                 path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO,
+        #                 path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO,
+        #                 path_dataset=config.DATA_SYNTHETIC_WSP_TESTING_DIR, 
+        #                 path_results=config.RESULTS_SYNTHETIC_YOLO_DIR,
+        #                 iou_threshold=IOU_THRESHOLD,
+        #                 distance_threshold=DISTANCE_THRESHOLD)
         
-        update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
-                                               evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO, 
-                                               "droplet_synthetic_square_dataset_yolo",
-                                               evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
-                                               evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION)
-        update_general_evaluation_droplet_stats(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, 
-                                                evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, 
-                                                "droplet_synthetic_square_dataset_yolo",
-                                                evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
-                                                evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS) 
+        # update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
+        #                                        evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_YOLO, 
+        #                                        "droplet_synthetic_square_dataset_yolo",
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION)
+        # update_general_evaluation_droplet_stats(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, 
+        #                                         evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_YOLO, 
+        #                                         "droplet_synthetic_square_dataset_yolo",
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS) 
         
         main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
                         fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
@@ -802,7 +1036,7 @@ def compute_evaluations():
 
                         path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_DATASET_YOLO,
                         path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_DATASET_YOLO,
-                        path_dataset=config.DATA_REAL_WSP_TESTING_DIR, 
+                        path_dataset=config.DATA_REAL_WSP_TESTING_DIR2, 
                         path_results=config.RESULTS_REAL_YOLO_DIR,
                         iou_threshold=IOU_THRESHOLD,
                         distance_threshold=DISTANCE_THRESHOLD)
@@ -820,7 +1054,7 @@ def compute_evaluations():
 
     if isDropletYOLO_Full:
 
-        main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        main_evaluation_full_image(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
                         fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
                         fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
                         fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
@@ -828,9 +1062,11 @@ def compute_evaluations():
                         path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_YOLO,
                         path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_YOLO,
                         path_dataset=config.DATA_SYNTHETIC_FULL_WSP_TESTING_DIR, 
-                        path_results=config.RESULTS_SYNTHETIC_FULL_YOLO_DIR,
+                        path_results=config.RESULTS_SYNTHETIC_YOLO_DIR,
+                        square_image_path=config.DATA_SYNTHETIC_WSP_TESTING_DIR,
+                        path_real_results=config.RESULTS_SYNTHETIC_FULL_YOLO_DIR,
                         iou_threshold=IOU_THRESHOLD,
-                        distance_threshold=DISTANCE_THRESHOLD)
+                        distance_threshold=DISTANCE_THRESHOLD, width_mm=76)
         
         update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
                                                evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_YOLO, 
@@ -844,39 +1080,139 @@ def compute_evaluations():
                                                 evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
                                                 evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS) 
         
+        # main_evaluation_full_image(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                 fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
+        #                 fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
+        #                 fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
+
+        #                 path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_FULL_DATASET_YOLO,
+        #                 path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_FULL_DATASET_YOLO,
+        #                 path_dataset=config.DATA_REAL_FULL_WSP_TESTING_DIR, 
+        #                 path_results=config.RESULTS_REAL_YOLO_DIR,
+        #                 square_image_path=config.DATA_REAL_WSP_TESTING_DIR2,
+        #                 path_real_results=config.RESULTS_REAL_FULL_YOLO_DIR,
+        #                 iou_threshold=IOU_THRESHOLD,
+        #                 distance_threshold=DISTANCE_THRESHOLD, width_mm=26)
+
+        # update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
+        #                                        evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_FULL_DATASET_YOLO, 
+        #                                        "droplet_real_full_dataset_yolo", 
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION)
+        
+        # update_general_evaluation_droplet_stats(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, 
+        #                                         evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_FULL_DATASET_YOLO, 
+        #                                         "droplet_real_full_dataset_yolo",
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS)
+    
+    if isDropletCELLPOSE_Square:
+
+        # main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                 fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
+        #                 fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
+        #                 fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
+
+        #                 path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_CELLPOSE,
+        #                 path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_CELLPOSE,
+        #                 path_dataset=config.DATA_SYNTHETIC_WSP_TESTING_DIR, 
+        #                 path_results=config.RESULTS_SYNTHETIC_CELLPOSE_DIR,
+        #                 iou_threshold=IOU_THRESHOLD,
+        #                 distance_threshold=DISTANCE_THRESHOLD)
+        
+        # update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
+        #                                        evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_CELLPOSE, 
+        #                                        "droplet_synthetic_square_dataset_cellpose",
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION)
+        # update_general_evaluation_droplet_stats(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, 
+        #                                         evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_DATASET_CELLPOSE, 
+        #                                         "droplet_synthetic_square_dataset_cellpose",
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS) 
+        
         main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
                         fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
                         fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
                         fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
 
-                        path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_FULL_DATASET_YOLO,
-                        path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_FULL_DATASET_YOLO,
-                        path_dataset=config.DATA_REAL_FULL_WSP_TESTING_DIR, 
-                        path_results=config.RESULTS_REAL_FULL_YOLO_DIR,
+                        path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_DATASET_CELLPOSE,
+                        path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_DATASET_CELLPOSE,
+                        path_dataset=config.DATA_REAL_WSP_TESTING_DIR2, 
+                        path_results=config.RESULTS_REAL_CELLPOSE_DIR,
                         iou_threshold=IOU_THRESHOLD,
                         distance_threshold=DISTANCE_THRESHOLD)
 
         update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
-                                               evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_FULL_DATASET_YOLO, 
-                                               "droplet_real_full_dataset_yolo", 
+                                               evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_DATASET_CELLPOSE, 
+                                               "droplet_real_square_dataset_cellpose", 
+                                               evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+                                               evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION)
+        update_general_evaluation_droplet_stats(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, 
+                                                evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_DATASET_CELLPOSE, 
+                                                "droplet_real_square_dataset_cellpose",
+                                                evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
+                                                evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS)
+
+    if isDropletCELLPOSE_Full:
+
+        # main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                 fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
+        #                 fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
+        #                 fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
+
+        #                 path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_CELLPOSE,
+        #                 path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_CELLPOSE,
+        #                 path_dataset=config.DATA_SYNTHETIC_FULL_WSP_TESTING_DIR, 
+        #                 path_results=config.RESULTS_SYNTHETIC_FULL_CELLPOSE_DIR,
+        #                 iou_threshold=IOU_THRESHOLD,
+        #                 distance_threshold=DISTANCE_THRESHOLD, width_mm=76)
+        
+        # update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
+        #                                        evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_CELLPOSE, 
+        #                                        "droplet_synthetic_full_dataset_cellpose",
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+        #                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION)
+        
+        # update_general_evaluation_droplet_stats(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, 
+        #                                         evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_CELLPOSE, 
+        #                                         "droplet_synthetic_full_dataset_cellpose",
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
+        #                                         evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS) 
+        
+        main_evaluation(fieldnames_segmentation=evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+                        fieldnames_statistics=evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS,
+                        fieldnames_time=evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
+                        fieldnames_predicted_statistics=evaluate_algorithms_config.FIELDNAMES_PREDICTED_STATISTICS,
+
+                        path_csv_segmentation=evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_FULL_DATASET_CELLPOSE,
+                        path_csv_statistics=evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_FULL_DATASET_CELLPOSE,
+                        path_dataset=config.DATA_REAL_FULL_WSP_TESTING_DIR, 
+                        path_results=config.RESULTS_REAL_FULL_CELLPOSE_DIR,
+                        iou_threshold=IOU_THRESHOLD,
+                        distance_threshold=DISTANCE_THRESHOLD, width_mm=26)
+
+        update_general_evaluation_droplet_segm(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, 
+                                               evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_FULL_DATASET_CELLPOSE, 
+                                               "droplet_real_full_dataset_cellpose", 
                                                evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
                                                evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION)
         
         update_general_evaluation_droplet_stats(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, 
-                                                evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_FULL_DATASET_YOLO, 
-                                                "droplet_real_full_dataset_yolo",
+                                                evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_FULL_DATASET_CELLPOSE, 
+                                                "droplet_real_full_dataset_cellpose",
                                                 evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS,
                                                 evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS)
 
-#compute_evaluations()
+compute_evaluations()
 
 # new_csv_file(evaluate_algorithms_config.EVAL_DROPLET_STATS_GENERAL, evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_STATISTICS)
 # new_csv_file(evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL, evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION)
 
-divide_evaluations_by_image_resolution(evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_CV,
-                                       evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL,
-                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
-                                        evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
-                                        "droplet_synthetic_square_dataset_ccv"
+#divide_evaluations_by_image_resolution(evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_DATASET_CV,
+                                    #    evaluate_algorithms_config.EVAL_DROPLET_SEGM_GENERAL,
+                                    #     evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
+                                    #     evaluate_algorithms_config.FIELDNAMES_DROPLET_GENERAL_SEGMENTATION,
+                                    #     "droplet_synthetic_square_dataset_ccv"
                                        
-                                       )
+                                    #    )

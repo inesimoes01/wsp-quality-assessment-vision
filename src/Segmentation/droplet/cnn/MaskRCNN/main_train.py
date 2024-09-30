@@ -19,10 +19,9 @@ COCO_WEIGHTS_PATH = os.path.join(path_configurations.MODELS_MRCNN_DIR, "mask_rcn
 
 # directory to save logs and model checkpoints, if not provided
 # through the command line argument --logs
-DEFAULT_LOGS_DIR = os.path.join(path_configurations.MODELS_MRCNN_DIR, "logs")
+DEFAULT_LOGS_DIR = os.path.join(path_configurations.MODELS_MRCNN_DIR, "logs_2")
 
-DATASET_PATH = os.path.join("data\\droplets\\synthetic_dataset_normal_droplets\\mrcnn_ready")
-
+DATASET_PATH = os.path.join("data\\droplets\\synthetic_dataset_normal_droplets\\mrcnn")
 
 
 def train(model):
@@ -50,7 +49,7 @@ def train(model):
                 
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
-                epochs=50,
+                epochs=100,
                 layers='heads', #layers='all', 
                 # augmentation = imgaug.augmenters.Sequential([ 
                 # imgaug.augmenters.Fliplr(1), 
@@ -87,8 +86,6 @@ def train(model):
                                         # ) 
                                    # )
                                     
-
-    
 				
 config = custom_mrcnn_classes.CustomConfigDroplet()
 model = modellib.MaskRCNN(mode="training", config=config,

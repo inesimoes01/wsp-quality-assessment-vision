@@ -18,8 +18,8 @@ from Common.Statistics import Statistics as stats
 
 
 def prepare_dataset_for_yolo():
-    original_dataset_folder = "data\\droplets\\synthetic_dataset_droplets\\full\\divided\\test"
-    output_squares_folder = "data\\droplets\\synthetic_dataset_droplets\\square2"
+    original_dataset_folder = "data\\droplets\\real_dataset_droplets\\full"
+    output_squares_folder = "data\\droplets\\real_dataset_droplets\\square2"
     separated_squares_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided"
 
     # original_dataset_folder = "data\\droplets\\synthetic_dataset_normal_droplets\\full\\divided\\test"
@@ -168,6 +168,80 @@ def split_dataset_kfold(dataset_folder, output_dir, n_splits=5):
         
         fold += 1
         
+def calculate_real_dataset_statistics(path_dataset, width_mm):
+    path_images = os.path.join(path_dataset, config.DATA_GENERAL_IMAGE_FOLDER_NAME)
+    for file in os.listdir(path_images):
+
+        filename = file.split(".")[0]
+
+        image = cv2.imread(os.path.join(path_images, file))
+        height, width = image.shape[:2]
+        image_area = height * width
+
+        label_path = os.path.join(path_dataset, config.DATA_GENERAL_LABEL_FOLDER_NAME, filename + ".txt")
+        stats_path = os.path.join(path_dataset, config.DATA_GENERAL_STATS_FOLDER_NAME, filename + ".csv")
+
+        polygons = []
+        with open(label_path, 'r') as file:
+            for line in file:
+                parts = line.strip().split()            
+                coordinates = list(map(float, parts[1:]))
+                polygon = [(coordinates[i] * height, coordinates[i+1] * width) for i in range(0, len(coordinates), 2)]
+                polygons.append(polygon)
+
+        area_list = []
+        area_sum = 0
+        num_pols = 0
+        list_polygons = []
+
+        for pol in polygons:
+            pol = Polygon(pol)
+            area = pol.area
+            area_sum += area
+            area_list.append(area)
+            num_pols += 1
+
+            list_polygons.append(pol)
+
+
+        diameter_list = sorted(stats.area_to_diameter_micro(area_list, width, width_mm))
+
+        
+        # find the overlapping polygons
+        no_droplets_overlapped = 0
+        overlapping_polygons = []
+        for i, polygon in enumerate(list_polygons):
+            if not polygon.is_valid:
+                polygon = polygon.buffer(0)  # Attempt to fix invalid polygon
+            for j, other_polygon in enumerate(list_polygons):
+                if i != j:
+                    if not other_polygon.is_valid:
+                        other_polygon = other_polygon.buffer(0)  # Attempt to fix invalid other polygon
+                    if polygon.intersects(other_polygon):
+                        overlapping_polygons.append(i)
+                        overlapping_polygons.append(j)
+
+        no_droplets_overlapped = len(overlapping_polygons)
+        overlaped_percentage = no_droplets_overlapped / num_pols * 100 if num_pols > 0 else 0
+
+        vmd_value, coverage_percentage, rsf_value, _ = stats.calculate_statistics(diameter_list, image_area, area_sum)
+            
+        ground_truth_stats = stats(vmd_value, rsf_value, coverage_percentage, num_pols, no_droplets_overlapped, overlaped_percentage)
+
+        
+        data = {
+            '': ['VMD', 'RSF', 'Coverage %', 'Nº Droplets', 'Overlapped Droplets %', 'Number of overlapped droplets'],
+            'GroundTruth': [ground_truth_stats.vmd_value, ground_truth_stats.rsf_value, ground_truth_stats.coverage_percentage, ground_truth_stats.no_droplets, ground_truth_stats.overlaped_percentage, ground_truth_stats.no_droplets_overlapped], 
+        }
+
+        df = pd.DataFrame(data)
+        df.to_csv(stats_path, index=False, float_format='%.2f')
+
+
+    return ground_truth_stats
+
+
+
 def calculate_statistics_from_yolo_annotation(shapes, width_px, height_px, width_mm, statistics_file_path):
     total_droplet_area = 0
     total_no_droplets = 0
@@ -355,6 +429,6 @@ def _save_split(images, labels, output_dir, split_name):
         copyfile(label, os.path.join(label_output_dir, os.path.basename(label)))
 
 
-
+#calculate_real_dataset_statistics("data\\droplets\\real_dataset_droplets\\full", 26)
 
 #prepare_dataset_for_yolo()

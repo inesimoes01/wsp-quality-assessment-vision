@@ -37,9 +37,8 @@ COCO_WEIGHTS_PATH = os.path.join(ROOT_DIR, "mask_rcnn_coco.h5")
 # save logs and model checkpoints, if not provided
 # through the command line argument --logs
 DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "logs")
-DATASET_PATH = "data\\droplets\\synthetic_dataset_normal_droplets\\mrcnn_ready"
-
-MODEL_PATH = 'models\\mrcnn\\logs\\droplet_dataset20240820T1841\\mask_rcnn_droplet_dataset_0050.h5'
+DATASET_PATH = "data\\droplets\\synthetic_dataset_droplets\\mrcnn"
+MODEL_PATH = 'models\\droplets\\mrcnn\\logs_2\\droplet_dataset20240906T1631\\mask_rcnn_droplet_dataset_0100.h5'
 
 DATASET_TEST_PATH = os.path.join(DATASET_PATH, "test")
 
@@ -47,6 +46,8 @@ def draw_precision_recall_curve( gt_bbox, gt_class_id, gt_mask, r):
     AP, precisions, recalls, overlaps = utils.compute_ap(gt_bbox, gt_class_id, gt_mask,
                                             r['rois'], r['class_ids'], r['scores'], r['masks'])
     visualize.plot_precision_recall(AP, precisions, recalls)
+    return precisions, recalls
+
 
 def draw_confusion_matrix(config, dataset):
 
@@ -124,21 +125,34 @@ dataset_val = custom_mrcnn_classes.CustomDataset()
 dataset_val.load_custom(DATASET_PATH, "val")
 dataset_val.prepare()
 
-image_paths = []
-for filename in os.listdir(os.path.join(DATASET_PATH, "test")):
-    if os.path.splitext(filename)[1].lower() in ['.png', '.jpg', '.jpeg']:
-        image_paths.append(os.path.join(DATASET_TEST_PATH, filename))
+# image_paths = []
+# for filename in os.listdir(os.path.join(DATASET_PATH, "test")):
+#     if os.path.splitext(filename)[1].lower() in ['.png', '.jpg', '.jpeg']:
+#         image_paths.append(os.path.join(DATASET_TEST_PATH, filename))
 
-for image_path in image_paths:
-    img = skimage.io.imread(image_path)
-    img_arr = np.array(img)
-    results = model.detect([img_arr])
-    r = results[0]
-    visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], 
-                                dataset_val.class_names, r['scores'], figsize=(5,5))
+# for image_path in image_paths:
+#     img = skimage.io.imread(image_path)
+#     img_arr = np.array(img)
+#     results = model.detect([img_arr])
+#     r = results[0]
+    #visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], 
+                                #dataset_val.class_names, r['scores'], figsize=(5,5))
     
 
 tp, fp, fn, gt_bbox, gt_class_id, gt_mask, r = draw_confusion_matrix(inference_config, dataset_val)
 
 
-draw_precision_recall_curve(gt_bbox, gt_class_id, gt_mask, r)
+precisions, recalls = draw_precision_recall_curve(gt_bbox, gt_class_id, gt_mask, r)
+
+import pandas as pd
+
+
+# Create a DataFrame
+df = pd.DataFrame({'Precision': precisions, 'Recall': recalls})
+
+# Save the DataFrame to a CSV file
+df.to_csv('precision_recall.csv', index=False)
+
+print("CSV file saved successfully!")
+
+

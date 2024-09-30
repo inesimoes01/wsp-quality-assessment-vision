@@ -6,7 +6,7 @@ import csv
 sys.path.insert(0, 'src')
 import Common.config as config 
 
-results_files = "results\\metrics\\droplet\\real_dataset\\droplet_stats_evaluation_overleaf.csv"
+results_files = "results\\evaluation\\droplet\\dropleaf_statistics.csv"
 
 def write_stats_csv(filename, coverage_percentage, vmd, rsf, no_droplets, coverage_percentage_gt, vmd_gt, rsf_gt, no_droplets_gt):
     

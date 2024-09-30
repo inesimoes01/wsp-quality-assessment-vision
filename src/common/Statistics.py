@@ -9,7 +9,7 @@ from Droplet import *
 #TODO adjust pixels to real word dimensions
 
 class Statistics:
-    def __init__(self, vmd_value:float, rsf_value:float, coverage_percentage:float, no_droplets:int, no_droplets_overlapped, overlaped_percentage, droplet_info:list[Droplet] = None):
+    def __init__(self, vmd_value:float, rsf_value:float, coverage_percentage:float, no_droplets:int, no_droplets_overlapped, overlaped_percentage, droplet_info = None):
         self.vmd_value = vmd_value
         self.rsf_value = rsf_value
         self.coverage_percentage = coverage_percentage

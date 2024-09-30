@@ -21,12 +21,12 @@ import tensorflow.keras.layers as KL
 import tensorflow.keras.utils as KU
 from tensorflow.python.eager import context
 import tensorflow.keras.models as KM
-
-#import tensorflow.keras.engine as KE
-
-from mrcnn import utils
 import sys
-from mrcnn.parallel_model import ParallelModel
+#import tensorflow.keras.engine as KE
+sys.path.insert(0, 'src')
+from Segmentation.droplet.cnn.MaskRCNN.mrcnn import utils
+import sys
+from Segmentation.droplet.cnn.MaskRCNN.mrcnn.parallel_model import ParallelModel
 
 # Requires TensorFlow 2.0+
 from distutils.version import LooseVersion

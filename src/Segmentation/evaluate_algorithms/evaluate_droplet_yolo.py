@@ -7,7 +7,7 @@ import time
 import copy
 import gc
 import pandas as pd
-import skimage
+
 from matplotlib import pyplot as plt 
 from pathlib import Path
 from ultralytics import YOLO
@@ -126,11 +126,13 @@ def compute_yolo_segmentation_normal(image_path, yolo_model):
 def compute_yolo_segmentation_full(image_path, full_image_path, yolo_model, last_index, x_offset, y_offset):
     predicted_droplets_adjusted = []
     predicted_droplets_adjusted_with_edges = []
+
     # predict image results
     image = cv2.imread(full_image_path)
     height, width = image.shape[:2]
 
-    results = yolo_model(image_path, conf=0.1)
+    results = yolo_model(image_path, conf=0.3)
+
 
     if results[0].masks:
         segmentation_result = results[0].masks.xy
@@ -149,11 +151,15 @@ def compute_yolo_segmentation_full(image_path, full_image_path, yolo_model, last
                 adjusted_coords.append([x + x_offset, y + y_offset])
             if adjusted_coords != [] and len(adjusted_coords) >= 4:
                 predicted_droplets_adjusted.append(np.array(adjusted_coords, dtype=np.int32))
+            
+
 
         # check which droplets are on the edge
         edge_zone_width = 5
         for i, polygon in enumerate(predicted_droplets_adjusted):
             isEdge = False
+            cv2.drawContours(image, [polygon], -1, (255, 0, 0), 1)
+
             for point in polygon:
                 if (point[0] < edge_zone_width or 
                     point[0] > width - edge_zone_width or
@@ -163,6 +169,9 @@ def compute_yolo_segmentation_full(image_path, full_image_path, yolo_model, last
                     isEdge = True
         
             predicted_droplets_adjusted_with_edges.append((polygon, i + last_index, isEdge))
+
+        
+ 
         #     if isEdge:
         #         cv2.drawContours(image, [polygon], -1, (255, 0, 0), 1)
         #     else:
@@ -349,22 +358,22 @@ yolo_model_path = evaluate_algorithms_config.DROPLET_YOLO_MODEL
 #           evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
 #           evaluate_algorithms_config.EVAL_DROPLET_SEGM_REAL_DATASET_YOLO, 
 #           evaluate_algorithms_config.EVAL_DROPLET_STATS_REAL_DATASET_YOLO, 
-#           config.DATA_REAL_WSP_TESTING_DIR, 
+#           config.DATA_REAL_WSP_TESTING_DIR2, 
 #           config.RESULTS_REAL_YOLO_DIR, 
 #           yolo_model_path)
 
 #### FULL IMAGE
 # SYNTHETIC DATASET
-main_yolo_full(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
-          evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
-          evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
-          evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_YOLO, 
-          evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_YOLO, 
-          config.DATA_SYNTHETIC_FULL_WSP_TESTING_DIR, 
-          config.RESULTS_SYNTHETIC_FULL_YOLO_DIR, 
-          yolo_model_path)
+# main_yolo_full(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
+#           evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
+#           evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,
+#           evaluate_algorithms_config.EVAL_DROPLET_SEGM_SYNTHETIC_FULL_DATASET_YOLO, 
+#           evaluate_algorithms_config.EVAL_DROPLET_STATS_SYNTHETIC_FULL_DATASET_YOLO, 
+#           config.DATA_SYNTHETIC_FULL_WSP_TESTING_DIR, 
+#           config.RESULTS_SYNTHETIC_FULL_YOLO_DIR, 
+#           yolo_model_path)
 
-# REAL DATASET
+# # REAL DATASET
 main_yolo_full(evaluate_algorithms_config.FIELDNAMES_DROPLET_SEGMENTATION, 
           evaluate_algorithms_config.FIELDNAMES_DROPLET_STATISTICS, 
           evaluate_algorithms_config.FIELDNAMES_SEGMENTATION_TIME,

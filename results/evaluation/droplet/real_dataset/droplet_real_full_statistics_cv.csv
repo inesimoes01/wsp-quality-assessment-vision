@@ -1,0 +1,3 @@
+file,VMD_pred,VMD_gt,VMD_error,RSF_pred,RSF_gt,RSF_error,CoveragePercentage_pred,CoveragePercentage_gt,CoveragePercentage_error,NoDroplets_pred,NoDroplets_gt,NoDroplets_error,NoOverlappedDroplets_pred,NoOverlappedDroplets_gt,NoOverlappedDroplets_error,OverlappedDropletsPercentage_pred,OverlappedDropletsPercentage_gt,OverlappedDropletsPercentage_error
+2_Z1_cut,224.20398519589526,215.8,0.03894339757134034,2.441486735236947,0.8,2.0518584190461837,5.287534915165784,3.71,0.4252115674301305,2256,1913.0,0.17929952953476216,396,0.0,0,17.5531914893617,0.0,0
+LadoOposto_850_Arv1_15m_cut,104.18439129050213,114.27,0.08826121212477345,1.2287284251515098,0.78,0.5752928527583459,3.129094271224299,3.82,0.18086537402505262,897,841.0,0.06658739595719382,184,0.0,0,20.51282051282051,0.0,0
