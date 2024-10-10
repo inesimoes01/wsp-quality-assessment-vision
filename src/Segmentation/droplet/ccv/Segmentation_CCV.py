@@ -23,6 +23,7 @@ class Segmentation_CCV:
     def __init__(self, image_color, image_gray, filename, save_image_steps:bool, segmentation_method:int, dataset_results_folder):
         self.save_image_steps = save_image_steps
         self.filename = filename
+        self.dataset_results_folder = dataset_results_folder
     
         self.initialize_variables(image_gray, image_color)
        
@@ -107,8 +108,8 @@ class Segmentation_CCV:
             #self.detected_image = cv2.cvtColor(self.detected_image, cv2.COLOR_BGR2RGB)
             cv2.imwrite(os.path.join(config.RESULTS_LATEX_PIP_DIR, filename + "detected.png"), self.detected_image)
             
-            self.separate_image = cv2.cvtColor(self.separate_image, cv2.COLOR_BGR2RGB)
-            cv2.imwrite(os.path.join(config.RESULTS_LATEX_PIP_DIR, filename + "contours.png"), self.separate_image)
+        self.separate_image = cv2.cvtColor(self.separate_image, cv2.COLOR_BGR2RGB)
+        cv2.imwrite(os.path.join(dataset_results_folder, filename + "contours.png"), self.separate_image)
 
         #cv2.imwrite(os.path.join(config.RESULTS_CV_DROPLETCLASSIFICATION_DIR, filename + "_countour.png"), self.contour_image)
 
@@ -289,13 +290,13 @@ class Segmentation_CCV:
 
         # findContours detects the white part of the image, therefore the threshold has to be inverted
         # values in the threshold dont affect anything?
-        _, threshold = cv2.threshold(img, 80, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        _, threshold = cv2.threshold(img, 250, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
-        if self.save_image_steps:
-            cv2.imwrite(os.path.join(config.RESULTS_LATEX_PIP_DIR, self.filename + "threshold.png"), threshold)
-            thre = cv2.imread(os.path.join(config.RESULTS_LATEX_PIP_DIR, self.filename + "threshold.png"))
-            self.separate_image = copy.copy(thre)
-            self.detected_image = copy.copy(thre)
+        #if self.save_image_steps:
+        cv2.imwrite(os.path.join(self.dataset_results_folder, self.filename + "threshold.png"), threshold)
+            # thre = cv2.imread(os.path.join(config.RESULTS_LATEX_PIP_DIR, self.filename + "threshold.png"))
+            # self.separate_image = copy.copy(thre)
+            # self.detected_image = copy.copy(thre)
 
         inverted_threshold = cv2.bitwise_not(threshold)
         self.contours, _ = cv2.findContours(inverted_threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

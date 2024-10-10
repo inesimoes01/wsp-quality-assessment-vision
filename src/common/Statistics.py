@@ -48,7 +48,7 @@ class Statistics:
     
     def area_to_diameter_micro(droplet_area, width_px, width_mm):
         ratio_pxTOcm = width_mm * 1000 / width_px
-        
+    
         diameter_list = []
         for area_px in droplet_area:
             diameter = 2 * np.sqrt(area_px / np.pi) * ratio_pxTOcm        

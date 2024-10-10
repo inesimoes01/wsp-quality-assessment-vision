@@ -50,7 +50,14 @@ RESULTS_CELLPOSE_DIR = Path("results") / "cellpose"
 RESULTS_LATEX_DIR = Path("results") / "latex"
 RESULTS_LATEX_PIP_DIR = Path("results") / "latex" / "pipeline"
 RESULTS_LATEX_PIP_ROI_DIR = Path("results") / "latex" / "pipeline" / "rois"
-YOLO_MODEL_DIR = Path("models") / "yolo_droplet" / "50epc_droplet4"
+
+
+# YOLO MODELS
+PAPER_YOLO_MODEL = os.path.join("models", "paper", "YOLOv8", "weights", "best.pt")
+DROPLET_YOLO_MODEL = os.path.join("models", "droplet", "YOLOv8", "weights", "best.pt")
+
+# MRCNN MODELS
+DROPLET_MRCNN_MODEL = "models\\droplet\\MRCNN\\droplet_dataset20240906T1631\\mask_rcnn_droplet_dataset_0100.h5"
 
 
 DATA_GENERAL_STATS_FOLDER_NAME = "statistics"

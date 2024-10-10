@@ -158,3 +158,4 @@ inputs/
 data/
 results/droplet_detection
 models/
+src/WebService/aux_files

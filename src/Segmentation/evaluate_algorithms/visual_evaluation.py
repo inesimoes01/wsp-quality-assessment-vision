@@ -36,7 +36,6 @@ def create_segmentation_image(filename, path_results, path_dataset, algorithm):
     fig, ax = plt.subplots(1, figsize=(10, 10))
     ax.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))  # Display the image
 
-
     with open(label_path, 'r') as file:
         lines = file.readlines()
         colors = _random_colors(len(lines))

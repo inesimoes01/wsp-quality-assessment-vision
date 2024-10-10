@@ -103,12 +103,9 @@ def draw_grouped_lines( image, grouped_lines, axis=0):
         end_point = tuple(coords[-1][0:2])
         cv2.line(image, start_point, end_point, (0, 255, 0), 2)
 
-def detect_rectangle_alternative(image, filename, save_steps = False):
+def detect_rectangle_alternative(image, filename):
     edges = cv2.GaussianBlur(image, (5, 5), 3, 3)
     
-    if save_steps:
-        cv2.imwrite("results\\latex\\rectangle_cv\\" + filename + "blur.png", edges)
-
     # find the most present color
     histogram = cv2.calcHist([edges], [0, 1, 2], None, [256, 256, 256], [0, 256, 0, 256, 0, 256])
     max_count = np.amax(histogram)
@@ -122,15 +119,9 @@ def detect_rectangle_alternative(image, filename, save_steps = False):
     mask = cv2.inRange(edges, lower_bound, upper_bound)
     result = cv2.bitwise_and(edges, edges, mask=cv2.bitwise_not(mask))
 
-    if save_steps:
-        cv2.imwrite("results\\latex\\rectangle_cv\\" + filename + "_mask.png", result)
-
     # threshold image
     gray = cv2.cvtColor(result, cv2.COLOR_RGB2GRAY)
     _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
-
-    if save_steps:
-        cv2.imwrite("results\\latex\\rectangle_cv\\" + filename + "_threshold.png", thresh)
 
     # find contours        
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -141,10 +132,7 @@ def detect_rectangle_alternative(image, filename, save_steps = False):
     for contour in contours:
         hull.append(cv2.convexHull(contour, False))
 
-    cv2.drawContours(image, [hull[0]], -1, (255, 0, 0), 2)
-
-    if save_steps:
-        cv2.imwrite("results\\latex\\rectangle_cv\\" + filename + "_final.png", image)
+    #cv2.drawContours(image, [hull[0]], -1, (255, 0, 0), 2)
 
     return hull[0]
 

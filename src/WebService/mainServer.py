@@ -2,43 +2,41 @@ from flask import Flask, jsonify, request
 import cv2
 import base64
 import sys
-import os
 from matplotlib import pyplot as plt 
 from PIL import Image
 import io
 import numpy as np
+from datetime import date
+import os
+from ultralytics import YOLO
+
+
 
 sys.path.insert(0, 'src/')
-from Segmentation.droplet.ccv.Segmentation_CCV import Segmentation_CV
+from Segmentation.droplet.ccv.Segmentation_CCV import Segmentation_CCV
+import WebService.paper_segmentation as paper_segmentation
+import WebService.droplet_segmentation as droplet_segmentation
+import Common.config as config
 #from Distortion import Distortion
 #from Segmentation_CV import Segmentation
 # from Distortion import Distortion
 # from Segmentation import Segmentation
 import CreateGraph
 
+AUX_FOLDER = "src\\WebService\\aux_files"
+
 app = Flask(__name__)
 
-def create_json_answer(imgdata, vmd_value, rsf_value, coverage_percentage, no_droplets, overlapped_percentage, droplet_sizes_list=None):    
+def create_json_answer(imgdata, vmd_value, rsf_value, coverage_percentage, no_droplets, droplet_sizes_list=None):    
     
     data_graph = CreateGraph.create_graph_values(droplet_sizes_list)
-    # data = {
-    #     "image_bitmap": imgdata,
-    #     "vmd": vmd_value,
-    #     "rsf": rsf_value,
-    #     "coverage_percentage": int(coverage_percentage),
-    #     "number_droplets": int(no_droplets),
-    #     "overlapped_percentage": 15.8,
-    #     "values_of_radius": data_graph  
-    # }
-
     data = {
-        #"image_bitmap": imgdata,
-        "vmd": 0.0,
-        "rsf": 0.0,
-        "coverage_percentage": 12,
-        "number_droplets": 222,
-        "overlapped_percentage": 15.8,
-        "values_of_size": data_graph
+        "image_bitmap": imgdata,
+        "vmd": vmd_value,
+        "rsf": rsf_value,
+        "coverage_percentage": int(coverage_percentage),
+        "number_droplets": int(no_droplets),
+        "values_of_diameter": data_graph  
     }
 
     return data
@@ -46,47 +44,50 @@ def create_json_answer(imgdata, vmd_value, rsf_value, coverage_percentage, no_dr
 
 
 def compute_function(image_uri, paper_width, paper_height, model):
+    for filename in os.listdir(AUX_FOLDER):
+        path = os.path.join(AUX_FOLDER, filename)
+        if os.path.isfile(path):
+            os.remove(path)
 
     imgdata = base64.b64decode(image_uri)
     im = Image.open(io.BytesIO(imgdata))
+    
     image_color = cv2.cvtColor(np.array(im), cv2.COLOR_BGR2RGB)
     image_gray = cv2.cvtColor(np.array(im), cv2.IMREAD_GRAYSCALE)
-    
+
+    filename = str(date.today())
+
+    image_file = os.path.join(AUX_FOLDER, "original_" + filename + ".png")
+    undistorted_image_file = os.path.join(AUX_FOLDER, "undistorted_" + filename + ".png")
+    droplet_segmentation_file = os.path.join(AUX_FOLDER, "segmentation_" + filename + ".png")
+    cv2.imwrite(image_file, image_color)
+
+    model_yolo_paper = YOLO(config.PAPER_YOLO_MODEL)
+
+    image_to_analyze = cv2.imread(image_file)
+    width, height = image_to_analyze.shape[:2]
+
     match model:
-        case 0: # AI model
+        case 0: # Cellpose model
+            undistorted_image = paper_segmentation.find_paper_yolo(image_to_analyze, filename, model_yolo_paper)
+            cv2.imwrite(undistorted_image_file, undistorted_image)
+            
+            vmd_value, rsf_value, coverage_percentage, total_no_droplets, diameter_list = droplet_segmentation.droplet_segmentation_cellpose(undistorted_image, undistorted_image_file, AUX_FOLDER, filename, paper_width, 10, width, height)
             return
 
         case 1: # CV original segmentation
+            undistorted_image = paper_segmentation.find_paper_ccv(image_to_analyze, filename)
+            cv2.imwrite(undistorted_image_file, undistorted_image)
 
-                #find paper in image
-            # dist:Distortion = Distortion(image_gray, image_color, "", False)
-            # no_paper = dist.noPaper
-            # if no_paper: return
-            path = "data\\synthetic_normal_dataset_new\\wsp\\image\\270.png"
-            # read image
-            image_gray = cv2.imread(path ,cv2.IMREAD_GRAYSCALE)
-            image_colors = cv2.imread(path)  
+            image_gray = cv2.imread(undistorted_image_file, cv2.IMREAD_GRAYSCALE)
 
-            image_colors = cv2.cvtColor(image_colors, cv2.COLOR_BGR2RGB)
-
-            calculated = Segmentation_CV(image_colors, image_gray, "0", True, True, 0, "results\\computer_vision_algorithm")
+            vmd_value, rsf_value, coverage_percentage, total_no_droplets, diameter_list = droplet_segmentation.droplet_segmentation_ccv(undistorted_image, image_gray, filename, paper_width, width, height, AUX_FOLDER)
             
-            circle_areas = [droplet.area for droplet in calculated.droplets_data]
-            #segmentation:Segmentation = Segmentation(dist.undistorted_image, "0", save_images=False, create_masks= False)
-            im = cv2.imread("results\\latex\\pipeline\\0detected.png")
-            _, buffer = cv2.imencode('.png', im)
-            img_str = base64.b64encode(buffer).decode('utf-8')
+    im = cv2.imread(droplet_segmentation_file)
+    _, buffer = cv2.imencode('.png', im)
+    img_str = base64.b64encode(buffer).decode('utf-8')
 
-            return create_json_answer(img_str, 449.9, 0.75, 8.63, 1057, 25.3, circle_areas)
-
-            # return create_json_answer(img_str, segmentation.stats.vmd_value, segmentation.stats.rsf_value, 
-            #                    segmentation.stats.coverage_percentage, segmentation.stats.final_no_droplets, 
-            #                    segmentation.stats.overlaped_percentage, segmentation.droplet_area)
-
-        
-            
-        case 2: # CV paper segmentation
-            return
+    return create_json_answer(img_str, vmd_value, rsf_value, coverage_percentage, total_no_droplets, diameter_list)
         
     
 
@@ -104,6 +105,7 @@ def compute():
         paper_width = settings.get('paper_width')
         paper_height = settings.get('paper_height')
         model = settings.get('model')
+
     
         # perform segmentation
         result = compute_function(image_uri, paper_width, paper_height, model)

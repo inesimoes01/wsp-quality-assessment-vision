@@ -10,7 +10,7 @@ import pandas as pd
 import skimage
 from joblib import Parallel, delayed
 from matplotlib import pyplot as plt 
-from shapely import Polygon
+from shapely import Polygon, unary_union, MultiPolygon
 
 sys.path.insert(0, 'src')
 import Common.config as config 
@@ -84,8 +84,6 @@ def handle_edge_cases(label_path, predicted_droplets, width, height, distance_th
                         yolo_line += f" {x_norm:.10f} {y_norm:.10f}"
                     file.write(yolo_line + "\n")
 
-                            
-                
                 # if not save it as is
                 else:
                     # write each one of the points in the label file
@@ -625,6 +623,7 @@ def calculate_metrics_for_resolution(df, method, fieldnames, fieldnames_general,
 
     # Save the updated general evaluation to CSV
     df_gen.to_csv(path_general_evaluation, index=False)
+
 def save_shapes_to_yolo_label(label_path, droplets_detected, width, height):
     with open(label_path, "w") as file:
         for droplet, centroid in droplets_detected:
