@@ -32,8 +32,8 @@ def create_json_answer(imgdata, vmd_value, rsf_value, coverage_percentage, no_dr
     data_graph = CreateGraph.create_graph_values(droplet_sizes_list)
     data = {
         "image_bitmap": imgdata,
-        "vmd": vmd_value,
-        "rsf": rsf_value,
+        "vmd": int(vmd_value),
+        "rsf": round(rsf_value, 2),
         "coverage_percentage": int(coverage_percentage),
         "number_droplets": int(no_droplets),
         "values_of_diameter": data_graph  
@@ -65,13 +65,16 @@ def compute_function(image_uri, paper_width, paper_height, model):
     model_yolo_paper = YOLO(config.PAPER_YOLO_MODEL)
 
     image_to_analyze = cv2.imread(image_file)
-    width, height = image_to_analyze.shape[:2]
+    width_full, height_full = image_to_analyze.shape[:2]
 
     match model:
         case 0: # Cellpose model
             undistorted_image = paper_segmentation.find_paper_yolo(image_to_analyze, filename, model_yolo_paper)
             cv2.imwrite(undistorted_image_file, undistorted_image)
-            
+
+
+            width, height = cv2.imread(undistorted_image_file).shape[:2]
+
             vmd_value, rsf_value, coverage_percentage, total_no_droplets, diameter_list = droplet_segmentation.droplet_segmentation_cellpose(undistorted_image, undistorted_image_file, AUX_FOLDER, filename, paper_width, 10, width, height)
             return
 
@@ -80,6 +83,8 @@ def compute_function(image_uri, paper_width, paper_height, model):
             cv2.imwrite(undistorted_image_file, undistorted_image)
 
             image_gray = cv2.imread(undistorted_image_file, cv2.IMREAD_GRAYSCALE)
+
+            width, height = cv2.imread(undistorted_image_file).shape[:2]
 
             vmd_value, rsf_value, coverage_percentage, total_no_droplets, diameter_list = droplet_segmentation.droplet_segmentation_ccv(undistorted_image, image_gray, filename, paper_width, width, height, AUX_FOLDER)
             

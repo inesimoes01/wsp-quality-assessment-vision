@@ -5,9 +5,8 @@ import numpy as np
 # # Sample list of droplet areas (you can replace this with your actual data)
 # droplet_areas = [2, 3, 5, 6, 2, 1, 1, 4, 5, 6, 4, 5, 3, 2, 3, 5, 4, 5, 6, 7]
 def create_graph_values(droplet_area):
-    droplet_area = [2, 3, 5, 6, 2, 1, 1, 4, 5, 6, 4, 5, 3, 2, 3, 5, 4, 5, 6, 7, 16, 10, 13, 19]
-
-    area_ranges = [(1, 3), (4, 6), (7, 9), (10, 12), (13, 15), (16, 18), (19, 21),]  # Example ranges, adjust as needed
+   
+    area_ranges = [(1, 10), (11, 20), (21, 30), (31, 40), (41, 50), (51, 60), (61, 200)]  # Example ranges, adjust as needed
 
     # Initialize counts for each range
     counts = [0] * len(area_ranges)

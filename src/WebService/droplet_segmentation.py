@@ -74,6 +74,7 @@ def _calculate_stats(predicted_shapes, width_px, height_px, width_mm):
     vmd_value, coverage_percentage, rsf_value, _ = stats.calculate_statistics(diameter_list, height_px * width_px, total_droplet_area)    
     predicted_stats = stats(vmd_value, rsf_value, coverage_percentage, total_no_droplets, no_droplets_overlapped, overlaped_percentage)
 
+    print("VMD", vmd_value, "RSF", rsf_value, "Coverage Percentage", coverage_percentage, "Number of Droplets", total_no_droplets)
     return vmd_value, rsf_value, coverage_percentage, total_no_droplets, diameter_list
 
 def _random_colors(N, bright=True):
